@@ -15,7 +15,7 @@ typedef struct _Buffer buffer;
 
 /* Terminal prototype */
 typedef struct _TTY {
-	int tty_id;
+	int tty_id; // 1-4, given in assignment
 
 	node *to_write;
 	node *buffers;

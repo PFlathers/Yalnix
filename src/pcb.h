@@ -26,6 +26,7 @@ typedef struct _PCB {
 	/* Process Memory management */
 
 	int brk_address;
+	int stack_pointer; // or void *stack_start
 	int neap_start_pg; //or void *heap_start
 	
 } _PCB;
