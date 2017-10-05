@@ -1,5 +1,9 @@
 #ifndef _LOCK_H_
 #define _LOCK_H_
+
+#include "list.h"
+
+
 typedef struct _LOCK
 {
         int id; // id of lock
