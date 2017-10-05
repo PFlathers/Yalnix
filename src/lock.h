@@ -13,5 +13,6 @@ typedef struct _LOCK
 } __LOCK;
 typedef struct _LOCK lock;
 
+/* Public Facing Function Calls */
 
 #endif

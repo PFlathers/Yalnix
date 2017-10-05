@@ -1,5 +1,6 @@
 #ifndef _PCB_H_
 #define _PCB_H_
+
 #include "lock.h"
 #include "list.h"
 // #include wherever User and kernel context are
@@ -8,8 +9,7 @@ typedef struct _PCB {
 
 	/* Process tracking */
 	
-	// should we make it unsigned? 
-	int process_id;
+	unsigned int process_id;
 	//User Context *user_context;
 	//Kernel Context *kernel_context;
 	lock *process_lock;
@@ -28,6 +28,12 @@ typedef struct _PCB {
 	int brk_address;
 	int neap_start_pg; //or void *heap_start
 	
+} _PCB;
+typedef struct _PCB pcb;
 
 
-#endif // _PCB_H_
+
+/* Public Facing Function Calls */
+
+
+#endif
