@@ -1,10 +1,18 @@
 This is a general to-do list for the yalnix kernel. 
 Ideally, we'd put stuff in here in order not to forget it
 
+Questions for Sean:
+  ☐ how to operate that damn makefile
+
 General:
  ☐ global variable of available process id (probably ok just to have the nextone as int)
  ☐ logging system (a way to print things out from anywhere)
 
 Checkpoint 1:
-
+ ☐ list.c
+ ☐ globals.h
+ ☐ kernel.c template
+ ☐ documentation folder
+ ☐ split .h files in the include
+   ☐ README in there
 
