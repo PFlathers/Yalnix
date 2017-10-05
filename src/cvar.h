@@ -10,7 +10,7 @@ typedef struct _CVAR
         int claimed; // 0 if not claimed. 1 if claimed
         struct node *waiters; // who is waiting on signal.
 } _CVAR;
-typedef struct _CVAR CVAR;
+typedef struct _CVAR cvar;
 
 /* Public Facing Function Calls */
 
