@@ -3,6 +3,7 @@
 
 #include "lock.h"
 #include "list.h"
+
 // #include wherever User and kernel context are
 
 typedef struct _PCB { 
@@ -35,6 +36,6 @@ typedef struct _PCB pcb;
 
 
 /* Public Facing Function Calls */
-
+// pcb new_process(UserContext\KernelContext);
 
 #endif
