@@ -1,0 +1,10 @@
+This is a general to-do list for the yalnix kernel. 
+Ideally, we'd put stuff in here in order not to forget it
+
+General:
+ ☐ global variable of available process id (probably ok just to have the nextone as int)
+ ☐ logging system (a way to print things out from anywhere)
+
+Checkpoint 1:
+
+
