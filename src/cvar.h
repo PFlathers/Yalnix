@@ -14,5 +14,4 @@ typedef struct _CVAR cvar;
 
 /* Public Facing Function Calls */
 
-
 #endif
