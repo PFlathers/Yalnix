@@ -10,8 +10,9 @@ typedef struct _Node
         struct _Node *next;
         struct _Node *prev;
         void *data;
-} __Node;
+} _Node;
 typedef struct _Node node;
+
 
 
 /* Public Facing Function Calls */
