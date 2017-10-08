@@ -24,6 +24,8 @@ typedef struct List
 
 
 /* Public Facing Function Calls */
+int list_remove(list list_to_remove, void *data);
+void list_add(list *list_to_add, void *data);
 
 
 
