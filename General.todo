@@ -9,7 +9,7 @@ General:
  ☐ logging system (a way to print things out from anywhere)
 
 Checkpoint 1:
- ✔ set up virtual machine @done (17-10-07 21:30)
+ ✔ set up virtual machine @bruno @done (17-10-07 21:30)
  ✔ list.c @done (17-10-08 10:17)
  ✔ globals.h @done (17-10-08 10:17)
  ✔ kernel.c template @done (17-10-08 10:17)
@@ -17,10 +17,8 @@ Checkpoint 1:
  ☐ split .h files in the include
    ☐ README in there
  ✔ list.c               @done (17-10-08 21:29)
- ✔ get vm running       @done (17-10-08 21:29)
+ ✔ get vm running       @patrick  @done (17-10-08 21:29)
  ✔ globals.h            @done (17-10-08 21:29)
  ✔ kernel.c template    @done (17-10-08 21:29)
- ✔ documentation folder @done (17-10-08 21:29)
- ✔ split .h files in the include @done (17-10-08 21:30)
-   ✔ README in there //Done (17-10-08 21:30)
+
 
