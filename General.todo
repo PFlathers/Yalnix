@@ -9,9 +9,9 @@ General:
  ☐ logging system (a way to print things out from anywhere)
 
 Checkpoint 1:
- ☐ list.c
- ☐ globals.h
- ☐ kernel.c template
+ ✔ list.c @done (17-10-08 10:17)
+ ✔ globals.h @done (17-10-08 10:17)
+ ✔ kernel.c template @done (17-10-08 10:17)
  ☐ documentation folder
  ☐ split .h files in the include
    ☐ README in there
