@@ -14,8 +14,18 @@ typedef struct _Node
 typedef struct _Node node;
 
 
+/* Define a list type so that we don't have to mess around with
+ * nodes in our implementation
+ */
+typedef struct _List{
+	node head;
+} _List;
+typedef struct List
+
 
 /* Public Facing Function Calls */
+int list_remove(list list_to_remove, void *data);
+void list_add(list *list_to_add, void *data);
 
 
 

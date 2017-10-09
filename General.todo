@@ -15,4 +15,11 @@ Checkpoint 1:
  ☐ documentation folder
  ☐ split .h files in the include
    ☐ README in there
+ ☐ list.c               //Done
+ ☐ get vm running       //Done
+ ☐ globals.h            //Done
+ ☐ kernel.c template    //Done
+ ☐ documentation folder //Done
+ ☐ split .h files in the include //Done
+   ☐ README in there //Done
 
