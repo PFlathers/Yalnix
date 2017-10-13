@@ -18,6 +18,7 @@ void KernelStart(char *cmd_args[],
 	TracePrintf(1, "Start: KernelStart \n");
 
 	/*LOCAL VARIABLES*/
+
 	int i; 
 	int arg_count; // number of variables passed 
 
@@ -35,6 +36,28 @@ void KernelStart(char *cmd_args[],
 	zombie_procs = (list *)init_list(); 
 
 
+
+// Create the list of empty frames
+
+// Set up the page tables for what's already in use by the kernel.
+
+	// Create an empty page table entry structure and assign permissions and validity
+
+	// save pagetable 0
+
+	// Create pte for r1 pagetables
+
+	// Create an empty page table entry structure and assign permissions and validity
+
+	// Save pagetable 1 (
+
+// Create the idle process
+	// Create a shell process
+	// Set up the user stack by allocating two frames
+	// Update the 1st page table with validity & pfn of idle
+	// assign values to the PCB structure and UserContext for DoIdle
+
+	// Assign Idle PCB
 
 
 } 
