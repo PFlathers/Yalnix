@@ -1,84 +1,85 @@
 #include <stdlib.h>
-#include <stdio.h>
-
 #include "globals.h"
-#include "list.h"
+//#include "list.h"
 
-
-/* initialize empty list with NULL head */
-list *init_list()
+// create list
+List *init_list()
 {
-	list *new_list = malloc(sizeof(list));
+	List *new_list = malloc(sizeof(List));
 	ALLOC_CHECK(new_list, "init_list");
-	
-	list->head = NULL;
-	return list;
+
+	new_list->head = NULL;
+	new_list->tail = NULL;
+
+	return new_list;
 }
 
-/* add data to the end of list */
-void list_add(list *list_to_add, void *data)
+// append to end of list
+void list_add(List *list_to_add, void *data)
 {
-	node *new = malloc(sizeof(node));
-	ALLOC_CHECK(new, "list_add");
+	Node *new_node = malloc(sizeof(Node));
+	ALLOC_CHECK(new_node, "list_add");
 
-	new->data = data;
-	new->prev = NULL;
-	new->next = NULL;
+	new_node->data = data;
+	new_node->prev = NULL;
+	new_node->next = NULL;
 
-	node *curr = list_to_add->head;
-
-	// if list empty
-	if (!curr){
-		list_to_add->head = new;
-		return;
+	// we have an empty list
+	if(!list_to_add->tail){
+		list_to_add->head = new_node;
+		list_to_add->tail = new_node;
+	// append onto end of list
+	} else {
+		list_to_add->tail->next = new_node;
+		new_node->prev = list_to_add->tail;
+		list_to_add->tail = new_node;
 	}
-
-	// go to the end of the list
-	while (!curr){
-		curr = curr->next;
-	}
-
-	curr->next = new;
-	new->prev = curr;
-
 }
 
-/* remove element from the list */
-int list_remove(list list_to_remove, void *data)
+// 0 if we found and removed the data. -1 if not exisit
+int list_remove(List *list_to_remove, void *data)
 {
-	node *curr = list_to_remove->head;
+	if (!list_to_remove->head){
+		return -1;
+	}
+	Node *curr = list_to_remove->head;
 
-	// find the element we want to remove, return
-	// -1 if not exists
+	//find element to remove
 	while (curr != NULL && curr->data != data){
 		curr = curr->next;
 	}
-	if (!curr){
+
+	//we didnt find the data
+	if(!curr){
 		return -1;
 	}
 
-	// if not the first element
-	if (curr->prev){
+	//if not the first element
+	if(curr->prev){
 		curr->prev->next = curr->next;
 
-		// and not the last
-		if (curr->next){
+		// not the last element
+		if(curr->next){
 			curr->next->prev = curr->prev;
+		// it is last element
+		} else{
+			//update last element if is last
+			curr->prev->next = NULL;
+			list_to_remove->tail = curr->prev;
 		}
 	// it is the first element
 	} else {
-		// not the last element
-		if (curr->next){
+		// and not the last element
+		if(curr->next){
 			curr->next->prev = curr->prev;
 			list_to_remove->head = curr->next;
-		} else{
+		//it is the last element
+		} else {
 			list_to_remove->head = NULL;
+			list_to_remove->tail = NULL;
 		}
 	}
 
-
-	// free and return succes
 	free(curr);
 	return 0;
-
 }
