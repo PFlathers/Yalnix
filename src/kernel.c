@@ -169,6 +169,14 @@ void KernelStart(char *cmd_args[],
 
 } 
 
+/* given idle function */
+void DoIdle() {
+  while (1) {
+    TracePrintf(1, "\tDoIdle\n");
+    Pause();
+  } 
+} 
+
 /*SwitchContext*/
 /*SetBreak*/
 /*Change Process*/
