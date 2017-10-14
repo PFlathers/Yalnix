@@ -22,3 +22,40 @@ Checkpoint 1:
  ✔ kernel.c template    @done (17-10-08 21:29)
 
 
+ Addressing the comments:
+   
+   globals.h:  
+     ☐ any other globals?
+   pcb.h:
+      ☐ page tables?
+      ☐ probably don't need a process_lock
+   Kernel.h:
+      ☐ anything?
+    cvar.h: 
+      ☐ lock?
+    cvar.c:
+      ☐ add 
+    kernel.c:
+      ☐ nothing here!
+    syscalls.c:
+      ☐ nothign here!
+  
+
+Checkpoint 2: 
+KernelStart runs, 
+ ☐ initializing the kernel 
+ ☐ the machine 
+ ☐ the interrupt vector, a
+ ☐ and the page tables. 
+ ☐ An idle process should run.
+
+ Specifics, page 50, bullets:
+    ☐ Initialize the interrupt vector table entries for each type of interrupt, exception, or trap, by making them point to the correct handler functions in your kernel.
+    ✔ Initialize the REG VECTOR BASE privileged machine register to point to your interrupt vec- tor table @done (17-10-14 13:09)
+    ☐ Build a structure to keep track of what page frames in physical memory are free. For this purpose, you might be able to use a linked list of physical frames, implemented in the frames themselves. Or you can have a separate structure, which is probably easier, though slightly less efficient. This list of free pages should be based on the pmem size argument passed to your KernelStart, but should of course not include any memory that is already in use by your kernel.
+    ☐ Build the initial page tables for Region 0 and Region 1, and initialize the registers REG PTBR0, REG PTLR0, REG PTBR1, and REG PTLR1 to define these initial page tables.
+      ✔ calculate physical kernel frames @done (17-10-14 13:10)
+    ☐ Enable virtual memory.
+    ☐ Create an “idle” process to be run by your kernel when there are no other runnable (ready) processes in the system. The idle process should be created based on the UserContext passed to your KernelStart routine. As mentioned in Chapter 3, the idle process should be a loop that executes the Pause machine instruction on each loop iteration.
+    ☐ Create the first process and load the initial program into it. In this step, guide yourself by the file template.c that we provide, which shows a skeleton of the procedure necessary to load an executable program from a Unix file into memory as a Yalnix process. This initial process will serve the role of the “init” process in Unix as the parent (or grandparent, etc.) of all processes running on the system.
+
