@@ -17,26 +17,4 @@
 
 
 
-
-/* Globals */
-
-unsigned int total_pframes;
-
-// memory management 
-int vm_en;
-void *kernel_data_start;
-void *kernel_data_end;
-void *kernel_brk;
-
-
-// process tracking
-List *ready_procs;
-List *blocked_procs;
-List *all_procs;
-List *zombie_procs;
-unsigned int available_process_id;
-
-
-
-
 #endif 
