@@ -15,6 +15,11 @@
 #include "pcb.h"
 
 
+#define VREG_1_PAGE_COUNT  (((VMEM_1_LIMIT - VMEM_1_BASE) / PAGESIZE))
+#define VREG_0_PAGE_COUNT  (((VMEM_0_LIMIT - VMEM_0_BASE) / PAGESIZE))
+#define KERNEL_PAGE_COUNT  (KERNEL_STACK_MAXSIZE / PAGESIZE)
+
+
 // globals
 
 // SetKernelData - see kernel.c ln 18:29
@@ -46,8 +51,8 @@ List *zombie_procs;
 
 // Page table List for both regions (statically defined)
 // both pte struct and constants defined in hardware.h
-struct pte r0_ptlist[VMEM_0_PAGE_COUNT];                                     
-struct pte r1_ptlist[VMEM_1_PAGE_COUNT]; 
+struct pte r0_ptlist[VREG_0_PAGE_COUNT];                                     
+struct pte r1_ptlist[VREG_1_PAGE_COUNT]; 
 
 
 
@@ -73,5 +78,6 @@ void KernelStart(char *cmd_args[],
                  UserContext *user_context);
 
 void SetKernelBrk(void * addr);
+void DoIdle();
 
 #endif

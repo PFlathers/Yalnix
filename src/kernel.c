@@ -1,6 +1,7 @@
 #include <hardware.h>
 
 #include "kernel.h"
+#include "pcb.h"
 #include "globals.h"
 #include "list.h"
 
@@ -65,7 +66,7 @@ void KernelStart(char *cmd_args[],
 	// phisical memory
 	// constants in hardware.h
 	// memory shifts explained in pg 24, bullet 4
-	total_phisical_frames = pmem_size / PAGESIZE;
+	total_phisical_frames = phys_mem_size / PAGESIZE;
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
@@ -125,7 +126,7 @@ void KernelStart(char *cmd_args[],
     }
 
 	// Build the initial page tables for Region 1 (pg 50, bullet 4)
-	for (i = base_frame_r1; i < top_frame_r1; i++) {
+	for (i = r1_base_frame; i < r1_top_frame; i++) {
 		struct pte new_pt_entry; // New pte entry
 
 		// So far, page is invalid, has read/write protections, and no pfn
@@ -134,7 +135,7 @@ void KernelStart(char *cmd_args[],
 		new_pt_entry.pfn = (u_long) 0x0;
 
 		// Add the page to the pagetable (accounting for 0-indexing - not sure if I need to add 1)
-		r1_ptlist[i - base_frame_r1] = new_pt_entry;
+		r1_ptlist[i - r1_base_frame] = new_pt_entry;
 	}
 
 
@@ -148,8 +149,8 @@ void KernelStart(char *cmd_args[],
   	//							  pg 27, bullet 1
 	WriteRegister(REG_PTBR0, (unsigned int) &r0_ptlist);
 	WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
-	WriteRegister(REG_PTLR0, (unsigned int) VMEM_0_PAGE_COUNT);
-	WriteRegister(REG_PTLR1, (unsigned int) VMEM_1_PAGE_COUNT); 
+	WriteRegister(REG_PTLR0, (unsigned int) VREG_0_PAGE_COUNT);
+	WriteRegister(REG_PTLR1, (unsigned int) VREG_1_PAGE_COUNT); 
 
 	// Enable virtual memory as in table 3.3
 	WriteRegister(REG_VM_ENABLE, 1);
@@ -167,27 +168,53 @@ void KernelStart(char *cmd_args[],
 	// allocates within the function (see pcb.c)
 	// global idle_proc pcb defined in kernel.h
            
-	idle_proc = new_process(user_context); 
+	idle_proc = (pcb *) new_process(user_context); 
 
 	// take two frames
 	int idle_stack_frame1 = (int) pop(&empty_frame_list);               
 	int idle_stack_frame2 = (int) pop(&empty_frame_list);    
  	// we know that the idle will take the first two pages
  	// in user region (1); and we can set the bits to valid
-  	r1_ptlist[VMEM_1_PAGE_COUNT - 1].valid = (u_long) 0x1;
- 	r1_ptlist[VMEM_1_PAGE_COUNT - 2].valid = (u_long) 0x1; 
+  	r1_ptlist[VREG_1_PAGE_COUNT - 1].valid = (u_long) 0x1;
+ 	r1_ptlist[VREG_1_PAGE_COUNT - 2].valid = (u_long) 0x1; 
 
- 	r1_ptlist[[VMEM_1_PAGE_COUNT - 1].pfn = (u_long) ((idle_stack_frame1 * PAGESIZE) >> PAGESHIFT);
- 	r1_ptlist[[VMEM_1_PAGE_COUNT - 2].pfn = (u_long) ((idle_stack_frame2 * PAGESIZE) >> PAGESHIFT);
+ 	r1_ptlist[VREG_1_PAGE_COUNT - 1].pfn = (u_long) ((idle_stack_frame1 * PAGESIZE) >> PAGESHIFT);
+ 	r1_ptlist[VREG_1_PAGE_COUNT - 2].pfn = (u_long) ((idle_stack_frame2 * PAGESIZE) >> PAGESHIFT);
+
+	// flush the TLB region 1 after messing with it
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
 
-// Allocates internally (see PCB.c)// Create the idle process
-	// Create a shell process
-	// Set up the user stack by allocating two frames
-	// Update the 1st page table with validity & pfn of idle
-	// assign values to the PCB structure and UserContext for DoIdle
+	// ASSIGN PCB VALUES TO DO IDLE
+	//program counter to do idle:
+	idle_proc->user_context->pc = &DoIdle;
+	// since this is the first page, stack pointer addr can be 
+	// just the upper limit minus one page and it grows downwardes
+	idle_proc->user_context->sp = (void *) (VMEM_1_LIMIT - PAGESIZE);
 
-	// Assign Idle PCBs
+
+	// allocated region1 pageTable is just a pagecount for region 1 process 
+	// times the size of the pte struct
+	idle_proc->region1_pt = (struct pte *)malloc( VREG_1_PAGE_COUNT * sizeof(struct pte));
+	// Copy over idle's region 1 page table
+	memcpy((void *)idle_proc->region1_pt, (void *) r1_ptlist, VREG_1_PAGE_COUNT * sizeof(struct pte));
+
+
+	// region0 pagetable is malloced in the same way as the user one
+	idle_proc->region0_pt = (struct pte *)malloc( KERNEL_PAGE_COUNT * sizeof(struct pte));
+
+	// this 
+	memcpy((void *)idle_proc->region0_pt,
+		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
+		  KERNEL_PAGE_COUNT * sizeof(struct pte));
+
+	/* BOOKKEEPING */
+	idle_proc->parent = NULL;
+	// copy idle's usercontext into the current usercontext
+	memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+
+
+	TracePrintf(1, "End: SernelStart\n");
 
 } 
 
