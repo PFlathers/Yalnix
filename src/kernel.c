@@ -1,9 +1,11 @@
+#include <hardware.h>
+
 #include "kernel.h"
 #include "globals.h"
 #include "list.h"
 
 // Interrupt vector (pg50, bull 1)
-void (*interrupt_vector[8]) = {
+void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
   HANDLE_TRAP_KERNEL, 
   HANDLE_TRAP_CLOCK,
   HANDLE_TRAP_ILLEGAL,
@@ -11,7 +13,6 @@ void (*interrupt_vector[8]) = {
   HANDLE_TRAP_MATH,
   HANDLE_TRAP_TTY_RECEIVE,
   HANDLE_TRAP_TTY_TRANSMIT,
-  HANDLE_TRAP_DISK
 };
 
 
@@ -19,7 +20,8 @@ void (*interrupt_vector[8]) = {
 At boot time, the hardware invokes SetKernelData 
 to tell your kernel some basic pa- rameters about the data segment
 */
-void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd) { 
+void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd) 
+{ 
   TracePrintf(1, "Start: SetKernelData \n");
 
   kernel_data_start = _KernelDataStart; 
@@ -68,7 +70,7 @@ void KernelStart(char *cmd_args[],
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
 
-	// Create the list of empty frames (NEEDS EDITING)
+	// Create the List of empty frames (NEEDS EDITING)
   	for (i = physical_kernel_frames; i < total_phisical_frames; i++){
 		add_to_list(&empty_frame_list, i);
   	}
@@ -79,10 +81,10 @@ void KernelStart(char *cmd_args[],
 	available_process_id = 0;	// at start we run at 0
 
 	// process tracking lists (per sean's suggestion)
-	ready_procs = (list *)init_list();
-	blocked_procs = (list *)init_list();
-	all_procs = (list *)init_list(); 
-	zombie_procs = (list *)init_list(); 
+	ready_procs = (List *)init_list();
+	blocked_procs = (List *)init_list();
+	all_procs = (List *)init_list(); 
+	zombie_procs = (List *)init_list(); 
 
 
 
@@ -137,6 +139,7 @@ void KernelStart(char *cmd_args[],
 
 
 	/* CONFUGURE REGS */
+
 	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
   	WriteRegister(REG_VECTOR_BASE, (unsigned int) &interrupt_vector);
 
@@ -151,14 +154,34 @@ void KernelStart(char *cmd_args[],
 	// Enable virtual memory as in table 3.3
 	WriteRegister(REG_VM_ENABLE, 1);
 	TracePrintf(1, "Virtual Memory Enabled!\n");
+	
 	// Flush the tlb as in pg29, bullet 1
 	// (when do we not want to have flush all and use other consts?)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 	TracePrintf(8, "TLB flushed!\n");
 
 
+	/* PROCESS HANDLING */
 
-// Create the idle process
+	// Create idle process based on current user context
+	// allocates within the function (see pcb.c)
+	// global idle_proc pcb defined in kernel.h
+           
+	idle_proc = new_process(user_context); 
+
+	// take two frames
+	int idle_stack_frame1 = (int) pop(&empty_frame_list);               
+	int idle_stack_frame2 = (int) pop(&empty_frame_list);    
+ 	// we know that the idle will take the first two pages
+ 	// in user region (1); and we can set the bits to valid
+  	r1_ptlist[VMEM_1_PAGE_COUNT - 1].valid = (u_long) 0x1;
+ 	r1_ptlist[VMEM_1_PAGE_COUNT - 2].valid = (u_long) 0x1; 
+
+ 	r1_ptlist[[VMEM_1_PAGE_COUNT - 1].pfn = (u_long) ((idle_stack_frame1 * PAGESIZE) >> PAGESHIFT);
+ 	r1_ptlist[[VMEM_1_PAGE_COUNT - 2].pfn = (u_long) ((idle_stack_frame2 * PAGESIZE) >> PAGESHIFT);
+
+
+// Allocates internally (see PCB.c)// Create the idle process
 	// Create a shell process
 	// Set up the user stack by allocating two frames
 	// Update the 1st page table with validity & pfn of idle
@@ -166,8 +189,10 @@ void KernelStart(char *cmd_args[],
 
 	// Assign Idle PCBs
 
-
 } 
+
+
+int SetKernelBrk(void * addr) {}
 
 /* given idle function */
 void DoIdle() {
