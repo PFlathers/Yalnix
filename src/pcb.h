@@ -11,9 +11,11 @@ typedef struct _PCB {
 	/* Process tracking */
 	
 	unsigned int process_id;
-	//User Context *user_context;
-	//Kernel Context *kernel_context;
-	lock *process_lock;
+	UserContext *user_context;
+	Kernel Context *kernel_context;
+
+
+	//lock *process_lock;
 
 	/* Hierarchy structure */
 	// if parent
@@ -25,10 +27,10 @@ typedef struct _PCB {
 	int exit_status;
 
 	/* Process Memory management */
-
+	
 	int brk_address;
 	int stack_pointer; // or void *stack_start
-	int neap_start_pg; //or void *heap_start
+	int heap_start_pg; //or void *heap_start
 	
 } _PCB;
 typedef struct _PCB pcb;
