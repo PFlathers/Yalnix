@@ -150,10 +150,11 @@ void KernelStart(char *cmd_args[],
 
 	// Enable virtual memory as in table 3.3
 	WriteRegister(REG_VM_ENABLE, 1);
+	TracePrintf(1, "Virtual Memory Enabled!\n");
 	// Flush the tlb as in pg29, bullet 1
 	// (when do we not want to have flush all and use other consts?)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-
+	TracePrintf(8, "TLB flushed!\n");
 
 
 

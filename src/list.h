@@ -18,7 +18,7 @@ typedef struct _Node node;
  * nodes in our implementation
  */
 typedef struct _List{
-	node head;
+	node *head;
 } _List;
 typedef struct List
 
