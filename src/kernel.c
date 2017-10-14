@@ -49,8 +49,16 @@ void KernelStart(char *cmd_args[],
 	int i; 
 	int arg_count; // number of variables passed 
 
+	// lowest frame in region 1 - see figure 2.2
+	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
+	// highest frame in region 1 - see 3ipure 2.2
+	int r1_top_frame = UP_TO_PAGE(VMEM_1_LIMIT) >> PAGESHIFT;
+
 
 	/*GLOBAL VARIABLES*/
+
+	// break starts as kernel_data_end
+	kernel_brk = kernel_data_end;	
 
 	// phisical memory
 	// constants in hardware.h
@@ -59,22 +67,30 @@ void KernelStart(char *cmd_args[],
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
+
+	// Create the list of empty frames (NEEDS EDITING)
+  	for (i = physical_kernel_frames; i < total_phisical_frames; i++){
+		add_to_list(&empty_frame_list, i);
+  	}
+
+
 	// under is a mess, clean it up
 
 	available_process_id = 0;	// at start we run at 0
 
-	kernel_brk = kernel_data_end;	// break starts as kernel_data_end
-	available_process_id = 0;	// PIDs start at 0
-
-	// process tracking lists
+	// process tracking lists (per sean's suggestion)
 	ready_procs = (list *)init_list();
 	blocked_procs = (list *)init_list();
 	all_procs = (list *)init_list(); 
 	zombie_procs = (list *)init_list(); 
 
+
+
 	/* PAGE TABLES */
-    // Build the initial page tables for Region 0 and Region 1 (pg 50, bullet 4)
-    // Page table entry is 32-bits wide (but does not use all 32 bits).
+
+    // Build the initial page tables for Region 0 (pg 50, bullet 4)
+   	// Page table entry is 32-bits wide (but does not use all 32 bits).
+	// struct pte defined in hardware.h
 	for (i = 0; i < physical_kernel_frames; i++) {
     	// PTE struct
     	struct pte new_pt_entry;
@@ -94,32 +110,46 @@ void KernelStart(char *cmd_args[],
 		else
       		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE); // read and write protections
 
-
-
-
-
-
+		// pft (24 bits as defined on pg 28, bullet 3)
+		//field contains the page frame number (the physical memory page number) 
+		// of the page of physical memory to which this virtual memory page is 
+		//mapped by this page table entry
+		// If i get this correctly, that should just be base + ith page's address
+		new_pt_entry.pfn = (u_long) ((PMEM_BASE + (i * PAGESIZE)) >> PAGESHIFT);
+		
+		// set up a pagetable entry to be sth like
+		r0_ptlist[i] = new_pt_entry;
+  
     }
+
+	// Build the initial page tables for Region 1 (pg 50, bullet 4)
+	for (i = base_frame_r1; i < top_frame_r1; i++) {
+		struct pte new_pt_entry; // New pte entry
+
+		// So far, page is invalid, has read/write protections, and no pfn
+		new_pt_entry.valid = (u_long) 0x0;
+		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE);
+		new_pt_entry.pfn = (u_long) 0x0;
+
+		// Add the page to the pagetable (accounting for 0-indexing - not sure if I need to add 1)
+		r1_ptlist[i - base_frame_r1] = new_pt_entry;
+	}
+
 
 	/* CONFUGURE REGS */
 	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
   	WriteRegister(REG_VECTOR_BASE, (unsigned int) &interrupt_vector);
 
+  	// this is my guess based on: pg50, bullet 4
+  	// 							  Table 3.3
+  	//							  pg 27, bullet 1
+	WriteRegister(REG_PTBR0, (unsigned int) &r0_ptlist);
+	WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
+	WriteRegister(REG_PTLR0, (unsigned int) VMEM_0_PAGE_COUNT);
+	WriteRegister(REG_PTLR1, (unsigned int) VMEM_1_PAGE_COUNT); 
 
-, 
-    // and initialize the registers REG PTBR0, REG PTLR0, REG PTBR1, 
-    // and REG PTLR1 to define these initial page tables.
 
 
-// Create the list of empty frames
-
-// Set up the page tables for what's already in use by the kernel.
-
-	// Create an empty page table new_pt_entry structure and assign permissions and validity
-
-	// save pagetable 0
-
-	// Create pte for r1 pagetables
 
 
 
