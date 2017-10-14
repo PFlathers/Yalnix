@@ -79,7 +79,17 @@ int list_remove(List *list_to_remove, void *data)
 			list_to_remove->tail = NULL;
 		}
 	}
-
+	free(curr->data);
 	free(curr);
 	return 0;
+}
+
+void *list_pop(List *list_to_pop)
+{
+	Node *pop_node = list_to_pop->head;
+	void *ret_data = pop_node->data;
+	list_to_pop->head = list_to_pop->head->next;
+	list_to_pop->head->prev = NULL;
+	free(pop_node);
+	return ret_data;
 }
