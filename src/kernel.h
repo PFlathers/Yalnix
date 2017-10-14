@@ -11,8 +11,13 @@
 /*
  * Local Includes
  */
-#include "listlist.h"
+#include "list.h"
 #include "pcb.h"
+
+
+#define VREG_1_PAGE_COUNT  (((VMEM_1_LIMIT - VMEM_1_BASE) / PAGESIZE))
+#define VREG_0_PAGE_COUNT  (((VMEM_0_LIMIT - VMEM_0_BASE) / PAGESIZE))
+#define KERNEL_PAGE_COUNT  (KERNEL_STACK_MAXSIZE / PAGESIZE)
 
 
 // globals
@@ -28,9 +33,9 @@ void *kernel_brk;
 // phisical frames tracking - see kernel.c ln 55:6-
 unsigned int used_physical_kernel_frames;
 unsigned int physical_kernel_frames;
-unsigned int total_phisical_frames;
+unsigned int total_physical_frames;
 
-list empty_frame_list;
+List empty_frame_list;
 
 
 // process ttracking - see kernel.c ln 60
@@ -38,24 +43,28 @@ unsigned int available_process_id;
 
 
 // process tracking lists -
-list *ready_procs;
-list *blocked_procs;
-list *all_procs;
-list *zombie_procs;
+List *ready_procs;
+List *blocked_procs;
+List *all_procs;
+List *zombie_procs;
 
 
-// Page table list for both regions (statically defined)
+// Page table List for both regions (statically defined)
 // both pte struct and constants defined in hardware.h
-struct pte r0_ptlist[VMEM_0_PAGE_COUNT];                                     
-struct pte r1_ptlist[VMEM_1_PAGE_COUNT]; 
+struct pte r0_ptlist[VREG_0_PAGE_COUNT];                                     
+struct pte r1_ptlist[VREG_1_PAGE_COUNT]; 
 
 
-list *locks;
-list *cvars;
-list *pipes;
-list *ttys;
+
+// List *locks;
+// List *cvars;
+// List *pipes;
+// List *ttys;
 
 
+// processes
+
+pcb *idle_proc;
 
 
 
@@ -63,6 +72,12 @@ list *ttys;
 
 
 /* Public Facing Function Calls */
+void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd);
+void KernelStart(char *cmd_args[], 
+                 unsigned int phys_mem_size,
+                 UserContext *user_context);
 
+void SetKernelBrk(void * addr);
+void DoIdle();
 
 #endif

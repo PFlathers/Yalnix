@@ -1,4 +1,4 @@
-#ifndef _List_H_
+#ifndef _LIST_H_
 #define _LIST_H_
 
 typedef struct _Node
@@ -17,8 +17,6 @@ typedef struct _List List;
 
 
 /* Public Facing Function Calls */
-list *init_list();
-
 int list_remove(List *list_to_remove, void *data);
 void list_add(List *list_to_add, void *data);
 List *init_list();

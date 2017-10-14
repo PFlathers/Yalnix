@@ -1,6 +1,8 @@
 #ifndef _PCB_H_
 #define _PCB_H_
 
+#include <hardware.h>
+#include <yalnix.h>
 #include "lock.h"
 #include "list.h"
 
@@ -11,9 +13,11 @@ typedef struct _PCB {
 	/* Process tracking */
 	
 	unsigned int process_id;
-	//User Context *user_context;
-	//Kernel Context *kernel_context;
-	lock *process_lock;
+	UserContext *user_context;
+	Kernel Context *kernel_context;
+
+
+	//lock *process_lock;
 
 	/* Hierarchy structure */
 	// if parent
@@ -25,10 +29,16 @@ typedef struct _PCB {
 	int exit_status;
 
 	/* Process Memory management */
-
+	
 	int brk_address;
 	int stack_pointer; // or void *stack_start
-	int neap_start_pg; //or void *heap_start
+	int heap_start_pg; //or void *heap_start
+
+	// pointers to the kernel and user stack;
+	// allocte when creating the process or bruno angry
+	// and os segfaulty
+	struct pte *region0_pt;
+	struct pte *region1_pt;
 	
 } _PCB;
 typedef struct _PCB pcb;
