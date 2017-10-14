@@ -50,12 +50,16 @@ struct pte r0_ptlist[VMEM_0_PAGE_COUNT];
 struct pte r1_ptlist[VMEM_1_PAGE_COUNT]; 
 
 
-list *locks;
-list *cvars;
-list *pipes;
-list *ttys;
+
+// list *locks;
+// list *cvars;
+// list *pipes;
+// list *ttys;
 
 
+// processes
+
+pcb *idle_proc;
 
 
 
