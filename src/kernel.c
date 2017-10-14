@@ -148,7 +148,11 @@ void KernelStart(char *cmd_args[],
 	WriteRegister(REG_PTLR0, (unsigned int) VMEM_0_PAGE_COUNT);
 	WriteRegister(REG_PTLR1, (unsigned int) VMEM_1_PAGE_COUNT); 
 
-
+	// Enable virtual memory as in table 3.3
+	WriteRegister(REG_VM_ENABLE, 1);
+	// Flush the tlb as in pg29, bullet 1
+	// (when do we not want to have flush all and use other consts?)
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 
 
 
