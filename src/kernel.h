@@ -33,7 +33,7 @@ void *kernel_brk;
 // phisical frames tracking - see kernel.c ln 55:6-
 unsigned int used_physical_kernel_frames;
 unsigned int physical_kernel_frames;
-unsigned int total_phisical_frames;
+unsigned int total_physical_frames;
 
 List empty_frame_list;
 

@@ -66,7 +66,7 @@ void KernelStart(char *cmd_args[],
 	// physical memory
 	// constants in hardware.h
 	// memory shifts explained in pg 24, bullet 4
-	total_physical_frames = pmem_size / PAGESIZE;
+	total_physical_frames = phys_mem_size / PAGESIZE;
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
