@@ -24,7 +24,9 @@ list *ttys;
 
 
 
-
+// SetKernelData
+void *kernel_data_start;
+void *kernel_data_end;
 
 
 

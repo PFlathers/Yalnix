@@ -15,6 +15,18 @@ void (*interrupt_vector[8]) = {
 };
 
 
+/* from pg 14, bullet 1
+At boot time, the hardware invokes SetKernelData 
+to tell your kernel some basic pa- rameters about the data segment
+*/
+void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd) { 
+  TracePrintf(1, "Start: SetKernelData \n");
+
+  kernel_data_start = _KernelDataStart; 
+  kernel_data_end = _KernelDataEnd;
+
+  TracePrintf(1, "End: SetKernelData \n");
+}
 
 
 /* 
@@ -62,19 +74,28 @@ void KernelStart(char *cmd_args[],
 
 	/* PAGE TABLES */
     // Build the initial page tables for Region 0 and Region 1 (pg 50, bullet 4)
+    // Page table entry is 32-bits wide (but does not use all 32 bits).
 	for (i = 0; i < physical_kernel_frames; i++) {
     	// PTE struct
-    	struct pte entry;
+    	struct pte new_pt_entry;
 
     	// If counter is above stack base or
   		// below the used frames make it valid
 		if ((i < used_physical_kernel_frames) || (i >= (KERNEL_STACK_BASE >> PAGESHIFT)))
-		   entry.valid = (u_long) 0x1;
+		   new_pt_entry.valid = (u_long) 0x1;
 		else
-		   entry.valid = (u_long) 0x0; 
+		   new_pt_entry.valid = (u_long) 0x0; 
+
+		// if memory is bellow kernel data start 
+		// (i.e if it's kernel stach), we can read or exec,
+		// if userland we can read or write (see pg 28, bullet 2) 
+		if (i < (((unsigned int)kernel_data_start) >> PAGESHIFT))
+      		new_pt_entry.prot = (u_long) (PROT_READ | PROT_EXEC); // exec and read protections
+		else
+      		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE); // read and write protections
 
 
-		
+
 
 
 
@@ -94,13 +115,13 @@ void KernelStart(char *cmd_args[],
 
 // Set up the page tables for what's already in use by the kernel.
 
-	// Create an empty page table entry structure and assign permissions and validity
+	// Create an empty page table new_pt_entry structure and assign permissions and validity
 
 	// save pagetable 0
 
 	// Create pte for r1 pagetables
 
-	// Create an empty page table entry structure and assign permissions and validity
+	// Create an empty page table new_pt_entry structure and assign permissions and validity
 
 	// Save pagetable 1 (
 
