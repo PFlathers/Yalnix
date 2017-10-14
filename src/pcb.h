@@ -1,6 +1,8 @@
 #ifndef _PCB_H_
 #define _PCB_H_
 
+#include <hardware.h>
+#include <yalnix.h>
 #include "lock.h"
 #include "list.h"
 
