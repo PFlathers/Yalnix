@@ -24,7 +24,7 @@ KERNEL_ALL = yalnix
 #List all kernel source files here.  
 KERNEL_SRCS = list.c kernel.c pcb.c
 #List the objects to be formed form the kernel source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-KERNEL_OBJS = list.o
+KERNEL_OBJS = list.o kernel.o pcb.o
 #List all of the header files necessary for your kernel
 KERNEL_INCS = list.h globals.h kernel.h pcb.h
 
