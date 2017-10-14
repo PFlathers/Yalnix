@@ -31,6 +31,12 @@ typedef struct _PCB {
 	int brk_address;
 	int stack_pointer; // or void *stack_start
 	int heap_start_pg; //or void *heap_start
+
+	// pointers to the kernel and user stack;
+	// allocte when creating the process or bruno angry
+	// and os segfaulty
+	struct pte *region0_pt;
+	struct pte *region1_pt;
 	
 } _PCB;
 typedef struct _PCB pcb;
