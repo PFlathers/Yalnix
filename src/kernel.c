@@ -62,16 +62,16 @@ void KernelStart(char *cmd_args[],
 	// break starts as kernel_data_end
 	kernel_brk = kernel_data_end;	
 
-	// phisical memory
+	// physical memory
 	// constants in hardware.h
 	// memory shifts explained in pg 24, bullet 4
-	total_phisical_frames = pmem_size / PAGESIZE;
+	total_physical_frames = pmem_size / PAGESIZE;
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
 
 	// Create the List of empty frames (NEEDS EDITING)
-  	for (i = physical_kernel_frames; i < total_phisical_frames; i++){
+  	for (i = physical_kernel_frames; i < total_physical_frames; i++){
 		add_to_list(&empty_frame_list, i);
   	}
 
