@@ -16,6 +16,16 @@
 }
 
 
+/* Globals */
+
+unsigned int total_pframes;
+
+// memory management 
+int vm_en;
+void *kernel_data_start;
+void *kernel_data_end;
+
+
 
 
 
