@@ -20,5 +20,6 @@ typedef struct _List List;
 int list_remove(List *list_to_remove, void *data);
 void list_add(List *list_to_add, void *data);
 List *init_list();
+void *list_pop(List *list_to_pop);
 
 #endif

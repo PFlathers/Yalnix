@@ -4,18 +4,28 @@
 #include "pcb.h"
 #include "globals.h"
 #include "list.h"
+#include <hardware.h>
+#include "interupts.h"
 
 // Interrupt vector (pg50, bull 1)
 void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
-  HANDLE_TRAP_KERNEL, 
-  HANDLE_TRAP_CLOCK,
-  HANDLE_TRAP_ILLEGAL,
-  HANDLE_TRAP_MEMORY,
-  HANDLE_TRAP_MATH,
-  HANDLE_TRAP_TTY_RECEIVE,
-  HANDLE_TRAP_TTY_TRANSMIT,
-};
-
+  HANDLE_TRAP_KERNEL		= &trapKernel,
+  HANDLE_TRAP_CLOCK		= &trapClock,
+  HANDLE_TRAP_ILLEGAL		= &trapIllegal,
+  HANDLE_TRAP_MEMORY		= &trapMemory,
+  HANDLE_TRAP_MATH		= &trapMath,
+  HANDLE_TRAP_TTY_RECEIVE	= &trapTTYReceive,
+  HANDLE_TRAP_TTY_TRANSMIT	= &trapTTYTransmit,
+  HANDLE_TRAP_DISK		= &trapname1,
+  HANDLE_TRAP_2			= &trapname2,
+  HANDLE_TRAP_3			= &trapname3,
+  HANDLE_TRAP_4			= &trapname4,
+  HANDLE_TRAP_5			= &trapname5,
+  HANDLE_TRAP_6			= &trapname6,
+  HANDLE_TRAP_7			= &trapname7,
+  HANDLE_TRAP_8			= &trapname8,
+  HANDLE_TRAP_9			= &trapname9
+}; 
 
 /* from pg 14, bullet 1
 At boot time, the hardware invokes SetKernelData 
