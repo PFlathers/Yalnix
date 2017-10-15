@@ -22,11 +22,11 @@ ALL = $(KERNEL_ALL) $(USER_APPS)
 KERNEL_ALL = yalnix
 
 #List all kernel source files here.  
-KERNEL_SRCS = list.c kernel.c pcb.c
+KERNEL_SRCS = list.c kernel.c pcb.c interupts.c
 #List the objects to be formed form the kernel source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-KERNEL_OBJS = list.o kernel.o pcb.o
+KERNEL_OBJS = list.o kernel.o pcb.o interupts.o
 #List all of the header files necessary for your kernel
-KERNEL_INCS = list.h globals.h kernel.h pcb.h
+KERNEL_INCS = list.h globals.h kernel.h pcb.h interupts.h
 
 
 #List all user programs here.
