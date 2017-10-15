@@ -17,4 +17,8 @@ int PipeInit(int *pipe_idp);
 
 int PipeRead(int pipe_id, void *buf, int len);
 
+int PipeWrite(int pipe_id, void *buf, int len);
+
+int PipeDestroy(int pipe_id);
+
 #endif

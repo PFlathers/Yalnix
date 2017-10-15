@@ -12,3 +12,12 @@ int PipeRead(int pipe_id, void *buf, int len)
 	return 0;
 }
 
+int PipeWrite(int pipe_id, void *buf, int len)
+{
+	return 0;
+}
+
+int PipeDestroy(int pipe_id)
+{
+	return 0;
+}
