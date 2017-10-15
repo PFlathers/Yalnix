@@ -17,8 +17,8 @@ typedef struct _Buffer buffer;
 typedef struct _TTY {
 	int tty_id; // 1-4, given in assignment
 
-	node *to_write;
-	node *buffers;
+	List *to_write;
+	List *buffers;
 
 	//missing probz a lot
 } _TTY;
