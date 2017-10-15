@@ -47,7 +47,7 @@ pcb *new_process(UserContext *uc)
 	//The meaning of the code value varies depending 
 	// on the type of interrupt, exception, or trap. 
 	// The defined values of code are summarized in Table 3.2.
-	new_pcb->user_context->code = = uc->code;
+	new_pcb->user_context->code = uc->code;
 
 	// set new proc id - this is a global from kernel.h
 	new_pcb->process_id = available_process_id;
@@ -60,7 +60,7 @@ pcb *new_process(UserContext *uc)
   	new_pcb->parent = NULL;
 
   	new_pcb->brk_address = 0;
-  	new_pcb->heap_start_page = 0;
+  	new_pcb->heap_start_pg = 0;
 
 
 	return new_pcb;

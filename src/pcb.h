@@ -14,15 +14,15 @@ typedef struct _PCB {
 	
 	unsigned int process_id;
 	UserContext *user_context;
-	Kernel Context *kernel_context;
+	KernelContext *kernel_context;
 
 
 	//lock *process_lock;
 
 	/* Hierarchy structure */
 	// if parent
-	node *children;
-	node *zombiez;
+	List *children;
+	List *zombiez;
 
 	// if child
 	struct _PCB *parent; //we need to know new 
