@@ -13,6 +13,7 @@
  */
 #include "list.h"
 #include "pcb.h"
+#include "interupts.h"
 
 
 #define VREG_1_PAGE_COUNT  (((VMEM_1_LIMIT - VMEM_1_BASE) / PAGESIZE))
@@ -77,7 +78,7 @@ void KernelStart(char *cmd_args[],
                  unsigned int phys_mem_size,
                  UserContext *user_context);
 
-void SetKernelBrk(void * addr);
+int SetKernelBrk(void * addr);
 void DoIdle();
 
 #endif

@@ -4,27 +4,26 @@
 #include "pcb.h"
 #include "globals.h"
 #include "list.h"
-#include <hardware.h>
 #include "interupts.h"
 
 // Interrupt vector (pg50, bull 1)
 void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
-  HANDLE_TRAP_KERNEL		= &trapKernel,
-  HANDLE_TRAP_CLOCK		= &trapClock,
-  HANDLE_TRAP_ILLEGAL		= &trapIllegal,
-  HANDLE_TRAP_MEMORY		= &trapMemory,
-  HANDLE_TRAP_MATH		= &trapMath,
-  HANDLE_TRAP_TTY_RECEIVE	= &trapTTYReceive,
-  HANDLE_TRAP_TTY_TRANSMIT	= &trapTTYTransmit,
-  HANDLE_TRAP_DISK		= &trapname1,
-  HANDLE_TRAP_2			= &trapname2,
-  HANDLE_TRAP_3			= &trapname3,
-  HANDLE_TRAP_4			= &trapname4,
-  HANDLE_TRAP_5			= &trapname5,
-  HANDLE_TRAP_6			= &trapname6,
-  HANDLE_TRAP_7			= &trapname7,
-  HANDLE_TRAP_8			= &trapname8,
-  HANDLE_TRAP_9			= &trapname9
+   &trapKernel,
+   &trapClock,
+   &trapIllegal,
+   &trapMemory,
+   &trapMath,
+   &trapTTYReceive,
+   &trapTTYTransmit,
+   &trapname1,
+   &trapname2,
+   &trapname3,
+   &trapname4,
+   &trapname5,
+   &trapname6,
+   &trapname7,
+   &trapname8,
+   &trapname9
 }; 
 
 /* from pg 14, bullet 1
@@ -55,7 +54,7 @@ void KernelStart(char *cmd_args[],
                  unsigned int phys_mem_size,
                  UserContext *user_context) 
 {
-	TracePrintf(1, "Start: KernelStart \n");
+	TracePrintf(0, "Start: KernelStart \n");
 
 	/*LOCAL VARIABLES*/
 
@@ -83,7 +82,7 @@ void KernelStart(char *cmd_args[],
 
 	// Create the List of empty frames (NEEDS EDITING)
   	for (i = physical_kernel_frames; i < total_physical_frames; i++){
-		add_to_list(&empty_frame_list, i);
+		list_add(&empty_frame_list, (void *)i);
   	}
 
 
@@ -181,8 +180,8 @@ void KernelStart(char *cmd_args[],
 	idle_proc = (pcb *) new_process(user_context); 
 
 	// take two frames
-	int idle_stack_frame1 = (int) pop(&empty_frame_list);               
-	int idle_stack_frame2 = (int) pop(&empty_frame_list);    
+	int idle_stack_frame1 = (int) list_pop(&empty_frame_list);               
+	int idle_stack_frame2 = (int) list_pop(&empty_frame_list);    
  	// we know that the idle will take the first two pages
  	// in user region (1); and we can set the bits to valid
   	r1_ptlist[VREG_1_PAGE_COUNT - 1].valid = (u_long) 0x1;
@@ -229,7 +228,9 @@ void KernelStart(char *cmd_args[],
 } 
 
 
-int SetKernelBrk(void * addr) {}
+int SetKernelBrk(void * addr) {
+	return 0;
+}
 
 /* given idle function */
 void DoIdle() {
