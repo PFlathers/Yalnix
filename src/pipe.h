@@ -11,6 +11,10 @@ typedef struct _PIPE {
   // erad the textbook
   
 } _PIPE;
+typedef struct _PIPE Pipe;
 
+int PipeInit(int *pipe_idp);
+
+int PipeRead(int pipe_id, void *buf, int len);
 
 #endif
