@@ -3,40 +3,40 @@
 
 
 
-void trapKernel(UserContext *)
+void trapKernel(UserContext *uc)
 {
 }
 
-void trapClock(UserContext *)
+void trapClock(UserContext *uc)
 {
 }
 
-void trapIllegal(UserContext *)
+void trapIllegal(UserContext *uc)
 {
 }
 
-void trapMemory(UserContext *)
+void trapMemory(UserContext *uc)
 {
 }
 
-void trapMath(UserContext *)
+void trapMath(UserContext *uc)
 {
 }
 
-void trapTTYReceive(UserContext *)
+void trapTTYReceive(UserContext *uc)
 {
 }
 
-void trapTTYTransmit(UserContext *)
+void trapTTYTransmit(UserContext *uc)
 {
 }
 
-void trapname1(UserContext *){}
-void trapname2(UserContext *){}
-void trapname3(UserContext *){}
-void trapname4(UserContext *){}
-void trapname5(UserContext *){}
-void trapname6(UserContext *){}
-void trapname7(UserContext *){}
-void trapname8(UserContext *){}
-void trapname9(UserContext *){}
+void trapname1(UserContext *uc){}
+void trapname2(UserContext *uc){}
+void trapname3(UserContext *uc){}
+void trapname4(UserContext *uc){}
+void trapname5(UserContext *uc){}
+void trapname6(UserContext *uc){}
+void trapname7(UserContext *uc){}
+void trapname8(UserContext *uc){}
+void trapname9(UserContext *uc){}
