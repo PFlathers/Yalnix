@@ -10,3 +10,8 @@ Please find current state of the project in [General.todo](General.todo) file.
  - Checkpoint one completed on Oct 8th, 2017. 
 
 ### Usage manual and description
+#### To Compile:
+Run `make` in the yalnix virtual machine. Makefile is in the src folder.
+
+#### To Run:
+`yalnix -t tracefile -lk 2`

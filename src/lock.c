@@ -1,6 +1,9 @@
 #include "globals.h"
 #include "syscalls.h"
 
+
+//Prototypes for lock.
+
 int LockInit(Lock *lock_to_init)
 {
 	return 0;

@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <hardware.h>
 
-
+//Prototypes of kernel traps.
+//This will be flushed out later.
 
 void trapKernel(UserContext *uc)
 {

@@ -8,6 +8,7 @@
 
 
 /* macros */
+//Checks if the alloc was sucessful.
 #define ALLOC_CHECK(x, s){				\
 	if(!x){						\
 		puts("Memory allocation error: %s", s); \
