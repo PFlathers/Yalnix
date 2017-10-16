@@ -14,13 +14,13 @@ typedef struct _CVAR cvar;
 
 /* Public Facing Function Calls */
 
-int cvar_init(Cvar *cvar_to_init);
+int CvarInit(Cvar *cvar_to_init);
 
-int cvar_destroy(Cvar *cvar_to_destroy);
+int CvarDestory(int cvar_id);
 
-int cvar_signal(Cvar *cvar_to_signal);
+int CvarSignal(int cvar_id);
 
-int cvar_broadcast(Cvar *cvar_to_broadcast);
+int CvarBroadcast(int cvar_id);
 
-int cvar_wait(Cvar *cvar_to_wait);
+int CvarWait(int cvar_id, int lock_id);
 #endif

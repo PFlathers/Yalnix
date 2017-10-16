@@ -1,17 +1,22 @@
 #include "globals.h"
 #include "syscalls.h"
 
-Lock *lock_init()
-{
-	return NULL;
-}
-
-int lock_acquire(Lock *lock)
+int LockInit(Lock *lock_to_init)
 {
 	return 0;
 }
 
-int lock_release(Lock *lock)
+int Acquire(int lock_id)
+{
+	return 0;
+}
+
+int Release(int lock_id)
+{
+	return 0;
+}
+
+int LockDestroy(int lock_id)
 {
 	return 0;
 }

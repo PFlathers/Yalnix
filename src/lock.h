@@ -14,8 +14,9 @@ typedef struct _LOCK
 typedef struct _LOCK Lock;
 
 /* Public Facing Function Calls */
-Lock *lock_init();
-int lock_aquire(Lock *lock);
-int lock_release(Lock *lock);
+int LockInit(Lock *lock_to_init);
+int Acquire(int lock_id);
+int Release(int lock_id);
+int LockDestroy(int lock_id);
 
 #endif

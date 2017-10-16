@@ -10,7 +10,7 @@ typedef struct _Buffer {
   int len; // bytelength
 } _BUFFER;
 
-typedef struct _Buffer buffer;
+typedef struct _Buffer Buffer;
 
 
 /* Terminal prototype */
@@ -23,7 +23,10 @@ typedef struct _TTY {
 	//missing probz a lot
 } _TTY;
 
-typedef struct _TTY tty;
+typedef struct _TTY TTY;
 
+int TtyRead(int tty_id, void *buf, int len);
+
+int TtyWrite(int tty_id, void *buf, int len);
 
 #endif
