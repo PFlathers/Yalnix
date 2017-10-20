@@ -227,8 +227,28 @@ void KernelStart(char *cmd_args[],
 
 } 
 
+/*
+	SetKernelBrk
+	
+ */
+int SetKernelBrk(void * addr) 
+{
+	TracePrintf(2, "SetKernelBrk ### Start")
+	// Check that the address is within bounds
+	
+	// check if VM is enabled
+		// if yes pageshift VMEM_0_BASE
+		// page adress is pageshifted toPage(addr) 
+		// botom of the stack is pageshifted toPage(KERNEL BASE)
 
-int SetKernelBrk(void * addr) {
+		// from bottom to addr of page, update validity as (u_long) 0x01
+		// from addr of pade to bottom of stack invalid
+
+		// brk = addr
+		// flush tlb (I think 0, but might do all)
+	// else keep track of the higthes requested address
+
+	TracePrintf(2, "SetKernelBrk ### End")
 	return 0;
 }
 
