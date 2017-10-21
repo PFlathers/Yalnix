@@ -232,8 +232,13 @@ LoadProgram(char *name, char *args[], pcb proc)
 ==>> invalidate their entries in the TLB or write the updated entries
 ==>> into the TLB.  It's nice for the TLB and the page tables to remain
 ==>> consistent.
+	unsigned int virtual_address = VMEM_1_BASE + (text_pg1 << PAGESHIFT);
+	for (int i = virtual_address; i < li.t_npg; i++){
 
-  new_pt_entry.prot = (u_long) (PROT_READ | PROT_EXEC); // exec and read protections
+
+
+	}
+  = (u_long) (PROT_READ | PROT_EXEC); // exec and read protections
 
 
   close(fd);			/* we've read it all now */
