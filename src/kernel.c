@@ -271,7 +271,7 @@ int SetKernelBrk(void * addr)
 		// brk = addr
 		kernel_brk = addr;
 		
-		// flush tlb (I think 0, but might do all)
+		// flush tlb (only region 0, see hardware.h)
 		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
 	} 
