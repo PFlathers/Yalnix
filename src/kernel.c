@@ -229,27 +229,70 @@ void KernelStart(char *cmd_args[],
 
 /*
 	SetKernelBrk
-	
+	increase kenrnel break to addr if addr is larger than 
+	our current break in VM
+
+	if VM is not enabled, we neeg to realign things and 
+	it becomes a pain in the arse; essentially, we need
+	to rewrite page table permissions to ensure that everything up
+	to the new brk becomes valid (as it might not have been)
  */
 int SetKernelBrk(void * addr) 
 {
+	int i;
 	TracePrintf(2, "SetKernelBrk ### Start")
+	
 	// Check that the address is within bounds
 	
+
+	// get VM status from register
+	unsigned int vm_enabled = ReadRegister(REG_VM_ENABLE);
+
+
 	// check if VM is enabled
+	if (vm_enabled){
 		// if yes pageshift VMEM_0_BASE
-		// page adress is pageshifted toPage(addr) 
+		unsigned int page_bottom = VMEM_0_BASE >> PAGESHIFT;
+		// page adress is pageshifted toPage(addr)
+		unsigned int page_adrr = DOWN_TO_PAGE(addr) >> PAGESHIFT;
 		// botom of the stack is pageshifted toPage(KERNEL BASE)
+		unsigned int stack_bottom = DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT;
 
 		// from bottom to addr of page, update validity as (u_long) 0x01
+		for (i = page_bottom; i <= page_addr; i++){
+			r0_ptlist[i].valid = (u_long) 0x1;
+		}
+
 		// from addr of pade to bottom of stack invalid
-
+		for (i  = page_addr; i< stack_bottom; i++){
+			r0_ptlist[i] = (u_long) 0x0;
+		}
+		
 		// brk = addr
+		kernel_brk = addr;
+		
 		// flush tlb (I think 0, but might do all)
-	// else keep track of the higthes requested address
+		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0;)
 
+	} 
+	else{ // else keep track of the higthes requested address
+		unsigned int u_addr = (unsigned int) addr;
+		unsigned int u_brk = (unsigned int) kernel_brk;
+		// add safety check for casts
+
+		// if address is larger than the previous break, set new break, 
+		// else we do nothing
+		if ( u_addr > u_kernel_brk ){
+			kernel_brk = addr;
+		}
+
+
+	} // end if(vm_enabled)
+	
+	// exit function
 	TracePrintf(2, "SetKernelBrk ### End")
 	return 0;
+
 }
 
 /* given idle function */
