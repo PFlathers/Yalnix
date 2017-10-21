@@ -1,7 +1,7 @@
-==>> This is a TEMPLATE for how to write your own LoadProgram function.
-==>> Places where you must change this file to work with your kernel are
-==>> marked with "==>>".  You must replace these lines with your own code.
-==>> You might also want to save the original annotations as comments.
+// ==>> This is a TEMPLATE for how to write your own LoadProgram function.
+// ==>> Places where you must change this file to work with your kernel are
+// ==>> marked with "==>>".  You must replace these lines with your own code.
+// ==>> You might also want to save the original annotations as comments.
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -19,8 +19,7 @@
  *  to the process or PCB structure for the process into which the program
  *  is to be loaded. 
  */
-int
-LoadProgram(char *name, char *args[], pcb proc) 
+int LoadProgram(char *name, char *args[], pcb *proc) 
 //Checked==>> Declare the argument "proc" to be a pointer to your PCB or
 //==>> process descriptor data structure.  We assume you have a member
 //==>> of this structure used to hold the cpu context 
@@ -138,7 +137,7 @@ LoadProgram(char *name, char *args[], pcb proc)
 //! Note this may be wrong. cause usercontext also has a stackpointer
 //==>> Here you replace your data structure proc
 //==>> proc->context.sp = cp2;
-	proc->stack_pointer = cp2;
+	proc->user_context->sp = cp2;
 
 
 
