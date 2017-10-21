@@ -240,7 +240,7 @@ void KernelStart(char *cmd_args[],
 int SetKernelBrk(void * addr) 
 {
 	int i;
-	TracePrintf(2, "SetKernelBrk ### Start")
+	TracePrintf(2, "SetKernelBrk ### Start");
 	
 	// Check that the address is within bounds
 	
@@ -254,7 +254,7 @@ int SetKernelBrk(void * addr)
 		// if yes pageshift VMEM_0_BASE
 		unsigned int page_bottom = VMEM_0_BASE >> PAGESHIFT;
 		// page adress is pageshifted toPage(addr)
-		unsigned int page_adrr = DOWN_TO_PAGE(addr) >> PAGESHIFT;
+		unsigned int page_addr = DOWN_TO_PAGE(addr) >> PAGESHIFT;
 		// botom of the stack is pageshifted toPage(KERNEL BASE)
 		unsigned int stack_bottom = DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT;
 
@@ -265,14 +265,14 @@ int SetKernelBrk(void * addr)
 
 		// from addr of pade to bottom of stack invalid
 		for (i  = page_addr; i< stack_bottom; i++){
-			r0_ptlist[i] = (u_long) 0x0;
+			r0_ptlist[i].valid = (u_long) 0x0;
 		}
 		
 		// brk = addr
 		kernel_brk = addr;
 		
 		// flush tlb (I think 0, but might do all)
-		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0;)
+		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
 	} 
 	else{ // else keep track of the higthes requested address
@@ -282,7 +282,7 @@ int SetKernelBrk(void * addr)
 
 		// if address is larger than the previous break, set new break, 
 		// else we do nothing
-		if ( u_addr > u_kernel_brk ){
+		if ( u_addr > u_brk ){
 			kernel_brk = addr;
 		}
 
@@ -290,7 +290,7 @@ int SetKernelBrk(void * addr)
 	} // end if(vm_enabled)
 	
 	// exit function
-	TracePrintf(2, "SetKernelBrk ### End")
+	TracePrintf(2, "SetKernelBrk ### End");
 	return 0;
 
 }
