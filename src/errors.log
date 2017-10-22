@@ -1,0 +1,82 @@
+loadprog.c: In function ‘LoadProgram’:
+loadprog.c:177:10: error: redeclaration of ‘i’ with no linkage
+  for(int i = 0; i < VREG_1_PAGE_COUNT; i++){
+          ^
+loadprog.c:32:7: note: previous declaration of ‘i’ was here
+   int i;
+       ^
+loadprog.c:177:2: error: ‘for’ loop initial declarations are only allowed in C99 mode
+  for(int i = 0; i < VREG_1_PAGE_COUNT; i++){
+  ^
+loadprog.c:177:2: note: use option -std=c99 or -std=gnu99 to compile your code
+loadprog.c:192:11: error: redefinition of ‘i’
+  for (int i = text_pg1; i < text_pg1 + li.t_npg; i++){
+           ^
+loadprog.c:177:10: note: previous definition of ‘i’ was here
+  for(int i = 0; i < VREG_1_PAGE_COUNT; i++){
+          ^
+loadprog.c:192:2: error: ‘for’ loop initial declarations are only allowed in C99 mode
+  for (int i = text_pg1; i < text_pg1 + li.t_npg; i++){
+  ^
+loadprog.c:196:8: error: expected identifier or ‘(’ before ‘=’ token
+   Node = empty_frame_list.list_pop();
+        ^
+loadprog.c:197:26: error: expected expression before ‘Node’
+   int popped_int = (int) Node->data;
+                          ^
+loadprog.c:209:11: error: redefinition of ‘i’
+  for (int i = data_pg1; i < data_pg1 + data_npg; i ++){
+           ^
+loadprog.c:192:11: note: previous definition of ‘i’ was here
+  for (int i = text_pg1; i < text_pg1 + li.t_npg; i++){
+           ^
+loadprog.c:209:2: error: ‘for’ loop initial declarations are only allowed in C99 mode
+  for (int i = data_pg1; i < data_pg1 + data_npg; i ++){
+  ^
+loadprog.c:213:8: error: expected identifier or ‘(’ before ‘=’ token
+   Node = empty_frame_list.list_pop();
+        ^
+loadprog.c:214:26: error: expected expression before ‘Node’
+   int popped_int = (int) Node->data;
+                          ^
+loadprog.c:228:10: error: redefinition of ‘i’
+  for(int i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
+          ^
+loadprog.c:209:11: note: previous definition of ‘i’ was here
+  for (int i = data_pg1; i < data_pg1 + data_npg; i ++){
+           ^
+loadprog.c:228:2: error: ‘for’ loop initial declarations are only allowed in C99 mode
+  for(int i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
+  ^
+loadprog.c:232:8: error: expected identifier or ‘(’ before ‘=’ token
+   Node = empty_frame_list.list_pop();
+        ^
+loadprog.c:233:26: error: expected expression before ‘Node’
+   int popped_int = (int) Node->data;
+                          ^
+loadprog.c:271:1: error: expected expression before ‘==’ token
+ ==>> Change the protection on the "li.t_npg" pages starting at
+ ^
+loadprog.c:278:23: warning: missing terminating ' character [enabled by default]
+ ==>> into the TLB.  It's nice for the TLB and the page tables to remain
+                       ^
+loadprog.c:278:1: error: missing terminating ' character
+ ==>> into the TLB.  It's nice for the TLB and the page tables to remain
+ ^
+loadprog.c:281:10: error: redefinition of ‘i’
+  for(int i =  saddress; i < saddress + li.t_npg; i ++){
+          ^
+loadprog.c:228:10: note: previous definition of ‘i’ was here
+  for(int i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
+          ^
+loadprog.c:281:15: error: ‘saddress’ undeclared (first use in this function)
+  for(int i =  saddress; i < saddress + li.t_npg; i ++){
+               ^
+loadprog.c:281:15: note: each undeclared identifier is reported only once for each function it appears in
+loadprog.c:281:2: error: ‘for’ loop initial declarations are only allowed in C99 mode
+  for(int i =  saddress; i < saddress + li.t_npg; i ++){
+  ^
+loadprog.c:302:19: error: request for member ‘pc’ in something not a structure or union
+ proc->user_context.pc = (caddr_t) li.entry;
+                   ^
+make: *** [loadprog.o] Error 1

@@ -45,9 +45,9 @@ int kernel_Delay(UserContext *user_context, int clock_ticks)
 	// curr_proc->timeflag = 1;
 
 	// set up block handler for curr process
-	curr_proc->block.is_active = ACTIVE;
-	curr_proc->block.type = DELAY;
-	curr_proc->block.stats.count = clock_ticks;
+	curr_proc->block->is_active = ACTIVE;
+	curr_proc->block->type = DELAY;
+	curr_proc->block->stats.count = clock_ticks;
 
 
 	//Interupts off

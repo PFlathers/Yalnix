@@ -83,10 +83,11 @@ void KernelStart(char *cmd_args[],
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
-
+	// init me baybe
+	empty_frame_list = init_list();
 	// Create the List of empty frames (NEEDS EDITING)
   	for (i = physical_kernel_frames; i < total_physical_frames; i++){
-		list_add(&empty_frame_list, (int *)i);
+		list_add(empty_frame_list, (void *) i);
   	}
 
 
@@ -189,10 +190,16 @@ void KernelStart(char *cmd_args[],
 	idle_proc = (pcb *) new_process(user_context); 
 
 	// take two frames
-	Node *node = list_pop(&empty_frame_list);
-	int idle_stack_frame1 = (int) node->data;     
+	Node *node = list_pop(empty_frame_list);
+	if (!node){
+		exit(-42);
+	}
+	int idle_stack_frame1 = (int)node->data;     
 	free(node);
-	node = list_pop(&empty_frame_list);          
+	node = list_pop(empty_frame_list);  
+	if (!node){
+		exit(-42);
+	}        
 	int idle_stack_frame2 = (int) node->data; 
 	free(node);
 
@@ -237,73 +244,73 @@ void KernelStart(char *cmd_args[],
 	 // base it of of the init (so that I don't have to re-do things)
 	 pcb *init_proc = (pcb *) new_process(user_context);
 
-	 // init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
-	 // init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
-	 // // zero out the memory for pt1
-	 // //bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
+	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 // zero out the memory for pt1
+	 //bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
 
-	 // // memory in region 1 should be invalid, 
-	 // for (i=0; i < VREG_1_PAGE_COUNT; i++) {
-	 // 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
-	 // 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-	 // 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
-	 // }
-
-
-	//  Node *node;
-	//  for (i = 0; i < KERNEL_PAGE_COUNT; i++){
-	//  	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
- //    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
- //    	node = (Node *) list_pop(&empty_frame_list);
- //    	// this is sketchy
- //    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
-	//  	free(node);
-	//  }
-
-	// // TLB flush
-	// WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-
- // 	// init_proc is the first child of idle_proc!
-	// init_proc->parent = idle_proc;
- //  	idle_proc->children = init_list();
- //  	list_add(idle_proc->children, (void *)init_proc);
-
- //  	if (cmd_args[0] == NULL) {
- //  		list_add(all_procs, (void *)idle_proc);
-
- //  		curr_proc = idle_proc;
+	 // memory in region 1 should be invalid, 
+	 for (i=0; i < VREG_1_PAGE_COUNT; i++) {
+	 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
+	 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+	 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
+	 }
 
 
- //  		// copy idle's UC into the current UC
- //  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
- //  		TracePrintf(2, "KernelStart ### End");
 
- //  	} else{
- //  		int arg_count = 0;
+	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
+    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+    	node = (Node *) list_pop(empty_frame_list);
+    	// this is sketchy
+    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
+	 	free(node);
+	 }
 
- //  		while (cmd_args[arg_count] != NULL){
- //  			arg_count++;
- //  		}
- //  		// null terminated
- //  		arg_count++; 
+	// TLB flush
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 
- //  		char *argument_list[arg_count];
- //  		for (i = 0; i<arg_count; i++){
- //  			argument_list[i] = cmd_args[i];
- //  		}
+ 	// init_proc is the first child of idle_proc!
+	init_proc->parent = idle_proc;
+  	idle_proc->children = init_list();
+  	list_add(idle_proc->children, (void *)init_proc);
 
- //  		char *program_name = argument_list[0];
+  	if (cmd_args[0] == NULL) {
+  		list_add(all_procs, (void *)idle_proc);
 
- //  		int lpr;
- //  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
- //  			list_add(all_procs, (void *) init_proc);
- //  			list_add(ready_procs, (void*) init_proc);
- //  		} else{
- //  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
- //  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
- //  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
- //  		}
- //  	}
+  		curr_proc = idle_proc;
+
+
+  		// copy idle's UC into the current UC
+  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+  		TracePrintf(2, "KernelStart ### End");
+
+  	} else{
+  		int arg_count = 0;
+
+  		while (cmd_args[arg_count] != NULL){
+  			arg_count++;
+  		}
+  		// null terminated
+  		arg_count++; 
+
+  		char *argument_list[arg_count];
+  		for (i = 0; i<arg_count; i++){
+  			argument_list[i] = cmd_args[i];
+  		}
+
+  		char *program_name = argument_list[0];
+
+  		int lpr;
+  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
+  			list_add(all_procs, (void *) init_proc);
+  			list_add(ready_procs, (void*) init_proc);
+  		} else{
+  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
+  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
+  		}
+  	}
 
 	/* 
 	 * BOOKKEEPING 
