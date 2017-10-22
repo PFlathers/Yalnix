@@ -196,6 +196,8 @@ int LoadProgram(char *name, char *args[], pcb *proc)
   WriteRegister(REG_PTBR1, (unsigned int) proc_pagetable);
   WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 	
+
+
   TracePrintf(3, "loagprog : allocating text");
   for (i = text_pg1; i < text_pg1 + li.t_npg; i++){
 		struct pte new_entry;
@@ -320,6 +322,8 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 */
 
 proc->user_context->pc = (caddr_t) li.entry;
+
+WriteRegister(REG_PTBR1, old_proc_PTBR1);
 WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
   /*
