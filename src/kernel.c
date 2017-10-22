@@ -388,6 +388,45 @@ void DoIdle() {
   } 
 } 
 
+
+/* magic function from 5.2 */ 
+KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
+{
+	//casts
+	pcb *current = (pcb *) current_pcb;
+	pcb *next = (pcb *) next_pcb; 
+
+	// save current kc
+	if (current != NULL){
+		memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+	}
+
+	// close current on how should we ? 
+
+	// save current k stack
+	if (current != NULL) {
+      memcpy((void *) current->region0_pt,
+              (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
+              KERNEL_PAGE_COUNT * (sizeof(struct pte)));
+    }
+
+
+    // get the region's kernel stack
+    memcpy((void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
+            (void *) next->region0_pt,
+            KERNEL_PAGE_COUNT * (sizeof(struct pte)));
+
+    // update pt register
+    WriteRegister(REG_PTBR1, (unsigned int) next->region1_pt);
+
+    // flush the TLB
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+
+    // return
+    return next->kernel_context;
+
+}
+
 /* switch to a new process - makes life easier for syscalls */
 goto_next_process(UserContext *user_context, int repeat_bool)
 {
@@ -426,7 +465,7 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 	curr_proc = next;
 
 	// magic function from 5.2
-	int r = KernelContextSwitch(KCSFunc t *, (void *) current, (void *) next);
+	int r = KernelContextSwitch(MyKCS, (void *) current, (void *) next);
 
 	// make user context current one (not needed atm)
 	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));

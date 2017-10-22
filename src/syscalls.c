@@ -36,7 +36,7 @@ int Brk(void *addr)
 	return 0;
 }
 
-int Delay(iUserContext *user_context, int clock_ticks)
+int Delay(UserContext *user_context, int clock_ticks)
 {
 	if (clock_ticks == 0)
 		return SUCCESS;

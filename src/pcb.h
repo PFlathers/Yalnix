@@ -22,13 +22,14 @@ https://web.cs.wpi.edu/~claypool/courses/3013-A03/samples/linux-pcb.c
 
 #define NO_BLOCK ((u_long) 0x0)
 #define DELAY ((u_long) 0x1)
+#define WAIT ((u_long) 0x2)
 
 typedef struct _DELAY {
 	// we are either blocking or not
 	union{
 		int count; // count of the deyay
 		int ret; // return value of the blocking party
-	}
+	} stats;
 
 	u_long is_active; // check if active
 	u_long type; // check what kind for sys handler
