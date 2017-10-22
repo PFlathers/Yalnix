@@ -5,6 +5,8 @@
 #include "globals.h"
 #include "list.h"
 #include "interupts.h"
+#include "loadprog.h"
+
 
 // Interrupt vector (pg50, bull 1)
 void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
@@ -171,7 +173,10 @@ void KernelStart(char *cmd_args[],
 	TracePrintf(8, "TLB flushed!\n");
 
 
-	/* PROCESS HANDLING */
+	/* 
+	 * PROCESS HANDLING 
+	 * IDLE
+	 */
 
 	// Create idle process based on current user context
 	// allocates within the function (see pcb.c)
@@ -217,8 +222,88 @@ void KernelStart(char *cmd_args[],
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
 
-	/* BOOKKEEPING */
-	idle_proc->parent = NULL;
+
+	/* 
+	 * PROCESS HANDLING 
+	 * INIT
+	 */
+
+	 // base it of of the init (so that I don't have to re-do things)
+	 pcb *init_proc = (pcb *)new_process(idle_proc->user_context);
+	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
+	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 // zero out the memory for pt1
+	 bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
+
+	 // memory in region 1 should be invalid, 
+	 for (i=0; i < VREG_1_PAGE_COUNT; i++) {
+	 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
+	 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+	 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
+	 }
+
+
+	 Node *node;
+	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
+    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+    	node = (Node *) list_pop(&empty_frame_list);
+    	// this is sketchy
+    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
+	 	free(node);
+	 }
+
+	// TLB flush
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+
+ 	// init_proc is the first child of idle_proc!
+	init_proc->parent = idle_proc;
+  	idle_proc->children = init_list();
+  	list_add(idle_proc->children, (void *)init_proc);
+
+  	if (cmd_args[0] == NULL) {
+  		list_add(all_procs, (void *)idle_proc);
+
+  		curr_proc = idle_proc;
+
+
+  		// copy idle's UC into the current UC
+  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+  		TracePrintf(2, "KernelStart ### End");
+
+  	} else{
+  		int arg_count = 0;
+
+  		while (cmd_args[arg_count] != NULL){
+  			arg_count++;
+  		}
+  		// null terminated
+  		arg_count++; 
+
+  		char *argument_list[arg_count];
+  		for (i = 0; i<arg_count; i++){
+  			argument_list[i] = cmd_args[i];
+  		}
+
+  		char *program_name = argument_list[0];
+
+  		int lpr;
+  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
+  			list_add(all_procs, (void *) init_proc);
+  			list_add(ready_procs, (void*) init_proc);
+  		} else{
+  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
+  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
+  		}
+  	}
+
+	/* 
+	 * BOOKKEEPING 
+	 */
+
+	list_add(all_procs, (void *) idle_proc);
+	curr_proc = idle_proc;
 	// copy idle's usercontext into the current usercontext
 	memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
 
@@ -227,9 +312,72 @@ void KernelStart(char *cmd_args[],
 
 } 
 
+/*
+	SetKernelBrk
+	increase kenrnel break to addr if addr is larger than 
+	our current break in VM
 
-int SetKernelBrk(void * addr) {
+	if VM is not enabled, we neeg to realign things and 
+	it becomes a pain in the arse; essentially, we need
+	to rewrite page table permissions to ensure that everything up
+	to the new brk becomes valid (as it might not have been)
+ */
+int SetKernelBrk(void * addr) 
+{
+	int i;
+	TracePrintf(2, "SetKernelBrk ### Start");
+	
+	// Check that the address is within bounds
+	
+
+	// get VM status from register
+	unsigned int vm_enabled = ReadRegister(REG_VM_ENABLE);
+
+
+	// check if VM is enabled
+	if (vm_enabled){
+		// if yes pageshift VMEM_0_BASE
+		unsigned int page_bottom = VMEM_0_BASE >> PAGESHIFT;
+		// page adress is pageshifted toPage(addr)
+		unsigned int page_addr = DOWN_TO_PAGE(addr) >> PAGESHIFT;
+		// botom of the stack is pageshifted toPage(KERNEL BASE)
+		unsigned int stack_bottom = DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT;
+
+		// from bottom to addr of page, update validity as (u_long) 0x01
+		for (i = page_bottom; i <= page_addr; i++){
+			r0_ptlist[i].valid = (u_long) 0x1;
+		}
+
+		// from addr of pade to bottom of stack invalid
+		for (i  = page_addr; i< stack_bottom; i++){
+			r0_ptlist[i].valid = (u_long) 0x0;
+		}
+		
+		// brk = addr
+		kernel_brk = addr;
+		
+		// flush tlb (only region 0, see hardware.h)
+		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+	} 
+	else{ // else keep track of the higthes requested address
+		unsigned int u_addr = (unsigned int) addr;
+		unsigned int u_brk = (unsigned int) kernel_brk;
+		// add safety check for casts
+
+		// if address is larger than the previous break, set new break, 
+		// else we do nothing
+		if ( u_addr > u_brk ){
+			kernel_brk = addr;
+		}
+
+
+	} // end if(vm_enabled)
+	
+	// exit function
+	TracePrintf(2, "SetKernelBrk ### End");
 	return 0;
+
 }
 
 /* given idle function */

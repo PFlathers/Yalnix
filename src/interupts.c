@@ -10,6 +10,7 @@ void trapKernel(UserContext *uc)
 
 void trapClock(UserContext *uc)
 {
+
 }
 
 void trapIllegal(UserContext *uc)
