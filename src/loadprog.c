@@ -236,7 +236,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
 
-		popped_int = (int) list_pop(empty_frame_list;
+		popped_int = (int) list_pop(empty_frame_list);
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
 
 		proc_pagetable[i] = new_entry;
