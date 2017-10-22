@@ -171,7 +171,10 @@ void KernelStart(char *cmd_args[],
 	TracePrintf(8, "TLB flushed!\n");
 
 
-	/* PROCESS HANDLING */
+	/* 
+	 * PROCESS HANDLING 
+	 * IDLE
+	 */
 
 	// Create idle process based on current user context
 	// allocates within the function (see pcb.c)
@@ -217,8 +220,87 @@ void KernelStart(char *cmd_args[],
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
 
-	/* BOOKKEEPING */
-	idle_proc->parent = NULL;
+
+	/* 
+	 * PROCESS HANDLING 
+	 * INIT
+	 */
+
+	 // base it of of the init (so that I don't have to re-do things)
+	 pcb *init_proc = new_process(idle_proc->user_context);
+	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
+	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 // zero out the memory for pt1
+	 bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
+
+	 // memory in region 1 should be invalid, 
+	 for (i=0; i < VREG_1_PAGE_COUNT; i++) {
+	 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
+	 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+	 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
+	 }
+
+
+	 Node *node;
+	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
+    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+    	node = pop(&empty_frame_list);
+    	// this is sketchy
+    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
+	 	free(node);
+	 }
+
+	// TLB flush
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+
+ 	// init_proc is the first child of idle_proc!
+	init_proc->parent = idle_proc;
+  	idle_proc->children = init_list();
+  	list_add(idle_proc->children, (void *)init_proc);
+
+  	if (cmd_args[0] == NULL) {
+  		list_add(all_procs, (void *)idle_proc);
+
+  		curr_proc - idle_proc;
+
+
+  		// copy idle's UC into the current UC
+  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+  		TracePrintf(2, "KernelStart ### End");
+
+  	} else{
+  		int arg_count = 0;
+
+  		while (cmd_args[arg_count] != NULL){
+  			arg_count++;
+  		}
+  		// null terminated
+  		arg_count++; 
+
+  		char *argument_list[arg_count];
+  		for (i = 0; i<arg_count; i++){
+  			argument_list[i] = cmd_args[i];
+  		}
+
+  		char *program_name = argument_list[0];
+
+  		if ((int lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS) {
+  			list_add(all_procs, (void *) init_proc);
+  			list_add(ready_procs, (void*) init_proc);
+  		} else{
+  			WriteRegister(REG_PTBR1, (unsigned int) &r1_pagetable);
+  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
+  		}
+  	}
+
+	/* 
+	 * BOOKKEEPING 
+	 */
+
+	list_add(all_procs, (void *) idle_proc);
+	curr_proc = idle_proc;
 	// copy idle's usercontext into the current usercontext
 	memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
 
