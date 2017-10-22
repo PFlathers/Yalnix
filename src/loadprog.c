@@ -41,7 +41,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
   int stack_npg;
   long segment_size;
   char *argbuf;
-
+  int popped_int;
   
   /*
    * Open the executable file 
@@ -197,10 +197,11 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node *node = list_pop(empty_frame_list);
-		int popped_int = (int) node->id;
+		
+    popped_int = (int) list_pop(empty_frame_list);
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
-		proc_pagetable[i] = new_entry;
+		
+    proc_pagetable[i] = new_entry;
 	}
 
 
@@ -215,8 +216,8 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node *node = list_pop(empty_frame_list);
-		int popped_int = (int) node->id;
+
+		popped_int = (int) list_pop(empty_frame_list);
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
 		proc_pagetable[i] = new_entry;
 	}
@@ -234,9 +235,10 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node *node = list_pop(empty_frame_list);
-		int popped_int = (int) node->id;
+
+		popped_int = (int) list_pop(empty_frame_list;
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
+
 		proc_pagetable[i] = new_entry;
 
 	}
