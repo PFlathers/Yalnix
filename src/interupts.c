@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <hardware.h>
+#include "pcb.h"
+#include "kernel.h"
 
 //Prototypes of kernel traps.
 //This will be flushed out later.
@@ -10,7 +12,7 @@ void trapKernel(UserContext *uc)
 
 void trapClock(UserContext *uc)
 {
-
+	
 }
 
 void trapIllegal(UserContext *uc)

@@ -3,6 +3,7 @@
 #include "pipe.h"
 #include "lock.h"
 #include "cvar.h"
+#include "pcb.h"
 
 
 int Fork()
@@ -36,6 +37,11 @@ int Brk(void *addr)
 
 int Delay(int clock_ticks)
 {
+	if (clock_ticks == 0)
+		return 0;
+	else if (clock_ticks < 0)
+		return ERROR
+	while(num_interrupts < clock_ticks);
 	return 0;
 }
 

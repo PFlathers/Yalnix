@@ -17,6 +17,7 @@ typedef struct _PCB {
 	KernelContext *kernel_context;
 
 
+	unsigned int clock_ticks;
 	//lock *process_lock;
 
 	/* Hierarchy structure */
@@ -29,7 +30,6 @@ typedef struct _PCB {
 	int exit_status;
 
 	/* Process Memory management */
-	
 	int brk_address;
 
 	int stack_pointer; // or void *stack_start
