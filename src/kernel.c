@@ -388,6 +388,54 @@ void DoIdle() {
   } 
 } 
 
+/* switch to a new process - makes life easier for syscalls */
+goto_next_process(UserContext *user_context, int repeat_bool)
+{
+
+	if (repeat) {
+		list_add(ready_procs, (void *) curr_proc;
+	}
+
+	// context switching
+	Node *node;
+	node = (node *)list_pop(ready_procs);
+	pcb *next_proc = node->data;
+	free(node);
+
+	if (context_switch(curr_proc, next_proc, user_context) != 0){
+		exit FAILURE;
+	}
+
+
+	exit SUCCESS;
+}
+
+
+int context_switch(pcb *current, pcb *next, UserContext *user_context)
+{
+	// save UC of the current one
+	if (curr != NULL){
+		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
+	}
+
+	// Save hext process' UC in the currently used uc var so that we don't have to 
+	// reallocate (tip from prof Palmer in CS50 :))
+	memcpy((void *) user_context, (void *) next->user_context, sizeof(UserContext));
+
+	// current procces becomes next
+	curr_proc = next;
+
+	// magic function from 5.2
+	int r = KernelContextSwitch(KCSFunc t *, (void *) current, (void *) next);
+
+	// make user context current one (not needed atm)
+	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));
+
+	// return status from the magic function
+	return r;
+}	
+
+
 /*SwitchContext*/
 /*SetBreak*/
 /*Change Process*/
