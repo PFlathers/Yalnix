@@ -189,19 +189,9 @@ void KernelStart(char *cmd_args[],
            
 	idle_proc = (pcb *) new_process(user_context); 
 
-	// take two frames
-	Node *node = list_pop(empty_frame_list);
-	if (!node){
-		exit(-42);
-	}
-	int idle_stack_frame1 = (int)node->data;     
-	free(node);
-	node = list_pop(empty_frame_list);  
-	if (!node){
-		exit(-42);
-	}        
-	int idle_stack_frame2 = (int) node->data; 
-	free(node);
+	// take two frames	
+	int idle_stack_frame1 = (int) list_pop(empty_frame_list);          
+	int idle_stack_frame2 = (int) list_pop(empty_frame_list); 
 
  	// we know that the idle will take the first two pages
  	// in user region (1); and we can set the bits to valid
@@ -261,10 +251,8 @@ void KernelStart(char *cmd_args[],
 	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
 	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
     	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-    	node = (Node *) list_pop(empty_frame_list);
-    	// this is sketchy
-    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
-	 	free(node);
+
+    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int) list_pop(empty_frame_list) * PAGESIZE) >> PAGESHIFT);;
 	 }
 
 	// TLB flush
@@ -450,10 +438,7 @@ goto_next_process(UserContext *user_context, int repeat_bool)
 	}
 
 	// context switching
-	Node *node;
-	node = list_pop(ready_procs);
-	pcb *next_proc = node->data;
-	free(node);
+	pcb *next_proc = (pcb *) list_pop(ready_procs);
 
 	if (context_switch(curr_proc, next_proc, user_context) != 0){
 		exit(FAILURE);
