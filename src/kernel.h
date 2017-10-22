@@ -36,7 +36,8 @@ unsigned int used_physical_kernel_frames;
 unsigned int physical_kernel_frames;
 unsigned int total_physical_frames;
 
-List empty_frame_list;
+
+List *empty_frame_list;
 
 
 // process ttracking - see kernel.c ln 60

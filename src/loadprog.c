@@ -41,7 +41,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
   int stack_npg;
   long segment_size;
   char *argbuf;
-
+  int popped_int;
   
   /*
    * Open the executable file 
@@ -174,10 +174,10 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> of the new process.
 */
 
-	for(i = 0; i < VREG_1_PAGE_COUNT; i++){
-		free(proc->region1_pt[i]);
-		proc->region1_pt[i].valid = (unsigned long) 0x00;
-	}
+	// for(i = 0; i < VREG_1_PAGE_COUNT; i++){
+	// 	free(proc->region1_pt[i]);
+	// 	proc->region1_pt[i].valid = (unsigned long) 0x00;
+	// }
 
 /*CHECKED
 ==>> Allocate "li.t_npg" physical pages and map them starting at
@@ -185,18 +185,23 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> These pages should be marked valid, with a protection of 
 ==>> (PROT_READ | PROT_WRITE).
 */
+
+  // we are starting to play with the page tables
 	struct pte proc_pagetable[VREG_1_PAGE_COUNT];
 	memcpy((void *) (&(proc_pagetable[0])), (void *) proc->region1_pt,
 	       VREG_1_PAGE_COUNT * sizeof(struct pte));
 
-	for (i = text_pg1; i < text_pg1 + li.t_npg; i++){
+	
+  TracePrintf(3, "loagprog : allocating text");
+  for (i = text_pg1; i < text_pg1 + li.t_npg; i++){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node *node = list_pop(&empty_frame_list);
-		int popped_int = (int) node->data;
+		
+    popped_int = (int) list_pop(empty_frame_list);
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
-		proc_pagetable[i] = new_entry;
+		
+    proc_pagetable[i] = new_entry;
 	}
 
 
@@ -206,12 +211,13 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> These pages should be marked valid, with a protection of 
 ==>> (PROT_READ | PROT_WRITE).
 */
+  TracePrintf(3, "loagprog : allocating data");
 	for (i = data_pg1; i < data_pg1 + data_npg; i ++){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node *node = list_pop(&empty_frame_list);
-		int popped_int = (int) node->data;
+
+		popped_int = (int) list_pop(empty_frame_list);
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
 		proc_pagetable[i] = new_entry;
 	}
@@ -229,9 +235,10 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node *node = list_pop(&empty_frame_list);
-		int popped_int = (int) node->data;
+
+		popped_int = (int) list_pop(empty_frame_list;
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
+
 		proc_pagetable[i] = new_entry;
 
 	}
@@ -278,11 +285,16 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 // ==>> invalidate their entries in the TLB or write the updated entries
 // ==>> into the TLB.  It's nice for the TLB and the page tables to remain
 // ==>> consistent.
-	unsigned int saddress = VMEM_1_BASE + (text_pg1 << PAGESHIFT);
-	for(i =  saddress; i < saddress + li.t_npg; i ++){
-		proc_pagetable[i].prot = (unsigned long) (PROT_READ | PROT_EXEC);
-	}
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
+
+	// unsigned int saddress = VMEM_1_BASE + (text_pg1 << PAGESHIFT);
+	// for(i =  saddress; i < saddress + li.t_npg; i ++){
+	// 	proc_pagetable[i].prot = (unsigned long) (PROT_READ | PROT_EXEC);
+	// }
+
+  for (i = text_pg1; i< (text_pg1 + li.t_npg); i++){
+    proc_pagetable[i].prot = (u_long) (PROT_READ | PROT_EXEC);
+  }
+
 
   close(fd);			/* we've read it all now */
 
@@ -301,6 +313,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 */
 
 proc->user_context->pc = (caddr_t) li.entry;
+WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
   /*
    * Now, finally, build the argument list on the new stack.

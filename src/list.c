@@ -36,6 +36,7 @@ void list_add(List *list_to_add, void *data)
 	}
 }
 
+
 // 0 if we found and removed the data. -1 if not exisit
 int list_remove(List *list_to_remove, void *data)
 {
@@ -92,4 +93,18 @@ void *list_pop(List *list_to_pop)
 	list_to_pop->head->prev = NULL;
 	free(pop_node);
 	return ret_data;
+}
+
+int list_count(List *list_to_count)
+{
+	Node *place_holder = list_to_count->head;
+	if (!place_holder){
+		return 0;
+	}
+	int count = 0;
+	while(place_holder->next != NULL){
+		count++;
+		place_holder = place_holder->next;
+	}
+	return count;
 }

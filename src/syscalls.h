@@ -1,31 +1,30 @@
 #ifndef _SYSCALLS_H_
 #define _SYSCALLS_H_
 
+#include <hardware.h>
 
 // these includes will provide the syscalls for their respective data
 // structures instead of them being defined here. 
-#include "lock.h"
 #include "pipe.h"
-#include "cvar.h"
 #include "tty.h"
 
 
 
 /* Public Facing Function Calls */
 
-int Fork();
+int kernel_Fork();
 
-int Exec(char *filename, char **argvec);
+int kernel_Exec(char *filename, char **argvec);
 
-void Exit(int status);
+void kernel_Exit(int status);
 
-int Wait(int * status_ptr);
+int kernel_Wait(int * status_ptr);
 
-int GetPid();
+int kernel_GetPid();
 
-int Brk(void *addr);
+int kernel_Brk(void *addr);
 
-int Delay(int clock_ticks);
+int kernel_Delay(UserContext *user_context, int clock_ticks);
 
-int Reclaim(int id);
+int kernel_Reclaim(int id);
 #endif

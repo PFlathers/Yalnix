@@ -63,12 +63,14 @@ void KernelStart(char *cmd_args[],
 	int i; 
 	int arg_count; // number of variables passed 
 
+
 	// lowest frame in region 1 - see figure 2.2
 	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
 	// highest frame in region 1 - see 3ipure 2.2
 	int r1_top_frame = UP_TO_PAGE(VMEM_1_LIMIT) >> PAGESHIFT;
 
 
+	
 	/*GLOBAL VARIABLES*/
 
 	// break starts as kernel_data_end
@@ -81,16 +83,18 @@ void KernelStart(char *cmd_args[],
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
-
+	// init me baybe
+	empty_frame_list = init_list();
 	// Create the List of empty frames (NEEDS EDITING)
   	for (i = physical_kernel_frames; i < total_physical_frames; i++){
-		list_add(&empty_frame_list, (void *)i);
+		list_add(empty_frame_list, (void *) i);
   	}
 
 
 	// under is a mess, clean it up
 
 	available_process_id = 0;	// at start we run at 0
+
 
 	// process tracking lists (per sean's suggestion)
 	ready_procs = (List *)init_list();
@@ -135,6 +139,7 @@ void KernelStart(char *cmd_args[],
 		r0_ptlist[i] = new_pt_entry;
   
     }
+
 
 	// Build the initial page tables for Region 1 (pg 50, bullet 4)
 	for (i = r1_base_frame; i < r1_top_frame; i++) {
@@ -184,9 +189,10 @@ void KernelStart(char *cmd_args[],
            
 	idle_proc = (pcb *) new_process(user_context); 
 
-	// take two frames
-	int idle_stack_frame1 = (int) list_pop(&empty_frame_list);               
-	int idle_stack_frame2 = (int) list_pop(&empty_frame_list);    
+	// take two frames	
+	int idle_stack_frame1 = (int) list_pop(empty_frame_list);          
+	int idle_stack_frame2 = (int) list_pop(empty_frame_list); 
+
  	// we know that the idle will take the first two pages
  	// in user region (1); and we can set the bits to valid
   	r1_ptlist[VREG_1_PAGE_COUNT - 1].valid = (u_long) 0x1;
@@ -205,8 +211,6 @@ void KernelStart(char *cmd_args[],
 	// since this is the first page, stack pointer addr can be 
 	// just the upper limit minus one page and it grows downwardes
 	idle_proc->user_context->sp = (void *) (VMEM_1_LIMIT - PAGESIZE);
-
-
 	// allocated region1 pageTable is just a pagecount for region 1 process 
 	// times the size of the pte struct
 	idle_proc->region1_pt = (struct pte *)malloc( VREG_1_PAGE_COUNT * sizeof(struct pte));
@@ -216,7 +220,6 @@ void KernelStart(char *cmd_args[],
 
 	// region0 pagetable is malloced in the same way as the user one
 	idle_proc->region0_pt = (struct pte *)malloc( KERNEL_PAGE_COUNT * sizeof(struct pte));
-
 	// this 
 	memcpy((void *)idle_proc->region0_pt,
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
@@ -229,11 +232,12 @@ void KernelStart(char *cmd_args[],
 	 */
 
 	 // base it of of the init (so that I don't have to re-do things)
-	 pcb *init_proc = (pcb *)new_process(idle_proc->user_context);
+	 pcb *init_proc = (pcb *) new_process(user_context);
+
 	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
 	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
 	 // zero out the memory for pt1
-	 bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 //bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
 
 	 // memory in region 1 should be invalid, 
 	 for (i=0; i < VREG_1_PAGE_COUNT; i++) {
@@ -243,14 +247,12 @@ void KernelStart(char *cmd_args[],
 	 }
 
 
-	 Node *node;
+
 	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
 	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
     	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-    	node = (Node *) list_pop(&empty_frame_list);
-    	// this is sketchy
-    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
-	 	free(node);
+
+    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int) list_pop(empty_frame_list) * PAGESIZE) >> PAGESHIFT);;
 	 }
 
 	// TLB flush
@@ -387,6 +389,90 @@ void DoIdle() {
     Pause();
   } 
 } 
+
+
+/* magic function from 5.2 */ 
+KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
+{
+	//casts
+	pcb *current = (pcb *) current_pcb;
+	pcb *next = (pcb *) next_pcb; 
+
+	// save current kc
+	if (current != NULL){
+		memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+	}
+
+	// close current on how should we ? 
+
+	// save current k stack
+	if (current != NULL) {
+      memcpy((void *) current->region0_pt,
+              (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
+              KERNEL_PAGE_COUNT * (sizeof(struct pte)));
+    }
+
+
+    // get the region's kernel stack
+    memcpy((void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
+            (void *) next->region0_pt,
+            KERNEL_PAGE_COUNT * (sizeof(struct pte)));
+
+    // update pt register
+    WriteRegister(REG_PTBR1, (unsigned int) next->region1_pt);
+
+    // flush the TLB
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+
+    // return
+    return next->kernel_context;
+
+}
+
+/* switch to a new process - makes life easier for syscalls */
+goto_next_process(UserContext *user_context, int repeat_bool)
+{
+
+	if (repeat_bool) {
+		list_add(ready_procs, (void *) curr_proc);
+	}
+
+	// context switching
+	pcb *next_proc = (pcb *) list_pop(ready_procs);
+
+	if (context_switch(curr_proc, next_proc, user_context) != 0){
+		exit(FAILURE);
+	}
+
+
+	exit(SUCCESS);
+}
+
+
+int context_switch(pcb *current, pcb *next, UserContext *user_context)
+{
+	// save UC of the current one
+	if (current != NULL){
+		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
+	}
+
+	// Save hext process' UC in the currently used uc var so that we don't have to 
+	// reallocate (tip from prof Palmer in CS50 :))
+	memcpy((void *) user_context, (void *) next->user_context, sizeof(UserContext));
+
+	// current procces becomes next
+	curr_proc = next;
+
+	// magic function from 5.2
+	int r = KernelContextSwitch(MyKCS, (void *) current, (void *) next);
+
+	// make user context current one (not needed atm)
+	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));
+
+	// return status from the magic function
+	return r;
+}	
+
 
 /*SwitchContext*/
 /*SetBreak*/
