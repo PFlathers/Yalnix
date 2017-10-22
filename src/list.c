@@ -88,11 +88,11 @@ int list_remove(List *list_to_remove, void *data)
 void *list_pop(List *list_to_pop)
 {
 	Node *pop_node = list_to_pop->head;
-	//void *ret_data = pop_node->data;
+	void *ret_data = pop_node->data;
 	list_to_pop->head = list_to_pop->head->next;
 	list_to_pop->head->prev = NULL;
-	//free(pop_node);
-	return pop_node;
+	free(pop_node);
+	return ret_data;
 }
 
 int list_count(List *list_to_count)
