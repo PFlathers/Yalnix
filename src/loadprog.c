@@ -280,6 +280,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 	for(int i =  saddress; i < saddress + li.t_npg; i ++){
 		proc_pagetable[i].prot = (unsigned long) (PROT_READ | PROT_EXEC);
 	}
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
   close(fd);			/* we've read it all now */
 
@@ -291,8 +292,13 @@ int LoadProgram(char *name, char *args[], pcb *proc)
   /*
    * Set the entry point in the exception frame.
    */
+
+/*Checked
 ==>> Here you should put your data structure (PCB or process)
 ==>>  proc->context.pc = (caddr_t) li.entry;
+*/
+
+proc->user_context.pc = (caddr_t) li.entry;
 
   /*
    * Now, finally, build the argument list on the new stack.
