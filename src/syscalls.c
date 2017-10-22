@@ -4,6 +4,7 @@
 #include "lock.h"
 #include "cvar.h"
 #include "pcb.h"
+#include "kernel.h"
 
 
 int Fork()
@@ -41,8 +42,31 @@ int Delay(int clock_ticks)
 		return 0;
 	else if (clock_ticks < 0)
 		return ERROR
-	curr_proc->start_count = 0;
-	while(num_interrupts < clock_ticks);
+	curr_proc->start_count = clock_ticks;
+	curr_proc->timeflag = 1;
+
+
+	//Interupts off
+	list_remove(&ready_procs, (void *) curr_proc);
+	list_add(&blocked_procs, (void *) curr_proc);
+	//Interupts on
+
+	/* As part of the Scheduler:
+	 * Move from ready list to blocked list.
+	 * for each process in blocked list:
+	 *	if(pcb->timeflag == 1):
+	 *		if  pcb->start_count > 0:
+	 *			start_count --;
+	 *		else:
+	 *			move pcb from blocked to ready.
+	 */
+
+	/* Round Robin for this only has a quantum of 1 clock tick. since the
+	 * kernel is uninteruptable we wont be counting clock ticks when we are
+	 * scheduling.
+	 */
+
+
 	return 0;
 }
 

@@ -18,7 +18,7 @@ typedef struct _PCB {
 
 
 	unsigned int clock_ticks;
-	unsigned int start_count = 1;
+	unsigned int timeflag = 0;
 	//lock *process_lock;
 
 	/* Hierarchy structure */
