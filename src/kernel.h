@@ -66,7 +66,7 @@ struct pte r1_ptlist[VREG_1_PAGE_COUNT];
 
 
 // processes
-
+pcb *curr_proc;
 pcb *idle_proc;
 
 

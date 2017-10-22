@@ -15,3 +15,7 @@ Run `make` in the yalnix virtual machine. Makefile is in the src folder.
 
 #### To Run:
 `yalnix -t tracefile -lk 2`
+
+
+#### Trivia:
+![true story](https://imgs.xkcd.com/comics/git_commit_2x.png)

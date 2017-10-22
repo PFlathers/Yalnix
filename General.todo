@@ -71,5 +71,6 @@ Checkpoint 3 (process things not to forget):
     ☐ see if I have to read register or I can have a global @general_questions
     ☐ check that address is withing bounds .\src\kernel.c:246:8 @bruno, @implementation
     ☐ add safety check at .\src\kernel.c:281:8 @bruno, @implementation
-
-    
+    ☐ remove genera
+  Loadprog:
+    ☐ loadprog 271:8
