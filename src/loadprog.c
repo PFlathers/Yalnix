@@ -191,6 +191,10 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 	memcpy((void *) (&(proc_pagetable[0])), (void *) proc->region1_pt,
 	       VREG_1_PAGE_COUNT * sizeof(struct pte));
 
+
+  unsigned int old_proc_PTBR1 = ReadRegister(REG_PTBR1); 
+  WriteRegister(REG_PTBR1, (unsigned int) proc_pagetable);
+  WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 	
   TracePrintf(3, "loagprog : allocating text");
   for (i = text_pg1; i < text_pg1 + li.t_npg; i++){
@@ -211,7 +215,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> These pages should be marked valid, with a protection of 
 ==>> (PROT_READ | PROT_WRITE).
 */
-  TracePrintf(3, "loagprog : allocating data");
+  TracePrintf(3, "loagprog : allocating data\n");
 	for (i = data_pg1; i < data_pg1 + data_npg; i ++){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
@@ -221,16 +225,18 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
 		proc_pagetable[i] = new_entry;
 	}
+
   /*
    * Allocate memory for the user stack too.
    */
-
+   TracePrintf(3, "loagprog : allocating data done \n");
 /* CHECKED
 ==>> Allocate "stack_npg" physical pages and map them to the top
 ==>> of the region 1 virtual address space.
 ==>> These pages should be marked valid, with a
 ==>> protection of (PROT_READ | PROT_WRITE).
 */
+  TracePrintf(3, "loadprog: allocating stack\n");
 	for(i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
@@ -242,6 +248,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		proc_pagetable[i] = new_entry;
 
 	}
+  TracePrintf(3, "loadprog: allocating stack done \n");
   /*
    * All pages for the new address space are now in the page table.  
    * But they are not yet in the TLB, remember!
@@ -269,7 +276,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
     close(fd);
     return KILL;
   }
-
+  TracePrintf(3, "weeeee \n");
   /*
    * Now set the page table entries for the program text to be readable
    * and executable, but not writable.
@@ -290,11 +297,11 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 	// for(i =  saddress; i < saddress + li.t_npg; i ++){
 	// 	proc_pagetable[i].prot = (unsigned long) (PROT_READ | PROT_EXEC);
 	// }
-
+   TracePrintf(3, "loadprog: protection on things done \n");
   for (i = text_pg1; i< (text_pg1 + li.t_npg); i++){
     proc_pagetable[i].prot = (u_long) (PROT_READ | PROT_EXEC);
   }
-
+  TracePrintf(3, "loadprog: protection done \n");
 
   close(fd);			/* we've read it all now */
 
