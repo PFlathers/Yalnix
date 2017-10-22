@@ -9,8 +9,9 @@
 #include <load_info.h>
 //==>> #include anything you need for your kernel here
 #include "kernel.h"
-#include "gloabals.h"
+#include "globals.h"
 #include "pcb.h"
+#include "loadprog.h"
 
 /*
  *  Load a program into an existing address space.  The program comes from
@@ -146,7 +147,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
    * we are about to blow away all of region 1.
    */
   cp2 = argbuf = (char *)malloc(size);
-  ALLOC_CHECK(cp2);
+  ALLOC_CHECK(cp2, "LoadProgram");
 // CHECKED ==>> You should perhaps check that malloc returned valid space
   for (i = 0; args[i] != NULL; i++) {
     TracePrintf(3, "saving arg %d = '%s'\n", i, args[i]);
@@ -173,7 +174,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> of the new process.
 */
 
-	for(int i = 0; i < VREG_1_PAGE_COUNT; i++){
+	for(i = 0; i < VREG_1_PAGE_COUNT; i++){
 		free(proc->region1_pt[i]);
 		proc->region1_pt[i].valid = (unsigned long) 0x00;
 	}
@@ -188,12 +189,12 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 	memcpy((void *) (&(proc_pagetable[0])), (void *) proc->region1_pt,
 	       VREG_1_PAGE_COUNT * sizeof(struct pte));
 
-	for (int i = text_pg1; i < text_pg1 + li.t_npg; i++){
+	for (i = text_pg1; i < text_pg1 + li.t_npg; i++){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node = empty_frame_list.list_pop();
-		int popped_int = (int) Node->data;
+		Node *node = list_pop(&empty_frame_list);
+		int popped_int = (int) node->data;
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
 		proc_pagetable[i] = new_entry;
 	}
@@ -205,12 +206,12 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> These pages should be marked valid, with a protection of 
 ==>> (PROT_READ | PROT_WRITE).
 */
-	for (int i = data_pg1; i < data_pg1 + data_npg; i ++){
+	for (i = data_pg1; i < data_pg1 + data_npg; i ++){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node = empty_frame_list.list_pop();
-		int popped_int = (int) Node->data;
+		Node *node = list_pop(&empty_frame_list);
+		int popped_int = (int) node->data;
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
 		proc_pagetable[i] = new_entry;
 	}
@@ -224,12 +225,12 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> These pages should be marked valid, with a
 ==>> protection of (PROT_READ | PROT_WRITE).
 */
-	for(int i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
+	for(i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
 		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
-		Node = empty_frame_list.list_pop();
-		int popped_int = (int) Node->data;
+		Node *node = list_pop(&empty_frame_list);
+		int popped_int = (int) node->data;
 		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
 		proc_pagetable[i] = new_entry;
 
@@ -267,17 +268,18 @@ int LoadProgram(char *name, char *args[], pcb *proc)
    * and executable, but not writable.
    */
 
-==>> Change the protection on the "li.t_npg" pages starting at
-==>> virtual address VMEM_1_BASE + (text_pg1 << PAGESHIFT).  Note
-==>> that these pages will have indices starting at text_pg1 in 
-==>> the page table for region 1.
-==>> The new protection should be (PROT_READ | PROT_EXEC).
-==>> If any of these page table entries is also in the TLB, either
-==>> invalidate their entries in the TLB or write the updated entries
-==>> into the TLB.  It's nice for the TLB and the page tables to remain
-==>> consistent.
+// DON'T FORGET MORONS
+// ==>> Change the protection on the "li.t_npg" pages starting at
+// ==>> virtual address VMEM_1_BASE + (text_pg1 << PAGESHIFT).  Note
+// ==>> that these pages will have indices starting at text_pg1 in 
+// ==>> the page table for region 1.
+// ==>> The new protection should be (PROT_READ | PROT_EXEC).
+// ==>> If any of these page table entries is also in the TLB, either
+// ==>> invalidate their entries in the TLB or write the updated entries
+// ==>> into the TLB.  It's nice for the TLB and the page tables to remain
+// ==>> consistent.
 	unsigned int saddress = VMEM_1_BASE + (text_pg1 << PAGESHIFT);
-	for(int i =  saddress; i < saddress + li.t_npg; i ++){
+	for(i =  saddress; i < saddress + li.t_npg; i ++){
 		proc_pagetable[i].prot = (unsigned long) (PROT_READ | PROT_EXEC);
 	}
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
@@ -298,7 +300,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>>  proc->context.pc = (caddr_t) li.entry;
 */
 
-proc->user_context.pc = (caddr_t) li.entry;
+proc->user_context->pc = (caddr_t) li.entry;
 
   /*
    * Now, finally, build the argument list on the new stack.

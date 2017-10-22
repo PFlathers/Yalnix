@@ -5,6 +5,8 @@
 #include "globals.h"
 #include "list.h"
 #include "interupts.h"
+#include "loadprog.h"
+
 
 // Interrupt vector (pg50, bull 1)
 void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
@@ -227,7 +229,7 @@ void KernelStart(char *cmd_args[],
 	 */
 
 	 // base it of of the init (so that I don't have to re-do things)
-	 pcb *init_proc = new_process(idle_proc->user_context);
+	 pcb *init_proc = (pcb *)new_process(idle_proc->user_context);
 	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
 	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
 	 // zero out the memory for pt1
@@ -245,7 +247,7 @@ void KernelStart(char *cmd_args[],
 	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
 	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
     	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-    	node = pop(&empty_frame_list);
+    	node = (Node *) list_pop(&empty_frame_list);
     	// this is sketchy
     	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
 	 	free(node);
@@ -262,7 +264,7 @@ void KernelStart(char *cmd_args[],
   	if (cmd_args[0] == NULL) {
   		list_add(all_procs, (void *)idle_proc);
 
-  		curr_proc - idle_proc;
+  		curr_proc = idle_proc;
 
 
   		// copy idle's UC into the current UC
@@ -285,11 +287,12 @@ void KernelStart(char *cmd_args[],
 
   		char *program_name = argument_list[0];
 
-  		if ((int lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS) {
+  		int lpr;
+  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
   			list_add(all_procs, (void *) init_proc);
   			list_add(ready_procs, (void*) init_proc);
   		} else{
-  			WriteRegister(REG_PTBR1, (unsigned int) &r1_pagetable);
+  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
   			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
   			TracePrintf(3, "LoadProgram failed; code %d", lpr);
   		}
