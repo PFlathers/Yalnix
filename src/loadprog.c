@@ -159,7 +159,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
    * program into memory.  Get the right number of physical pages
    * allocated, and set them all to writable.
    */
-
+/*Checked
 ==>> Throw away the old region 1 virtual address space of the
 ==>> curent process by freeing
 ==>> all physical pages currently mapped to region 1, and setting all 
@@ -171,24 +171,69 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> how many pages the new process needs and allocate or
 ==>> deallocate a few pages to fit the size of memory to the requirements
 ==>> of the new process.
+*/
 
+	for(int i = 0; i < VREG_1_PAGE_COUNT; i++){
+		free(proc->region1_pt[i]);
+		proc->region1_pt[i].valid = (unsigned long) 0x00;
+	}
+
+/*CHECKED
 ==>> Allocate "li.t_npg" physical pages and map them starting at
 ==>> the "text_pg1" page in region 1 address space.  
 ==>> These pages should be marked valid, with a protection of 
 ==>> (PROT_READ | PROT_WRITE).
+*/
+	struct pte proc_pagetable[VREG_1_PAGE_COUNT];
+	memcpy((void *) (&(proc_pagetable[0])), (void *) proc->region1_pt,
+	       VREG_1_PAGE_COUNT * sizeof(struct pte));
 
+	for (int i = text_pg1; i < text_pg1 + li.t_npg; i++){
+		struct pte new_entry;
+		new_entry.valid = (unsigned long) 0x01;
+		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
+		Node = empty_frame_list.list_pop();
+		int popped_int = (int) Node->data;
+		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
+		proc_pagetable[i] = new_entry;
+	}
+
+
+/* CHECKED
 ==>> Allocate "data_npg" physical pages and map them starting at
 ==>> the  "data_pg1" in region 1 address space.  
 ==>> These pages should be marked valid, with a protection of 
 ==>> (PROT_READ | PROT_WRITE).
+*/
+	for (int i = data_pg1; i < data_pg1 + data_npg; i ++){
+		struct pte new_entry;
+		new_entry.valid = (unsigned long) 0x01;
+		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
+		Node = empty_frame_list.list_pop();
+		int popped_int = (int) Node->data;
+		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
+		proc_pagetable[i] = new_entry;
+	}
   /*
    * Allocate memory for the user stack too.
    */
+
+/* CHECKED
 ==>> Allocate "stack_npg" physical pages and map them to the top
 ==>> of the region 1 virtual address space.
 ==>> These pages should be marked valid, with a
 ==>> protection of (PROT_READ | PROT_WRITE).
+*/
+	for(int i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
+		struct pte new_entry;
+		new_entry.valid = (unsigned long) 0x01;
+		new_entry.prot = (unsigned long) (PROT_READ|PROT_WRITE);
+		Node = empty_frame_list.list_pop();
+		int popped_int = (int) Node->data;
+		new_entry.pfn = ((popped_int * PAGESIZE) >> PAGESHIFT);
+		proc_pagetable[i] = new_entry;
 
+	}
   /*
    * All pages for the new address space are now in the page table.  
    * But they are not yet in the TLB, remember!
@@ -231,14 +276,10 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> invalidate their entries in the TLB or write the updated entries
 ==>> into the TLB.  It's nice for the TLB and the page tables to remain
 ==>> consistent.
-	unsigned int virtual_address = VMEM_1_BASE + (text_pg1 << PAGESHIFT);
-	for (int i = virtual_address; i < li.t_npg; i++){
-
-
-
+	unsigned int saddress = VMEM_1_BASE + (text_pg1 << PAGESHIFT);
+	for(int i =  saddress; i < saddress + li.t_npg; i ++){
+		proc_pagetable[i].prot = (unsigned long) (PROT_READ | PROT_EXEC);
 	}
-  = (u_long) (PROT_READ | PROT_EXEC); // exec and read protections
-
 
   close(fd);			/* we've read it all now */
 
