@@ -27,7 +27,7 @@ int kernel_Wait(int * status_ptr)
 
 int kernel_GetPid()
 {
-	return curr_proc->proc_id;;
+	return curr_proc->process_id;
 }
 
 int kernel_Brk(void *addr)
@@ -43,7 +43,7 @@ int kernel_Brk(void *addr)
 	// reverse for the stack bottom (close to heap top)
 	unsigned int stack_bottom = (DOWN_TO_PAGE(curr_proc->user_context->sp) >> PAGESHIFT) - VREG_0_PAGE_COUNT;
 	// stack top is limit - count
-	unsigned int stack_top = ((VREG_1_LIMIT >> PAGESHIFT) - VREG_1_PAGE_COUNT);
+	unsigned int stack_top = ((VMEM_1_LIMIT >> PAGESHIFT) - VREG_1_PAGE_COUNT);
 
 
 
@@ -58,7 +58,7 @@ int kernel_Brk(void *addr)
 	// heap
 	for (i = heap_bottom; i<= heap_top; i++){
 		if ((*(curr_proc->region1_pt + i)).valid != 0x1) {
-			if (list_count(&empty_frame_list) < 1){
+			if (list_count(empty_frame_list) < 1){
 				TracePrintf(2, "Brk: out of memory");
 				return ERROR;
 			}
@@ -66,12 +66,10 @@ int kernel_Brk(void *addr)
 			// all heap pages are valid, rw, and theis phisical number is based on page id
 			(*(curr_proc->region1_pt + i)).valid = (u_long) 0x1;
 			(*(curr_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-			Node *node = list_pop(&empty_frame_list);
-			page_id = (int) node->data;
+			page_id = (int) list_pop(empty_frame_list);
 			(*(curr_proc->region1_pt + i)).pfn = (u_long) ( (PMEM_BASE + 
                   (page_id * PAGESIZE) ) >> PAGESHIFT);
 
-			free(node);
 		}
 	} // end heap traversal
 
@@ -80,11 +78,11 @@ int kernel_Brk(void *addr)
 		if ((*(curr_proc->region1_pt + i)).valid == 0x1) {
 			(*(curr_proc->region1_pt + i)).valid = (u_long) 0x0;
 			unsigned int idx = ((*(curr_proc->region1_pt + i)).pfn << PAGESHIFT) / PAGESIZE;
-			list_add(&empty_frame_list, idx);
+			list_add(empty_frame_list, (void *) idx);
 		}
 	}
 
-	curr_proc->brk_addr = heap_top << PAGESHIFT;
+	curr_proc->brk_address = heap_top << PAGESHIFT;
 	return SUCCESS;
 }
 
