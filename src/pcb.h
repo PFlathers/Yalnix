@@ -48,7 +48,7 @@ typedef struct _PCB {
 	KernelContext *kernel_context;
 
 	// see above
-	DelayHandler block;
+	DelayHandler *block;
 	// unsigned int clock_ticks;
 	// unsigned int timeflag = 0;
 	//lock *process_lock;

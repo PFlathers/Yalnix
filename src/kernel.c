@@ -63,12 +63,14 @@ void KernelStart(char *cmd_args[],
 	int i; 
 	int arg_count; // number of variables passed 
 
+
 	// lowest frame in region 1 - see figure 2.2
 	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
 	// highest frame in region 1 - see 3ipure 2.2
 	int r1_top_frame = UP_TO_PAGE(VMEM_1_LIMIT) >> PAGESHIFT;
 
 
+	
 	/*GLOBAL VARIABLES*/
 
 	// break starts as kernel_data_end
@@ -84,13 +86,14 @@ void KernelStart(char *cmd_args[],
 
 	// Create the List of empty frames (NEEDS EDITING)
   	for (i = physical_kernel_frames; i < total_physical_frames; i++){
-		list_add(&empty_frame_list, (void *)i);
+		list_add(&empty_frame_list, (int *)i);
   	}
 
 
 	// under is a mess, clean it up
 
 	available_process_id = 0;	// at start we run at 0
+
 
 	// process tracking lists (per sean's suggestion)
 	ready_procs = (List *)init_list();
@@ -135,6 +138,7 @@ void KernelStart(char *cmd_args[],
 		r0_ptlist[i] = new_pt_entry;
   
     }
+
 
 	// Build the initial page tables for Region 1 (pg 50, bullet 4)
 	for (i = r1_base_frame; i < r1_top_frame; i++) {
@@ -185,8 +189,13 @@ void KernelStart(char *cmd_args[],
 	idle_proc = (pcb *) new_process(user_context); 
 
 	// take two frames
-	int idle_stack_frame1 = (int) list_pop(&empty_frame_list);               
-	int idle_stack_frame2 = (int) list_pop(&empty_frame_list);    
+	Node *node = list_pop(&empty_frame_list);
+	int idle_stack_frame1 = (int) node->data;     
+	free(node);
+	node = list_pop(&empty_frame_list);          
+	int idle_stack_frame2 = (int) node->data; 
+	free(node);
+
  	// we know that the idle will take the first two pages
  	// in user region (1); and we can set the bits to valid
   	r1_ptlist[VREG_1_PAGE_COUNT - 1].valid = (u_long) 0x1;
@@ -205,8 +214,6 @@ void KernelStart(char *cmd_args[],
 	// since this is the first page, stack pointer addr can be 
 	// just the upper limit minus one page and it grows downwardes
 	idle_proc->user_context->sp = (void *) (VMEM_1_LIMIT - PAGESIZE);
-
-
 	// allocated region1 pageTable is just a pagecount for region 1 process 
 	// times the size of the pte struct
 	idle_proc->region1_pt = (struct pte *)malloc( VREG_1_PAGE_COUNT * sizeof(struct pte));
@@ -216,7 +223,6 @@ void KernelStart(char *cmd_args[],
 
 	// region0 pagetable is malloced in the same way as the user one
 	idle_proc->region0_pt = (struct pte *)malloc( KERNEL_PAGE_COUNT * sizeof(struct pte));
-
 	// this 
 	memcpy((void *)idle_proc->region0_pt,
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
@@ -229,74 +235,75 @@ void KernelStart(char *cmd_args[],
 	 */
 
 	 // base it of of the init (so that I don't have to re-do things)
-	 pcb *init_proc = (pcb *)new_process(idle_proc->user_context);
-	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
-	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
-	 // zero out the memory for pt1
-	 bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 pcb *init_proc = (pcb *) new_process(user_context);
 
-	 // memory in region 1 should be invalid, 
-	 for (i=0; i < VREG_1_PAGE_COUNT; i++) {
-	 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
-	 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-	 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
-	 }
+	 // init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
+	 // init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 // // zero out the memory for pt1
+	 // //bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
 
-
-	 Node *node;
-	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
-	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
-    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-    	node = (Node *) list_pop(&empty_frame_list);
-    	// this is sketchy
-    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
-	 	free(node);
-	 }
-
-	// TLB flush
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-
- 	// init_proc is the first child of idle_proc!
-	init_proc->parent = idle_proc;
-  	idle_proc->children = init_list();
-  	list_add(idle_proc->children, (void *)init_proc);
-
-  	if (cmd_args[0] == NULL) {
-  		list_add(all_procs, (void *)idle_proc);
-
-  		curr_proc = idle_proc;
+	 // // memory in region 1 should be invalid, 
+	 // for (i=0; i < VREG_1_PAGE_COUNT; i++) {
+	 // 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
+	 // 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+	 // 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
+	 // }
 
 
-  		// copy idle's UC into the current UC
-  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
-  		TracePrintf(2, "KernelStart ### End");
+	//  Node *node;
+	//  for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+	//  	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
+ //    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+ //    	node = (Node *) list_pop(&empty_frame_list);
+ //    	// this is sketchy
+ //    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int)node->data * PAGESIZE) >> PAGESHIFT);;
+	//  	free(node);
+	//  }
 
-  	} else{
-  		int arg_count = 0;
+	// // TLB flush
+	// WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 
-  		while (cmd_args[arg_count] != NULL){
-  			arg_count++;
-  		}
-  		// null terminated
-  		arg_count++; 
+ // 	// init_proc is the first child of idle_proc!
+	// init_proc->parent = idle_proc;
+ //  	idle_proc->children = init_list();
+ //  	list_add(idle_proc->children, (void *)init_proc);
 
-  		char *argument_list[arg_count];
-  		for (i = 0; i<arg_count; i++){
-  			argument_list[i] = cmd_args[i];
-  		}
+ //  	if (cmd_args[0] == NULL) {
+ //  		list_add(all_procs, (void *)idle_proc);
 
-  		char *program_name = argument_list[0];
+ //  		curr_proc = idle_proc;
 
-  		int lpr;
-  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
-  			list_add(all_procs, (void *) init_proc);
-  			list_add(ready_procs, (void*) init_proc);
-  		} else{
-  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
-  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
-  		}
-  	}
+
+ //  		// copy idle's UC into the current UC
+ //  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+ //  		TracePrintf(2, "KernelStart ### End");
+
+ //  	} else{
+ //  		int arg_count = 0;
+
+ //  		while (cmd_args[arg_count] != NULL){
+ //  			arg_count++;
+ //  		}
+ //  		// null terminated
+ //  		arg_count++; 
+
+ //  		char *argument_list[arg_count];
+ //  		for (i = 0; i<arg_count; i++){
+ //  			argument_list[i] = cmd_args[i];
+ //  		}
+
+ //  		char *program_name = argument_list[0];
+
+ //  		int lpr;
+ //  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
+ //  			list_add(all_procs, (void *) init_proc);
+ //  			list_add(ready_procs, (void*) init_proc);
+ //  		} else{
+ //  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
+ //  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+ //  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
+ //  		}
+ //  	}
 
 	/* 
 	 * BOOKKEEPING 
@@ -431,29 +438,29 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 goto_next_process(UserContext *user_context, int repeat_bool)
 {
 
-	if (repeat) {
-		list_add(ready_procs, (void *) curr_proc;
+	if (repeat_bool) {
+		list_add(ready_procs, (void *) curr_proc);
 	}
 
 	// context switching
 	Node *node;
-	node = (node *)list_pop(ready_procs);
+	node = list_pop(ready_procs);
 	pcb *next_proc = node->data;
 	free(node);
 
 	if (context_switch(curr_proc, next_proc, user_context) != 0){
-		exit FAILURE;
+		exit(FAILURE);
 	}
 
 
-	exit SUCCESS;
+	exit(SUCCESS);
 }
 
 
 int context_switch(pcb *current, pcb *next, UserContext *user_context)
 {
 	// save UC of the current one
-	if (curr != NULL){
+	if (current != NULL){
 		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
 	}
 

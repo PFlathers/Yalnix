@@ -97,8 +97,11 @@ void *list_pop(List *list_to_pop)
 int list_count(List *list_to_count)
 {
 	Node *place_holder = list_to_count->head;
+	if (!place_holder){
+		return 0;
+	}
 	int count = 0;
-	while(place_holder != NULL){
+	while(place_holder->next != NULL){
 		count++;
 		place_holder = place_holder->next;
 	}

@@ -2,6 +2,7 @@
 #include <hardware.h>
 #include "pcb.h"
 #include "kernel.h"
+#include "syscalls.h"
 
 //Prototypes of kernel traps.
 //This will be flushed out later.
@@ -12,9 +13,20 @@ void trapKernel(UserContext *uc)
 
 void trapClock(UserContext *uc)
 {
-	if(curr_proc->start_count == 0){
-		curr_proc->clock_ticks++;
-	}
+  void *addr;               // address of current process
+  int clock_ticks;          // Number of clock ticks for delay
+  int status;               // The exit status for delay
+  int retval;
+
+  switch (uc->code){
+  	case YALNIX_DELAY:
+  		clock_ticks = (int) uc->regs[0];
+  		retval = kernel_Delay(uc, clock_ticks);
+  		break;
+  }
+
+
+  uc->regs[0] = retval;
 }
 
 void trapIllegal(UserContext *uc)

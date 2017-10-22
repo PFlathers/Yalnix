@@ -35,7 +35,8 @@ pcb *new_process(UserContext *uc)
 	new_pcb->kernel_context = (KernelContext *) malloc(sizeof(KernelContext));
 
 	// malloc lock for the pcb
-	// new_pcb->process_lock = (lock *) malloc( sizeof(lock) );
+	new_pcb->block = (DelayHandler *) malloc( sizeof(DelayHandler));
+	bzero((char *)new_pcb->block, sizeof(DelayHandler));
 
 	
 	// here I follow page 36 of the manual:
