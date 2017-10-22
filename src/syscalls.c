@@ -21,12 +21,16 @@ void Exit(int status)
 
 int Wait(int * status_ptr)
 {
-	return 0;
+	return 0; 
 }
 
+/* GetPid
+ * implementing syscall that returns the PID of a current proc
+ * returns the process id from the global current process
+ */ 
 int GetPid()
 {
-	return 0;
+	return curr_proc->proc_id;;
 }
 
 
