@@ -36,28 +36,6 @@ void list_add(List *list_to_add, void *data)
 	}
 }
 
-void list_add2(List *list_to_add, void *data, int id)
-{
-
-	Node *new_node = malloc(sizeof(Node));
-	ALLOC_CHECK(new_node, "list_add");
-
-	new_node->data = data;
-	new_node->prev = NULL;
-	new_node->next = NULL;
-	new_node->id = id;
-
-	// we have an empty list
-	if(!list_to_add->tail){
-		list_to_add->head = new_node;
-		list_to_add->tail = new_node;
-	// append onto end of list
-	} else {
-		list_to_add->tail->next = new_node;
-		new_node->prev = list_to_add->tail;
-		list_to_add->tail = new_node;
-	}
-}
 
 // 0 if we found and removed the data. -1 if not exisit
 int list_remove(List *list_to_remove, void *data)
