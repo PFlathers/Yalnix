@@ -12,7 +12,9 @@ void trapKernel(UserContext *uc)
 
 void trapClock(UserContext *uc)
 {
-	
+	if(curr_proc->start_count == 0){
+		curr_proc->clock_ticks++;
+	}
 }
 
 void trapIllegal(UserContext *uc)

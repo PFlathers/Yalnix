@@ -41,6 +41,7 @@ int Delay(int clock_ticks)
 		return 0;
 	else if (clock_ticks < 0)
 		return ERROR
+	curr_proc->start_count = 0;
 	while(num_interrupts < clock_ticks);
 	return 0;
 }

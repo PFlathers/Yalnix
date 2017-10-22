@@ -36,7 +36,6 @@ unsigned int used_physical_kernel_frames;
 unsigned int physical_kernel_frames;
 unsigned int total_physical_frames;
 
-unsigned int start_count = 1;
 
 List empty_frame_list;
 
