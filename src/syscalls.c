@@ -36,19 +36,36 @@ int Brk(void *addr)
 	return 0;
 }
 
-int Delay(int clock_ticks)
+int Delay(iUserContext *user_context, int clock_ticks)
 {
 	if (clock_ticks == 0)
-		return 0;
-	else if (clock_ticks < 0)
+		return SUCCESS;
+	if (clock_ticks < 0)
 		return ERROR
-	curr_proc->start_count = clock_ticks;
-	curr_proc->timeflag = 1;
+	// curr_proc->start_count = clock_ticks;
+	// curr_proc->timeflag = 1;
+
+	// set up block handler for curr process
+	curr_proc->block->active = ACTIVE;
+	curr_proc->block->type = DELAY;
+	curr_proc->stats.count = clock_ticks;
 
 
 	//Interupts off
-	list_remove(&ready_procs, (void *) curr_proc);
+	//list_remove(&ready_procs, (void *) curr_proc);
 	list_add(&blocked_procs, (void *) curr_proc);
+
+	if (list_count(ready_procs) < 1){
+		TracePrint(2, "no items to switch to! ");
+		exit(FAILURE);
+	} else {
+		if (goto_next_process(user_context, 0) != SUCCESS){
+			TracePrintf(3, "Delay: goto_next_process failed with error");
+		}
+	}
+
+	return SUCCESS;
+	
 	//Interupts on
 
 	/* As part of the Scheduler:
@@ -65,9 +82,6 @@ int Delay(int clock_ticks)
 	 * kernel is uninteruptable we wont be counting clock ticks when we are
 	 * scheduling.
 	 */
-
-
-	return 0;
 }
 
 /* 
