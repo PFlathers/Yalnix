@@ -46,6 +46,7 @@ typedef struct _PCB {
 	unsigned int process_id;
 	UserContext *user_context;
 	KernelContext *kernel_context;
+	int has_kc;
 
 	// see above
 	DelayHandler *block;

@@ -25,7 +25,8 @@ Run `make` in the yalnix virtual machine. Makefile is in the src folder.
 ##### Traceprint level guide:
 0. Enter and exit for kernel start only
 1. Enter and exit into every major function; exit inducing errors; running process printfs
-2. Enter and exit into nested functions;
+2. Enter and exit into nested functions; Debugging messages: announcments
+3. Debugging messages: general information
 
 #### Trivia:
 ![true story](https://imgs.xkcd.com/comics/git_commit_2x.png)
