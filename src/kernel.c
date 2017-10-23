@@ -465,13 +465,12 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
             (void *) next->region0_pt,
             KERNEL_PAGE_COUNT * (sizeof(struct pte)));
 
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
     // update pt register
     WriteRegister(REG_PTBR1, (unsigned int) next->region1_pt);
 
     // flush the TLB
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 
     // return	
     TracePrintf(2, "MyKCS ### End : my guess \n");
@@ -480,7 +479,7 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 }
 
 /* switch to a new process - makes life easier for syscalls */
-void goto_next_process(UserContext *user_context, int repeat_bool)
+int goto_next_process(UserContext *user_context, int repeat_bool)
 {
 	TracePrintf(1, "goto_next_process ### Start \n");
 	if (repeat_bool) {
@@ -491,12 +490,12 @@ void goto_next_process(UserContext *user_context, int repeat_bool)
 	pcb *next_proc = (pcb *) list_pop(ready_procs);
 
 	if (context_switch(curr_proc, next_proc, user_context) != 0){
-		exit(FAILURE);
+		return FAILURE;
 	}
 
 	TracePrintf(1, "goto_next_process ### End \n");
 
-	exit(SUCCESS);
+	return SUCCESS;
 	
 }
 
