@@ -3,7 +3,7 @@
 Members: Patrick J. Flathers (pjflathers) and Bruno Korbar (bjuncek)
 
 
-![What we do](http://folk.uio.no/hpv/linuxtoons/foxtrot.2003-08-14.gif)
+![What we do](http://folk.uio.no/hpv/linuxtoons/foxtrot.1999-08-16.png)
 
 ---
 
