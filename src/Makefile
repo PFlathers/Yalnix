@@ -30,11 +30,11 @@ KERNEL_INCS = list.h globals.h kernel.h pcb.h interupts.h loadprog.h syscalls.h
 
 
 #List all user programs here.
-USER_APPS = init
+USER_APPS = init delay
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
-USER_SRCS = init.c
+USER_SRCS = init.c delay.c
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-USER_OBJS = init.o
+USER_OBJS = init.o delay.o
 #List all of the header files necessary for your user programs
 USER_INCS = 
 

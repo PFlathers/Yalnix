@@ -9,24 +9,27 @@
 
 void trapKernel(UserContext *uc)
 {
+   TracePrintf(1, "blah \n");
 }
 
 void trapClock(UserContext *uc)
 {
-  void *addr;               // address of current process
-  int clock_ticks;          // Number of clock ticks for delay
-  int status;               // The exit status for delay
-  int retval;
+  TracePrintf(1, "trapClock ### start \n");
 
-  switch (uc->code){
-  	case YALNIX_DELAY:
-  		clock_ticks = (int) uc->regs[0];
-  		retval = kernel_Delay(uc, clock_ticks);
-  		break;
+
+
+  TracePrintf(3, "Proc Id: %d\n", curr_proc->process_id);
+  if (list_count(ready_procs) > 0){
+    TracePrintf(3, "Switching processes\n");
+    goto_next_process(uc, 1);
+  }
+  else{
+    TracePrintf(3, "No process to switch to or in proc 1- gonna keep going\n");
   }
 
+  TracePrintf(1, "trapClock ### end \n");
+  
 
-  uc->regs[0] = retval;
 }
 
 void trapIllegal(UserContext *uc)

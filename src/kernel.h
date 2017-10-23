@@ -81,5 +81,5 @@ void KernelStart(char *cmd_args[],
 
 int SetKernelBrk(void * addr);
 void DoIdle();
-
+int goto_next_process(UserContext *user_context, int repeat_bool);
 #endif

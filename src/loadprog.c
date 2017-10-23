@@ -26,6 +26,8 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 //==>> of this structure used to hold the cpu context 
 //==>> for the process holding the new program.  
 {
+  TracePrintf(1, "LoadProgram ### Start\n");
+
   int fd;
   int (*entry)();
   struct load_info li;
@@ -47,18 +49,18 @@ int LoadProgram(char *name, char *args[], pcb *proc)
    * Open the executable file 
    */
   if ((fd = open(name, O_RDONLY)) < 0) {
-    TracePrintf(0, "LoadProgram: can't open file '%s'\n", name);
+    TracePrintf(1, "LoadProgram: can't open file '%s'\n", name);
     return ERROR;
   }
 
   if (LoadInfo(fd, &li) != LI_NO_ERROR) {
-    TracePrintf(0, "LoadProgram: '%s' not in Yalnix format\n", name);
+    TracePrintf(1, "LoadProgram: '%s' not in Yalnix format\n", name);
     close(fd);
     return (-1);
   }
 
   if (li.entry < VMEM_1_BASE) {
-    TracePrintf(0, "LoadProgram: '%s' not linked for Yalnix\n", name);
+    TracePrintf(1, "LoadProgram: '%s' not linked for Yalnix\n", name);
     close(fd);
     return ERROR;
   }
@@ -108,7 +110,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 
 
 
-  TracePrintf(1, "prog_size %d, text %d data %d bss %d pages\n",
+  TracePrintf(2, "prog_size %d, text %d data %d bss %d pages\n",
 	      li.t_npg + data_npg, li.t_npg, li.id_npg, li.ud_npg);
 
 
@@ -116,7 +118,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
    * Compute how many pages we need for the stack */
   stack_npg = (VMEM_1_LIMIT - DOWN_TO_PAGE(cp2)) >> PAGESHIFT;
 
- TracePrintf(1, "LoadProgram: heap_size %d, stack_size %d\n",
+ TracePrintf(2, "LoadProgram: heap_size %d, stack_size %d\n",
 	      li.t_npg + data_npg, stack_npg);
 
 
@@ -198,7 +200,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 	
 
 
-  TracePrintf(3, "loagprog : allocating text");
+  TracePrintf(3, "Loadprog : allocating text \n");
   for (i = text_pg1; i < text_pg1 + li.t_npg; i++){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
@@ -217,7 +219,7 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 ==>> These pages should be marked valid, with a protection of 
 ==>> (PROT_READ | PROT_WRITE).
 */
-  TracePrintf(3, "loagprog : allocating data\n");
+  TracePrintf(3, "Loadprog : allocating data\n");
 	for (i = data_pg1; i < data_pg1 + data_npg; i ++){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
@@ -231,14 +233,13 @@ int LoadProgram(char *name, char *args[], pcb *proc)
   /*
    * Allocate memory for the user stack too.
    */
-   TracePrintf(3, "loagprog : allocating data done \n");
 /* CHECKED
 ==>> Allocate "stack_npg" physical pages and map them to the top
 ==>> of the region 1 virtual address space.
 ==>> These pages should be marked valid, with a
 ==>> protection of (PROT_READ | PROT_WRITE).
 */
-  TracePrintf(3, "loadprog: allocating stack\n");
+  TracePrintf(3, "Loadprog: allocating stack\n");
 	for(i = (VREG_1_PAGE_COUNT - 1); i >= (VREG_1_PAGE_COUNT - stack_npg); i--){
 		struct pte new_entry;
 		new_entry.valid = (unsigned long) 0x01;
@@ -250,7 +251,6 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 		proc_pagetable[i] = new_entry;
 
 	}
-  TracePrintf(3, "loadprog: allocating stack done \n");
   /*
    * All pages for the new address space are now in the page table.  
    * But they are not yet in the TLB, remember!
@@ -299,11 +299,12 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 	// for(i =  saddress; i < saddress + li.t_npg; i ++){
 	// 	proc_pagetable[i].prot = (unsigned long) (PROT_READ | PROT_EXEC);
 	// }
-   TracePrintf(3, "loadprog: protection on things done \n");
+  TracePrintf(3, "Loadprog: Setting protection bits \n");
   for (i = text_pg1; i< (text_pg1 + li.t_npg); i++){
     proc_pagetable[i].prot = (u_long) (PROT_READ | PROT_EXEC);
+    //WriteRegister(REG_TLB_FLUSH, (MAX_PT_LEN + i) << PAGESHIFT);
   }
-  TracePrintf(3, "loadprog: protection done \n");
+  memcpy(proc->region1_pt, proc_pagetable, VREG_1_PAGE_COUNT * sizeof(struct pte));
 
   close(fd);			/* we've read it all now */
 
@@ -323,7 +324,6 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 
 proc->user_context->pc = (caddr_t) li.entry;
 
-WriteRegister(REG_PTBR1, old_proc_PTBR1);
 WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
   /*
@@ -348,6 +348,13 @@ WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
   *cpp++ = NULL;			/* the last argv is a NULL pointer */
   *cpp++ = NULL;			/* a NULL pointer for an empty envp */
 
+
+  proc->heap_start_pg = text_pg1 + li.t_npg;
+
+  WriteRegister(REG_PTBR1, old_proc_PTBR1);
+  WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+
+  TracePrintf(1, "Loadprog ### end \n");
   return SUCCESS;
 }
 

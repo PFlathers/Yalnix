@@ -33,6 +33,7 @@ pcb *new_process(UserContext *uc)
 	new_pcb->user_context = (UserContext *) malloc( sizeof(UserContext) );
 	// malloc kernel context for the pcb
 	new_pcb->kernel_context = (KernelContext *) malloc(sizeof(KernelContext));
+	new_pcb->has_kc = 0; // kernel context has to be copied over
 
 	// malloc lock for the pcb
 	new_pcb->block = (DelayHandler *) malloc( sizeof(DelayHandler));

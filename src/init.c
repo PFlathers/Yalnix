@@ -1,3 +1,4 @@
+#include <yalnix.h>
 /* moddeled after DoIdle */
 int main(int argc, char *argv[]) {
     while (1) {
