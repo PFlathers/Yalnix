@@ -302,8 +302,9 @@ int LoadProgram(char *name, char *args[], pcb *proc)
   TracePrintf(3, "Loadprog: Setting protection bits \n");
   for (i = text_pg1; i< (text_pg1 + li.t_npg); i++){
     proc_pagetable[i].prot = (u_long) (PROT_READ | PROT_EXEC);
-    WriteRegister(REG_TLB_FLUSH, (MAX_PT_LEN + i) << PAGESHIFT);
+    //WriteRegister(REG_TLB_FLUSH, (MAX_PT_LEN + i) << PAGESHIFT);
   }
+  memcpy(proc->region1_pt, proc_pagetable, VREG_1_PAGE_COUNT * sizeof(struct pte));
 
   close(fd);			/* we've read it all now */
 
