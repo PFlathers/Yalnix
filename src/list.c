@@ -101,7 +101,7 @@ int list_count(List *list_to_count)
 	if (!place_holder){
 		return 0;
 	}
-	int count = 0;
+	int count = 1;
 	while(place_holder->next != NULL){
 		count++;
 		place_holder = place_holder->next;

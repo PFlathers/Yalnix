@@ -33,11 +33,19 @@ KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
 
 
 #List all user programs here.
+<<<<<<< HEAD:Makefile
 USER_APPS = userland/init
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
 USER_SRCS = userland/init.c
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
 USER_OBJS = userland/init.o
+=======
+USER_APPS = init delay
+#List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
+USER_SRCS = init.c delay.c
+#List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
+USER_OBJS = init.o delay.o
+>>>>>>> 4aa99acc7a1032fd6ab1c4288231d88d609299d2:src/Makefile
 #List all of the header files necessary for your user programs
 USER_INCS = 
 
