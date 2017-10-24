@@ -441,11 +441,9 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 	pcb *next = (pcb *) next_pcb; 
 
 	// save current kc
-	if (current != NULL){
-		memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
-	}
+	memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
 
-	// close current on how should we ? 
+	// bootstrap the kernel if we are starting
 	if (next->has_kc == 0){
 		clone_kc_stack(kernel_context_in, current_pcb, next_pcb);
 		next->has_kc = 1;
@@ -526,6 +524,32 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 	return r;
 }	
 
+
+void scheduler(void)
+{
+	TracePrintf(2, "Scheduler ### Start \n");
+
+	unsigned int i;
+	int retval;
+
+	pcb *next_pcb;
+	pcb *curr_pcb = curr_proc;
+
+	if (list_count(ready_procs) > 0){
+		next_pcb = list_pop(ready_procs);
+		curr_proc = next_pcb;
+
+		retval = KernelContextSwitch(MyKCS, (void *) curr_pcb, (void *) next_pcb);
+	}
+
+	if (retval != 0){
+		TracePrintf(1, "Scheduler ### ERROR KCS FAILED");
+		exit(FAILURE);
+	}
+
+	TracePrintf(2, "Scheduler ### End \n");
+
+}
 
 
 /*Switch PCBs*/
