@@ -1,0 +1,527 @@
+** Yalnix level 4 tracing enabled **
+Yalnix     SetKernelData ### Start
+Yalnix     SetKernelData ### End
+Yalnix     SetKernelBrk ### StartYalnix     SetKernelBrk ### EndYalnix     KernelStart ### Start
+Yalnix     Virtual Memory Enabled!
+Yalnix     LoadProgram ### Start
+Yalnix     counting arg 0 = 'init'
+Yalnix     LoadProgram: argsize 5, argcount 1
+Yalnix     prog_size 4, text 2 data 1 bss 1 pages
+Yalnix     LoadProgram: heap_size 4, stack_size 1
+Yalnix     saving arg 0 = 'init'
+Yalnix     Loadprog : allocating text 
+Yalnix     Loadprog : allocating data
+Yalnix     Loadprog: allocating stack
+Yalnix     weeeee 
+Yalnix     Loadprog: Setting protection bits 
+Yalnix     Loadprog ### end 
+Yalnix     LoadProgram added init on the ready list; code 0Yalnix     KernelStart ### End 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     clone_kc_stack ### Start : my guess 
+Yalnix     clone_kc_stack ### END 
+Yalnix     Copied idle's into next
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     clone_kc_stack ### Start : my guess 
+Yalnix     clone_kc_stack ### END 
+Yalnix     Copied idle's into next
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     	DoIdle
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 0
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+Yalnix     ContextSwitch ### End 
+Yalnix     goto_next_process ### End 
+Yalnix     trapClock ### end 
+Yalnix     trapClock ### start 
+Yalnix     Proc Id: 1
+Yalnix     Switching processes
+Yalnix     goto_next_process ### Start 
+Yalnix     ContextSwitch ### Start 
+Yalnix     MyKCS ### Start : my guess 
+Yalnix     MyKCS ### End : my guess 
+MyKCS ### End : my guess 
+Tty support process 2349 died - status 0x00000000!
