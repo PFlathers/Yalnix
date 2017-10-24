@@ -81,6 +81,7 @@ typedef struct _PCB pcb;
 
 
 /* Public Facing Function Calls */
-// pcb new_process(UserContext\KernelContext);
+pcb *new_process(UserContext *uc);
+int check_block_status(DelayHandler *block);
 
 #endif
