@@ -33,7 +33,7 @@ KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
 
 
 #List all user programs here.
-USER_APPS = userland/init 
+USER_APPS = userland/init
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
 USER_SRCS = userland/init.c
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"

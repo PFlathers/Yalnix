@@ -9,7 +9,17 @@
 
 void trapKernel(UserContext *uc)
 {
-   TracePrintf(1, "blah \n");
+  // int clock_ticks;
+  // int retval;
+  //  switch(uc->code) { 
+  //     case YALNIX_DELAY:
+  //       clock_ticks = (int) uc->regs[0];
+  //       int retval = kernel_Delay(uc, clock_ticks);
+  //       break;
+  //     default:
+  //       TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
+  //       break;
+  //   }
 }
 
 void trapClock(UserContext *uc)
