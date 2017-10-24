@@ -66,8 +66,45 @@ pcb *new_process(UserContext *uc)
 
 
 	return new_pcb;
-
-
 }
 
+
+int check_block_status(DelayHandler *block)
+{
+	unsigned int ticks;
+	pcb *proc_on_delay;
+
+	if (block->is_active == INACTIVE){
+		return(0);
+	}
+	else if (block->is_active != ACTIVE){
+		return(ERROR);
+	}
+
+	if (block->type == NO_BLOCK) {
+		bzero((char *) block, sizeof(DelayHandler));
+		return(0);
+	}
+
+	// check the length of the delay and decement
+	if (block->type == DELAY){
+		ticks = (unsigned int) block->stats.count;
+
+		if (ticks > 1) {
+			block->stats.count--;
+			return 1;
+		}
+		else{
+			bzero((char *) block, sizeof(DelayHandler));
+			return(0);
+		}
+	}
+	else{
+
+		return(ERROR);
+	}
+
+	return(ERROR);
+
+}
 
