@@ -16,6 +16,31 @@ void trapClock(UserContext *uc)
 {
   TracePrintf(1, "trapClock ### start \n");
 
+  if (list_count(blocked_procs) > 0) {
+    Node *curr_on_delay = (Node *) blocked_procs->head;
+
+    while(curr_on_delay->next != NULL){
+      pcb *delay_pcb = (pcb *)curr_on_delay->data;
+      curr_on_delay = curr_on_delay->next;
+
+      if (check_block_status(delay_pcb->block) == 0){
+        list_remove(blocked_procs, delay_pcb);
+        list_add(ready_procs, delay_pcb);
+      }
+    }
+
+    if (check_block_status(((pcb*)curr_on_delay->data)->block) == 0) {
+          // Remove it from the blocked queue and add it to ready queue
+          pcb *delay_pcb = (pcb *) curr_on_delay->data;
+          list_remove(blocked_procs, delay_pcb);
+          list_add(ready_procs, delay_pcb);
+    }
+
+
+    scheduler();
+  }
+
+  // add call to round robit
 
 
   TracePrintf(3, "Proc Id: %d\n", curr_proc->process_id);
