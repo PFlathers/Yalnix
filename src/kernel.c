@@ -43,33 +43,9 @@ void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd)
 }
 
 
-/* 
- * KernelStart
- *  Before allowing the execution of user processes, 
- * the KernelStart routine 
- * should perform any initialization necessary 
- * for your kernel or required by the hardware. 
- */
-void KernelStart(char *cmd_args[], 
-                 unsigned int phys_mem_size,
-                 UserContext *user_context) 
+void init_global_variables(unsigned int phys_mem_size)
 {
-	TracePrintf(0, "KernelStart ### Start\n");
-
-	/*LOCAL VARIABLES*/
-
-	int i; 
-	int arg_count; // number of variables passed 
-
-
-	// lowest frame in region 1 - see figure 2.2
-	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
-	// highest frame in region 1 - see 3ipure 2.2
-	int r1_top_frame = UP_TO_PAGE(VMEM_1_LIMIT) >> PAGESHIFT;
-
-
-	
-	/*GLOBAL VARIABLES*/
+	int i;
 
 	// break starts as kernel_data_end
 	kernel_brk = kernel_data_end;	
@@ -81,17 +57,15 @@ void KernelStart(char *cmd_args[],
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
-	// init me baybe
+	// initializ list of empty frames and add their id as data
 	empty_frame_list = init_list();
 	// Create the List of empty frames (NEEDS EDITING)
   	for (i = physical_kernel_frames; i < total_physical_frames; i++){
 		list_add(empty_frame_list, (void *) i);
   	}
 
-
-	// under is a mess, clean it up
-
-	available_process_id = 0;	// at start we run at 0
+  	// at the beginnign of the kernel, first available proccess is 0
+	available_process_id = 0;	
 
 
 	// process tracking lists (per sean's suggestion)
@@ -100,9 +74,12 @@ void KernelStart(char *cmd_args[],
 	all_procs = (List *)init_list(); 
 	zombie_procs = (List *)init_list(); 
 
+}
 
-
-	/* PAGE TABLES */
+void init_pagetables(unsigned int phys_mem_size, int r1_base_frame, int r1_top_frame)
+{
+	int i;
+	/* BOOTSTRAP PAGE TABLES <_> R0 */
 
     // Build the initial page tables for Region 0 (pg 50, bullet 4)
    	// Page table entry is 32-bits wide (but does not use all 32 bits).
@@ -139,6 +116,7 @@ void KernelStart(char *cmd_args[],
     }
 
 
+    /* BOOTSTRAP PAGE TABLES <_> R0 */
 	// Build the initial page tables for Region 1 (pg 50, bullet 4)
 	for (i = r1_base_frame; i < r1_top_frame; i++) {
 		struct pte new_pt_entry; // New pte entry
@@ -153,11 +131,6 @@ void KernelStart(char *cmd_args[],
 	}
 
 
-	/* CONFUGURE REGS */
-
-	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
-  	WriteRegister(REG_VECTOR_BASE, (unsigned int) &interrupt_vector);
-
   	// this is my guess based on: pg50, bullet 4
   	// 							  Table 3.3
   	//							  pg 27, bullet 1
@@ -165,28 +138,16 @@ void KernelStart(char *cmd_args[],
 	WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
 	WriteRegister(REG_PTLR0, (unsigned int) VREG_0_PAGE_COUNT);
 	WriteRegister(REG_PTLR1, (unsigned int) VREG_1_PAGE_COUNT); 
-
-	// Enable virtual memory as in table 3.3
-	WriteRegister(REG_VM_ENABLE, 1);
-	TracePrintf(1, "Virtual Memory Enabled!\n");
-	
-	// Flush the tlb as in pg29, bullet 1
-	// (when do we not want to have flush all and use other consts?)
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-	TracePrintf(8, "TLB flushed!\n");
+}
 
 
-	/* 
-	 * PROCESS HANDLING 
-	 * IDLE
-	 */
-
+void start_idle_process(UserContext *user_context)
+{
 	// Create idle process based on current user context
 	// allocates within the function (see pcb.c)
-	// global idle_proc pcb defined in kernel.h
-           
+	// global idle_proc pcb defined in kernel.h    
 	idle_proc = (pcb *) new_process(user_context); 
-
+	
 	// take two frames	
 	int idle_stack_frame1 = (int) list_pop(empty_frame_list);          
 	int idle_stack_frame2 = (int) list_pop(empty_frame_list); 
@@ -223,6 +184,61 @@ void KernelStart(char *cmd_args[],
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
 
+}
+
+/* 
+ * KernelStart
+ *  Before allowing the execution of user processes, 
+ * the KernelStart routine 
+ * should perform any initialization necessary 
+ * for your kernel or required by the hardware. 
+ */
+void KernelStart(char *cmd_args[], 
+                 unsigned int phys_mem_size,
+                 UserContext *user_context) 
+{
+	TracePrintf(0, "KernelStart ### Start\n");
+
+	/*LOCAL VARIABLES*/
+
+	int i; 
+	int arg_count; // number of variables passed 
+
+
+	// lowest frame in region 1 - see figure 2.2
+	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
+	// highest frame in region 1 - see 3ipure 2.2
+	int r1_top_frame = UP_TO_PAGE(VMEM_1_LIMIT) >> PAGESHIFT;
+
+
+	
+	/*GLOBAL VARIABLES*/
+	init_global_variables(phys_mem_size);
+	// inits r0 and r1 pagetables and writes them to the REG_PTBR0/1
+	init_pagetables(phys_mem_size, r1_base_frame, r1_top_frame);
+
+
+	/* CONFUGURE REGS */
+
+	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
+  	WriteRegister(REG_VECTOR_BASE, (unsigned int) &interrupt_vector);
+
+	// Enable virtual memory as in table 3.3
+	WriteRegister(REG_VM_ENABLE, 1);
+	TracePrintf(6, "KernelStart: Virtual Memory Enabled!\n");
+	
+	// Flush the tlb as in pg29, bullet 1
+	// (when do we not want to have flush all and use other consts?)
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+	TracePrintf(6, "KernelStart: TLB flushed!\n");
+
+
+	/* 
+	 * PROCESS HANDLING 
+	 * IDLE
+	 */
+
+	 start_idle_process(user_context);
 
 	/* 
 	 * PROCESS HANDLING 
@@ -529,6 +545,7 @@ void scheduler(void)
 {
 	TracePrintf(2, "Scheduler ### Start \n");
 
+
 	unsigned int i;
 	int retval;
 
@@ -536,9 +553,13 @@ void scheduler(void)
 	pcb *curr_pcb = curr_proc;
 
 	if (list_count(ready_procs) > 0){
-		next_pcb = list_pop(ready_procs);
+		next_pcb = (pcb *) list_pop(ready_procs);
+		if (!next_pcb)
+		{
+			TracePrintf(2, "fuuuuuck \n");
+		}
 		curr_proc = next_pcb;
-
+		TracePrintf(2, "fuuuuuck \n");
 		retval = KernelContextSwitch(MyKCS, (void *) curr_pcb, (void *) next_pcb);
 	}
 

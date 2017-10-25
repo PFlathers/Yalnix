@@ -88,12 +88,12 @@ int kernel_Brk(void *addr)
 
 int kernel_Delay(UserContext *user_context, int clock_ticks)
 {
+	TracePrintf(3, "kernel_Delay ### start ");
 	if (clock_ticks == 0)
 		return SUCCESS;
 	if (clock_ticks < 0)
 		return ERROR;
-	// curr_proc->start_count = clock_ticks;
-	// curr_proc->timeflag = 1;
+	
 
 	// set up block handler for curr process
 	curr_proc->block->is_active = ACTIVE;

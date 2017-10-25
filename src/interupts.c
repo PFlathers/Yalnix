@@ -9,17 +9,18 @@
 
 void trapKernel(UserContext *uc)
 {
-  // int clock_ticks;
-  // int retval;
-  //  switch(uc->code) { 
-  //     case YALNIX_DELAY:
-  //       clock_ticks = (int) uc->regs[0];
-  //       int retval = kernel_Delay(uc, clock_ticks);
-  //       break;
-  //     default:
-  //       TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
-  //       break;
-  //   }
+  int clock_ticks;
+  int retval;
+   switch(uc->code) { 
+      case YALNIX_DELAY:
+        TracePrintf(3, "Cought YALNIX_DELAY \n");
+         clock_ticks = (int) uc->regs[0];
+        int retval = kernel_Delay(uc, clock_ticks);
+        break;
+      default:
+        TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
+        break;
+    }
 }
 
 void trapClock(UserContext *uc)
@@ -50,18 +51,17 @@ void trapClock(UserContext *uc)
     scheduler();
   }
 
-  // add call to round robit
 
 
-  TracePrintf(3, "Proc Id: %d\n", curr_proc->process_id);
-  if (list_count(ready_procs) > 0){
-    TracePrintf(3, "Switching processes\n");
-    goto_next_process(uc, 1);
-  }
-  else{
-    TracePrintf(3, "No process to switch to or in proc 1- gonna keep going\n");
-  }
-
+  TracePrintf(3, "trapClock: proc is Id: %d\n", curr_proc->process_id);
+  // if (list_count(ready_procs) > 0){
+  //   TracePrintf(3, "trapClock: switching processes\n");
+  //   goto_next_process(uc, 1);
+  // }
+  // else{
+  //   TracePrintf(3, "No process to switch to or in proc 1- gonna keep going\n");
+  // }
+  scheduler();
   TracePrintf(1, "trapClock ### end \n");
   
 
