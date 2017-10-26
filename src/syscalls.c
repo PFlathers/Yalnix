@@ -22,14 +22,36 @@ void kernel_Exit(int status)
 
 int kernel_Wait(int * status_ptr)
 {
+	TracePrintf(3, "kernel_Wait ### start \n");
 	int child_pid_retval;
+	
 	// check if process has children
+	// if not, return error as the user was dumb enough to call wait wihtout them
+	pcb *parent = curr_proc;
+	TracePrintf(6, "kernel_Wait: curr waiting id: %d\n", curr_proc->process_id);
+	if (parent->children == NULL){
+		TracePrintf(3, "kernel_Wait (ln31): %d called Wait without children initialized\n", parent->process_id);
+		return(ERROR);
+	}
 
 	// check if process has children that exited
+	if (parent->zombies == NULL){
+		if (list_count(parent->children) <= 0 ) {
+			TracePrintf(3, "kernel_Wait (ln40): %d called Wait without active children, and with no zombie children initialized\n", parent->process_id);
+			return(ERROR);
+		}
+	}
 
+	if (list_count(parent->zombies) <= 0 && list_count(parent->children) <= 0) {
+		TracePrintf(3, "kernel_Wait (ln46): %d called Wait without active or zombie children\n", parent->process_id);
+		return(ERROR);
+	}
+
+	
 		// do stuff
 
 	// return the pid of the child that returned (mind == blown)
+	TracePrintf(3, "kernel_Wait ### end \n");
 	return child_pid_retval; 
 }
 
