@@ -42,11 +42,11 @@ Checkpoint 1:
 
 Checkpoint 2: 
 KernelStart runs, 
- ☐✔ initializing the kernel 
- ☐✔ the machine 
- ☐✔ the interrupt vector, a
- ☐✔ and the page tables. 
- ☐✔ An idle process should run.
+ ✔ initializing the kernel @done (17-10-26 12:32)
+ ✔ the machine @done (17-10-26 12:32)
+ ✔ the interrupt vector, a @done (17-10-26 12:32)
+ ✔ and the page tables. @done (17-10-26 12:32)
+ ✔ An idle process should run. @done (17-10-26 12:32)
 
  Specifics, page 50, bullets:
     ✔ Initialize the interrupt vector table entries for each type of interrupt, exception, or trap, by making them point to the correct handler functions in your kernel. @done (17-10-21 16:48)
@@ -74,3 +74,11 @@ Checkpoint 3 (process things not to forget):
     ☐ remove genera
   Loadprog:
     ☐ loadprog 271:8
+
+
+Checkpoint 4:
+  ☐ fork
+  ☐ exec
+  ☐ wait
+  ☐ kernel interrupt handler for the above
+  ☐ ...

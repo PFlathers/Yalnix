@@ -1,0 +1,30 @@
+** Yalnix level 4 tracing enabled **
+Yalnix     SetKernelData ### Start
+Yalnix     SetKernelData ### End
+Yalnix     SetKernelBrk ### StartYalnix     SetKernelBrk ### EndYalnix     KernelStart ### Start
+Yalnix     LoadProgram ### Start
+Yalnix     counting arg 0 = 'init'
+Yalnix     LoadProgram: argsize 5, argcount 1
+Yalnix     prog_size 4, text 2 data 1 bss 1 pages
+Yalnix     LoadProgram: heap_size 4, stack_size 1
+Yalnix     saving arg 0 = 'init'
+Yalnix     Loadprog : allocating text 
+Yalnix     Loadprog : allocating data
+Yalnix     Loadprog: allocating stack
+Yalnix     weeeee 
+Yalnix     Loadprog: Setting protection bits 
+Yalnix     Loadprog ### end 
+Yalnix     LoadProgram added init on the ready list; code 0Yalnix     clone_kc_stack ### Start : my guess 
+Yalnix     clone_kc_stack ### END 
+Yalnix     KernelStart: finished context switching
+Yalnix     KernelStart: update stack pointers etc
+Yalnix     KernelStart ### End 
+Yalnix     trapClock ### start 
+Yalnix     trapClock: proc is Id: 1
+Yalnix     Scheduler ### Start 
+Hardware   >>>> 
+
+
+ BIG GREEN SCREEN O' DEATH!!!!!!
+
+
