@@ -22,7 +22,15 @@ void kernel_Exit(int status)
 
 int kernel_Wait(int * status_ptr)
 {
-	return 0; 
+	int child_pid_retval;
+	// check if process has children
+
+	// check if process has children that exited
+
+		// do stuff
+
+	// return the pid of the child that returned (mind == blown)
+	return child_pid_retval; 
 }
 
 int kernel_GetPid()
