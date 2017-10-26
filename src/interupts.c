@@ -88,10 +88,10 @@ void trapClock(UserContext *uc)
     goto_next_process(uc, 1);
   }
   else{
-    TracePrintf(3, "trapClock: no process to switch to -  gonna keep going")
+    TracePrintf(3, "trapClock: no process to switch to gonna keep going")
   }
 
-  
+
 
   TracePrintf(1, "trapClock ### end \n");
 }
