@@ -36,6 +36,12 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_WAIT:
         TracePrintf(3, "trapKernel: YALNIX_WAIT\n");
+        // check if in range
+        // check if pages are valid
+        // check if RW
+
+        int *status_pt = (int *) uc->regs[0];
+        retval = kernel_Wait(status_pt, uc);
         break;
 
       case YALNIX_GETPID:
