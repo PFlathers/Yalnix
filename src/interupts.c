@@ -11,12 +11,46 @@ void trapKernel(UserContext *uc)
 {
   int clock_ticks;
   int retval;
-   switch(uc->code) { 
+  int exit_code;
+  void *addr;
+
+  // weee - switching
+  switch(uc->code) { 
+      case YALNIX_EXEC:
+        TracePrintf(3, "trapKernel: YALNIX_EXEC\n");
+        break;
+
       case YALNIX_DELAY:
-        TracePrintf(3, "Cought YALNIX_DELAY \n");
+        TracePrintf(3, "trapKernel: YALNIX_DELAY \n");
          clock_ticks = (int) uc->regs[0];
         int retval = kernel_Delay(uc, clock_ticks);
         break;
+
+      case YALNIX_FORK:
+        TracePrintf(3, "trapKernel: YALNIX_FORK\n");
+        break;
+
+      case YALNIX_EXIT:
+        TracePrintf(3, "trapKernel: YALNIX_EXIT\n");
+        break;
+
+      case YALNIX_WAIT:
+        TracePrintf(3, "trapKernel: YALNIX_WAIT\n");
+        break;
+
+      case YALNIX_GETPID:
+        TracePrintf(3, "trapKernel: YALNIX_GETPID\n");
+        retval = kernel_Getpid(uc);
+        break;
+
+      case YALNIX_BRK:
+        // check if in raed
+        // check if valid
+        // check if RW
+        addr = (void *) uc->regs[0];
+        retval = Yalnix_Brk(addr);
+        break;
+
       default:
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
@@ -40,31 +74,26 @@ void trapClock(UserContext *uc)
       }
     }
 
+    // handle last idem edge case (reason why it didn't work in chckp 3)
     if (check_block_status(((pcb*)curr_on_delay->data)->block) == 0) {
           // Remove it from the blocked queue and add it to ready queue
           pcb *delay_pcb = (pcb *) curr_on_delay->data;
           list_remove(blocked_procs, delay_pcb);
           list_add(ready_procs, delay_pcb);
     }
-
-
-    scheduler();
+  }
+  TracePrintf(3, "trapClock: proc is Id: %d\n", curr_proc->process_id);
+  if (list_count(ready_procs) > 0){
+    TracePrintf(3, "trapClock: Switching processes\n");
+    goto_next_process(uc, 1);
+  }
+  else{
+    TracePrintf(3, "trapClock: no process to switch to -  gonna keep going")
   }
 
-
-
-  TracePrintf(3, "trapClock: proc is Id: %d\n", curr_proc->process_id);
-  // if (list_count(ready_procs) > 0){
-  //   TracePrintf(3, "trapClock: switching processes\n");
-  //   goto_next_process(uc, 1);
-  // }
-  // else{
-  //   TracePrintf(3, "No process to switch to or in proc 1- gonna keep going\n");
-  // }
-  scheduler();
-  TracePrintf(1, "trapClock ### end \n");
   
 
+  TracePrintf(1, "trapClock ### end \n");
 }
 
 void trapIllegal(UserContext *uc)
