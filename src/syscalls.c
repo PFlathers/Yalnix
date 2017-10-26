@@ -47,9 +47,30 @@ int kernel_Wait(int * status_ptr)
 		return(ERROR);
 	}
 
-	
-		// do stuff
 
+	/* Actual work under */
+
+	// if has dead children, find them and remove them from the 
+	// parent->zombie list and global zombies list
+	if (list_count(parent->zombies) > 0) {
+		TracePrintf(6, "kernel_Wait: found zombie children\n");
+		// pop from parent list
+		pcb *child_pcb = list_pop(parent->zombies);
+		child_pid_retval = child_pcb->process_id;
+
+		// if my understanding is correct, status should be 
+		// the pointer to the process
+		*status_ptr = =*((int *) child_pcb);
+		// remove from global list (found in kernel.h)
+		list_remove(zombies, child_pcb);
+
+
+		// return the pid of the child that returned (mind == blown)
+		TracePrintf(3, "kernel_Wait ### end \n");
+		return child_pid_retval; 
+	}
+	
+	
 	// return the pid of the child that returned (mind == blown)
 	TracePrintf(3, "kernel_Wait ### end \n");
 	return child_pid_retval; 
