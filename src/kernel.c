@@ -7,6 +7,8 @@
 #include "interupts.h"
 #include "loadprog.h"
 
+KernelContext *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb);
+
 
 // Interrupt vector (pg50, bull 1)
 void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
@@ -186,6 +188,23 @@ void start_idle_process(UserContext *user_context)
 
 }
 
+
+
+char *get_argument_list(char * cmd_args)
+{
+	arg_count = 0;
+
+	while (cmd_args[arg_count] != '\0'){
+		arg_count++;
+	}
+	// null terminated
+	arg_count++; 
+	char *argument_list[arg_count];
+	for (i = 0; i<arg_count; i++){
+		argument_list[i] = cmd_args[i];
+  	}
+}
+
 /* 
  * KernelStart
  *  Before allowing the execution of user processes, 
@@ -246,8 +265,9 @@ void KernelStart(char *cmd_args[],
 	 */
 
 	 // base it of of the init (so that I don't have to re-do things)
-	 pcb *init_proc = (pcb *) new_process(user_context);
+	 pcb *init_proc = (pcb *) new_process(idle_proc->user_context);
 
+	 // Make space for Kernel and user space
 	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
 	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
 	 bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
@@ -259,8 +279,7 @@ void KernelStart(char *cmd_args[],
 	 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
 	 }
 
-
-
+	 // kernel stack memory is RW and popped from the empty frames
 	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
 	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
     	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
@@ -268,51 +287,56 @@ void KernelStart(char *cmd_args[],
     	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int) list_pop(empty_frame_list) * PAGESIZE) >> PAGESHIFT);;
 	 }
 
-	// TLB flush
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+	 // clear out the tlb
+	 WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 
- 	// init_proc is the first child of idle_proc!
-	init_proc->parent = idle_proc;
-  	idle_proc->children = init_list();
-  	list_add(idle_proc->children, (void *)init_proc);
 
-  	if (cmd_args[0] == '\0') {
-  		list_add(all_procs, (void *)idle_proc);
+	 // I'm not sure if this is the optimal way to do this
+	 init_proc->parent = idle_proc;
+	 idle_proc->children = init_list();
+	 list_add(idle_proc->children, (void *) init_proc);
 
+
+	// parse arguments
+	char *argument_list[] = get_argument_list(cmd_args);
+	char *program_name = argument_list[0];
+
+
+	int lpr;
+   	if (program_name == '\0') {
+  		// if there are no processes idle is running
+  		list_add(all_procs, idle_proc);
   		curr_proc = idle_proc;
 
-
-  		// copy idle's UC into the current UC
+  		// current UC is idle's uc
   		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+
+
   		TracePrintf(0, "KernelStart ### End \n");
 
   	} else{
-  		int arg_count = 0;
+  		lpr = LoadProgram(program_name, argument_list, init_proc);
+	}
+  		
 
-  		while (cmd_args[arg_count] != '\0'){
-  			arg_count++;
-  		}
-  		// null terminated
-  		arg_count++; 
+	if (lpr == SUCCESS){
+		list_add(all_procs, (void *) init_proc);
+		list_add(ready_procs, (void*) init_proc);
+		TracePrintf(3, "LoadProgram added %s on the ready list; code %d", program_name, lpr);
+	} 
+	else{
+		WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
+		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+		TracePrintf(3, "LoadProgram failed; code %d", lpr);
+	}
+  	
 
-  		char *argument_list[arg_count];
-  		for (i = 0; i<arg_count; i++){
-  			argument_list[i] = cmd_args[i];
-  		}
 
-  		char *program_name = argument_list[0];
+	// TLB flush
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+	KernelContextSwitch(clone_kc_stack, (pcb *) idle_proc, NULL);
+	TracePrintf(3, "KernelStart: finished context switching\n");
 
-  		int lpr;
-  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
-  			list_add(all_procs, (void *) init_proc);
-  			list_add(ready_procs, (void*) init_proc);
-  			TracePrintf(3, "LoadProgram added %s on the ready list; code %d", program_name, lpr);
-  		} else{
-  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
-  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
-  		}
-  	}
 
 	/* 
 	 * BOOKKEEPING 
@@ -321,8 +345,12 @@ void KernelStart(char *cmd_args[],
  
 	list_add(all_procs, (void *) idle_proc);
 	curr_proc = idle_proc;
-	// // copy idle's usercontext into the current usercontext
-	memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+
+
+	TracePrintf(3, "KernelStart: update stack pointers etc\n");
+	// copy idle's usercontext into the current usercontext
+	memcpy(user_context, curr_proc->user_context, sizeof(UserContext));
+
 
 
 	TracePrintf(0, "KernelStart ### End \n");
@@ -406,45 +434,60 @@ void DoIdle() {
 } 
 
 
-void *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
+// Copies contents of current kernel stack frames
+// into the frames allocated to this pcb's kernel stack
+KernelContext *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
 {
 	TracePrintf(2, "clone_kc_stack ### Start : my guess \n");
 	//casts
 	pcb *current = (pcb *) current_pcb;
-	pcb *next = (pcb *) next_pcb; 
+	pcb *next = (pcb *) next_pcb;
+
 	int i;
 
-	unsigned int dest = ((KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT) << PAGESHIFT;
-	unsigned int src = KERNEL_STACK_BASE;
 
 	// copy current kernelto the next kc pointer
-	memcpy((void *) (next->kernel_context), (void *) (current->kernel_context), sizeof(KernelContext));
+	memcpy((void *) (next->kernel_context), (void *) curernt->kernel_context, sizeof(KernelContext));
 
+	// set source and destination
+	unsigned int dest = ((KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT) << PAGESHIFT;
+ 	unsigned int src = KERNEL_STACK_BASE;
+
+	// declare backup
 	u_long bcp_valid[KERNEL_PAGE_COUNT];
 	u_long bcp_pfn[KERNEL_PAGE_COUNT];
 
+
+	// backup the kernel stack frame
 	for (i = 0; i<KERNEL_PAGE_COUNT; i++) {
 		bcp_valid[i] = r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].valid;
 		bcp_pfn[i] = r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].pfn;
 
+		// est validity and page frame number
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].valid = (u_long) 0x1; 
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].pfn = ((*(next->region0_pt + i)).pfn);
 	}
-
+	// flush me baby flush me baby
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
+	// bootstrap the new kernel stack with the contents of the old one
+	TracePrintf(6, "clone_kc_stack: bootstrapping the new kernel proc \n");
 	memcpy( (void *)dest, (void *)src, KERNEL_STACK_MAXSIZE);
+	TracePrintf(6, "clone_kc_stack: finished bootstrapping the new kernel proc \n");
 
-
+	// restore the old values
 	for (i = 0; i<KERNEL_PAGE_COUNT; i++) {
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].valid = bcp_valid[i];
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].pfn = bcp_pfn[i];
 	}
 
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+	// flush me baby flush me, tonigth
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
+    // get back to where you once belonged 
 	TracePrintf(2, "clone_kc_stack ### END \n");
-    return next->kernel_context;
+    return kernel_context_in;
+
 }
 
 
@@ -453,17 +496,20 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 {
 	TracePrintf(2, "MyKCS ### Start : my guess \n");
 	//casts
+
 	pcb *current = (pcb *) current_pcb;
 	pcb *next = (pcb *) next_pcb; 
+
+	int i;
 
 	// save current kc
 	memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
 
-	// bootstrap the kernel if we are starting
-	if (next->has_kc == 0){
-		clone_kc_stack(kernel_context_in, current_pcb, next_pcb);
+	// if we have not already bootstrapped the kernel of the new process, do it now
+	if (next->has_kc == 0) {
+		clone_kc_stack(kernel_context_in, curr_pcb, next_pcb);
 		next->has_kc = 1;
-		TracePrintf(3, "Copied idle's into next\n"); 
+		TracePrintf(6, "MyKCS: finished bootstrapping of proces %d \n", next->process_id);
 	}
 
 	// save current k stack
@@ -481,13 +527,17 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
 
     // update pt register
-    WriteRegister(REG_PTBR1, (unsigned int) next->region1_pt);
+    WriteRegister(REG_PTLR0, MAX_PT_LEN);
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
-    // flush the TLB
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+    // Remap Region 1 page table and flush entire region 1 TLB
+	WriteRegister(REG_PTBR1, (unsigned int) next->region1_pt);    
+	WriteRegister(REG_PTLR1, MAX_PT_LEN);
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
     // return	
     TracePrintf(2, "MyKCS ### End : my guess \n");
+    
     return next->kernel_context;
 
 }
@@ -504,6 +554,7 @@ int goto_next_process(UserContext *user_context, int repeat_bool)
 	pcb *next_proc = (pcb *) list_pop(ready_procs);
 
 	if (context_switch(curr_proc, next_proc, user_context) != 0){
+		TracePrintf(1, "goto_next_process: context switching failed \n");
 		return FAILURE;
 	}
 
@@ -517,6 +568,7 @@ int goto_next_process(UserContext *user_context, int repeat_bool)
 int context_switch(pcb *current, pcb *next, UserContext *user_context)
 {
 	TracePrintf(2, "ContextSwitch ### Start \n");
+	
 	// save UC of the current one
 	if (current != NULL){
 		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
