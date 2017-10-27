@@ -1,3 +1,22 @@
+/*=============================================================================
+ |   Assignment:  Yalnix Kernel Header files
+ |
+ |       Author:  Patrick Flathers and Bruno Korbar
+ |     Language:  C compiled by Sean's magical 
+ |   To Compile:  run `make` in the source folder; find results in bin folder
+ |
+ |        Class:  COSC58
+ |   Instructor:  Sean Smith
+ |     Due Date:  too soon
+ |
+ +-----------------------------------------------------------------------------
+ |
+ | Description:  Includes and definitions for the magic that happens in the kernel
+ |
+ | Known Bugs:  it doesn't really work
+ |
+ *===========================================================================*/
+
 #ifndef _KERNEL_H_
 #define _KERNEL_H_
 
@@ -16,15 +35,19 @@
 #include "interupts.h"
 
 
+/*
+ * Cool constants
+ */
 #define VREG_1_PAGE_COUNT  (((VMEM_1_LIMIT - VMEM_1_BASE) / PAGESIZE))
 #define VREG_0_PAGE_COUNT  (((VMEM_0_LIMIT - VMEM_0_BASE) / PAGESIZE))
 #define KERNEL_PAGE_COUNT  (KERNEL_STACK_MAXSIZE / PAGESIZE)
-
 #define RESERVED_KERNEL_PAGE ((VMEM_0_LIMIT - KERNEL_STACK_MAXSIZE - PAGESIZE)>>PAGESHIFT)
 
 
 
-// globals
+/*
+ * Global variables
+ */
 
 // SetKernelData - see kernel.c ln 18:29
 void *kernel_data_start;
@@ -76,7 +99,10 @@ pcb *idle_proc;
 
 
 
-/* Public Facing Function Calls */
+/* 
+ * Public Facing Function Calls 
+ */
+ 
 void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd);
 void KernelStart(char *cmd_args[], 
                  unsigned int phys_mem_size,
