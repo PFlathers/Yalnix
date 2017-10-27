@@ -59,7 +59,7 @@ int kernel_Fork(UserContext *user_context)
 	memcpy((void *) child->region0_pt, (void *) parent->region0_pt, (KERNEL_PAGE_COUNT * sizeof(struct pte)) );
 
 	// allocate new physical frames for kernel
-	if (list_count(empty_frame_list) < KERNEL_PAGE_COUNT){
+	if (list_count(empty_frame_list) =< KERNEL_PAGE_COUNT){
 		TracePrintf(1, "kernel_Fork: not enough memory for child's kernel stack");
 		exit(ERROR);
 	}
@@ -67,8 +67,29 @@ int kernel_Fork(UserContext *user_context)
 		pfn_scratch =  (int) list_pop(empty_frame_list);
 		(*(child->region0_pt + i)).pfn = ((u_long) (((int)(pfn_scratch) * PAGESIZE) >> PAGESHIFT));
 	}
-	
-	// -//- for region 1	
+
+	// -//- for region 1
+	if (list_count(empty_frame_list) <= VREG_1_PAGE_COUNT){
+		TracePrintf(1, "kernel_Fork: not enough memory for child's user memory");
+		exit(ERROR);
+	}
+	for (i = 0; i<VREG_1_PAGE_COUNT; i++){
+		if ( (*(child->region1_pt + i)).valid == (u_long) 0x1 ){
+			list_count(empty_frame_list <= 0){
+				TracePrintf(1, "kernel_Fork: not enough memory for child's user memory");
+				exit(ERROR);
+			}
+
+			pfn_scratch = pop(empty_frame_list);
+			(*(child->region1_pt + i)).pfn = ((u_long) (((int)(pfn_scratch) * PAGESIZE) >> PAGESHIFT));
+		}
+		else{
+			(*(child->region1_pt + i)).pfn = (u_long) 0x0;
+		}
+	}
+	TracePrintf(6, "kernel_Fork: done with memcpy and allocate pagetables\n");
+
+
 	// copy parent's memory to child process
 	// (don't know how to do it efficiently)
 
@@ -77,17 +98,37 @@ int kernel_Fork(UserContext *user_context)
 
 	// book keeping
 	// add kid to parent's list (potentially init)
+	if (parent->children == NULL){
+		parent->children = init_list();
+	}
+	list_add(parent->children, child);
 
 	// add to all and ready procs
+	list_add(all_procs, child);
+	list_add(ready_procs, child);
 
+	TracePrintf(6, "kernel_Fork: context switch to new process\n");
 	// context switch to the kid
+	if (goto_next_process(user_context, 0) != 0){
+		TracePrintf(1, "kernel_Fork: error switching failed\n");
+		exit(ERROR);
+	}
+	TracePrintf(6, "kernel_Fork: done with context switch to new process\n");
 
 	TracePrintf(3, "kernel_Fork ### end \n");
 	// return
 		// if current proc is parent return child id
+	if (curr_proc->process_id == parent->process_id){
+		return child->process_id;
+	}
 		// if current proc is child return 0
+	else if (curr_proc->procees_id == child->process_id){
+		return 0;
+	}
 		// else return ERROR
-	return 0;
+	else{
+		return ERROR;
+	}
 }
 
 int kernel_Exec(char *filename, char **argvec)
