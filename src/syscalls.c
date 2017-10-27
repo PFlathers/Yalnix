@@ -6,8 +6,54 @@
 #include "kernel.h"
 
 
-int kernel_Fork()
+/*------------------------------------------------- kernel_Fork -----
+|  Function kernel_Fork
+|
+|  Purpose:  Fork is the only way new_processes are created in Yalnix;
+|   		this is the only function that should have a call to new_process
+| 			other than StartKernel
+|
+|  Parameters:
+|      1) UserContext *user_context (IN/OUT) -- user context of currently
+| 				running process - used to bootstrap the parent's nad child's
+| 				UC to get them on the same page; may be updated at context
+|				switching
+|
+|  Returns:  this is hte only function that returns _TWICE_. Separately
+| 			as a kid (return value == 0) and as a parent (return value ==
+| 			child's id). 
+*-------------------------------------------------------------------*/
+int kernel_Fork(UserContext *user_context)
 {
+	TracePrintf(3, "kernel_Fork ### start \n");
+	// store user context of parrent (important for sp and pc)
+
+	// create a new process and coppy the uc to it
+
+	// allocate space for stack and PTE
+	// if successfull, create pagetables
+		// copy old ones
+		// allocate new physical frames for kernel
+		// -//- for region 1
+
+	// copy parrent's memory to child process
+	// (don't know how to do it efficiently)
+
+	// restore old PTE for destination page
+
+
+	// book keeping
+	// add kid to parrent's list (potentially init)
+
+	// add to all and ready procs
+
+	// context switch to the kid
+
+	TracePrintf(3, "kernel_Fork ### end \n");
+	// return
+		// if current proc is parent return child id
+		// if current proc is child return 0
+		// else return ERROR
 	return 0;
 }
 

@@ -28,6 +28,7 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_FORK:
         TracePrintf(3, "trapKernel: YALNIX_FORK\n");
+        retval = kernel_Fork(uc);
         break;
 
       case YALNIX_EXIT:

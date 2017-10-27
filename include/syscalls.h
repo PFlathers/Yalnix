@@ -12,6 +12,31 @@
 
 /* Public Facing Function Calls */
 
+
+/*------------------------------------------------- kernel_Fork -----
+|  Function kernel_Fork
+|
+|  Description:  Fork is the only way new processes are created in Yalnix.
+|  The memory image of the new process (the child) is a copy of that of 
+|  the process calling Fork (the parent). When the Fork call completes, 
+|  both the parent process and the child process return (separately) from 
+|  the kernel call as if they had been the one to call Fork, since the 
+|  child is a copy of the parent. The only distinction is the fact that 
+|  the return value in the calling (parent) process is the process ID of the 
+|  new (child) process, while the value returned in the child is 0. If, 
+|  for any reason, the new process cannot be created, this syscall instead 
+|  returns the value ERROR to the calling process.
+|
+|  Parameters:
+|      1) UserContext *user_context (IN/OUT) -- user context of currently
+| 				running process - used to bootstrap the parent's nad child's
+| 				UC to get them on the same page; may be updated at context
+|				switching
+|
+|  Returns:  this is hte only function that returns _TWICE_. Separately
+| 			as a kid (return value == 0) and as a parent (return value ==
+| 			child's id). 
+*-------------------------------------------------------------------*/
 int kernel_Fork();
 
 int kernel_Exec(char *filename, char **argvec);
@@ -22,7 +47,7 @@ void kernel_Exit(int status);
 /*------------------------------------------------- Kernel_Wait -----
  |  Function kernel_Wait
  |
- |  Description:  Collect the process ID and exit status returned by a child
+ | Description:  Collect the process ID and exit status returned by a child
  | process of the calling program. When a child process Exits, its exit 
  | status information is added to a FIFO queue of child processes not 
  | yet collected by its specific parent. After the Wait call, this child 
