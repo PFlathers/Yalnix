@@ -70,7 +70,33 @@ int kernel_Wait(int * status_ptr)
 		return child_pid_retval; 
 	}
 	
-	
+
+	// if we have live kids waiting, 
+	// modify the same block structure we used for delay
+	parent->block->is_active = ACTIVE;
+	parent->block->type = WAIT_BLOCK;
+	// data will point to the blocking process (in this case parent)
+	parent->block->data = (void *) parent;
+	 
+	/* book keeping */
+	list_add(blocked_procs, parent);
+
+	// switch to other process if needed
+	if (count_items(ready_procs) <= 0) {
+		TracePrintf(3, "kernel_Wait: no items on the ready queue \n");
+		exit(ERROR);
+	}
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Wait: failed to kontext switch");
+			exit(ERROR);
+		}
+	}
+
+	// at thois point, the only scenario is that we are returning from being
+	// blocked so her we removing exited child and removing it 
+
+
 	// return the pid of the child that returned (mind == blown)
 	TracePrintf(3, "kernel_Wait ### end \n");
 	return child_pid_retval; 
