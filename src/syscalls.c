@@ -26,24 +26,57 @@
 int kernel_Fork(UserContext *user_context)
 {
 	TracePrintf(3, "kernel_Fork ### start \n");
-	// store user context of parrent (important for sp and pc)
 
+	int i;
+	int pfn_scratch;
+
+	pcb *child; // local pcb of child fprocess
+	pcb *parent; // local pcb of parent
+
+	// store user context of parent (important for sp and pc)
+	parent = curr_proc;
+	memcpy((void *) parent->user_context, (void *) user_context, sizeof(UserContext));
+
+	
 	// create a new process and coppy the uc to it
-
+	TracePrintf(6, "kernel_Fork: creating new procees\n")
+	child = new_process(parent->user_context);
 	// allocate space for stack and PTE
-	// if successfull, create pagetables
-		// copy old ones
-		// allocate new physical frames for kernel
-		// -//- for region 1
+	child->region1_pt = (struct pte *) malloc (VREG_1_PAGE_COUNT *sizeof(struct pte));
+	ALLOC_CHECK(child->region1_pt, "kernel_Fork");
+	child->region0_pt = (struct pte *) malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
+	ALLOC_CHECK(child->region0_pt, "kernel_Fork");
+	
+	// finish pcb with usefull information
+	child->heap_start_pg = parent->heap_start_pg;
+	child->brk_address = parent->brk_address;
+	TracePrintf(6, "kernel_Fork: done creating new procees\n")
 
-	// copy parrent's memory to child process
+	// if successfull, create pagetables
+	TracePrintf(6, "kernel_Fork: memcpy and allocate pagetables\n")
+	// copy old ones
+	memcpy((void *) child->region1_pt, (void *) parent->region1_pt, (VREG_1_PAGE_COUNT * sizeof(struct pte)) );
+	memcpy((void *) child->region0_pt, (void *) parent->region0_pt, (KERNEL_PAGE_COUNT * sizeof(struct pte)) );
+
+	// allocate new physical frames for kernel
+	if (list_count(empty_frame_list) < KERNEL_PAGE_COUNT){
+		TracePrintf(1, "kernel_Fork: not enough memory for child's kernel stack");
+		exit(ERROR);
+	}
+	for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+		pfn_scratch =  (int) list_pop(empty_frame_list);
+		(*(child->region0_pt + i)).pfn = ((u_long) (((int)(pfn_scratch) * PAGESIZE) >> PAGESHIFT));
+	}
+	
+	// -//- for region 1	
+	// copy parent's memory to child process
 	// (don't know how to do it efficiently)
 
 	// restore old PTE for destination page
 
 
 	// book keeping
-	// add kid to parrent's list (potentially init)
+	// add kid to parent's list (potentially init)
 
 	// add to all and ready procs
 
