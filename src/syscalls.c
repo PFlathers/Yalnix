@@ -20,6 +20,23 @@ void kernel_Exit(int status)
 {
 }
 
+
+/*------------------------------------------------- Kernel_Wait -----
+ |  Function kernel_Wait
+ |
+ |  Purpose:  implements the wait syscall for details please see syscalls.h
+ |			  it consists of 3 main parts:
+ |          1) if we have kids that exited return their info 
+ | 			2) if we have blocking kids set up a block
+ |			3) place where wait returns implements pretty much 1) again
+ |
+ |  Parameters:
+ |      status_ptr (OUT or IN/OUT): exit status of the returned chiled 
+ |									copied to the integer 
+ |                   
+ |
+ |  Returns:  int with returing childs PID
+ *-------------------------------------------------------------------*/
 int kernel_Wait(int * status_ptr)
 {
 	TracePrintf(3, "kernel_Wait ### start \n");
