@@ -77,11 +77,18 @@ Checkpoint 3 (process things not to forget):
 
 
 Checkpoint 4:
+  Impplement:
+  ☐ fork
+  ☐ exec
+  ✔ wait @done (17-10-27 07:45)
+  ☐ kernel interrupt handler for the above
+  ☐ ...
+  Test:
   ☐ fork
   ☐ exec
   ☐ wait
   ☐ kernel interrupt handler for the above
   ☐ ...
-
-
+  Fix:
+  ☐ fork: efficient copy of the parent's memorys
 
