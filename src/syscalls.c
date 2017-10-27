@@ -60,7 +60,7 @@ int kernel_Wait(int * status_ptr)
 
 		// if my understanding is correct, status should be 
 		// the pointer to the process
-		*status_ptr = =*((int *) child_pcb);
+		*status_ptr = *((int *) child_pcb);
 		// remove from global list (found in kernel.h)
 		list_remove(zombies, child_pcb);
 
@@ -83,18 +83,30 @@ int kernel_Wait(int * status_ptr)
 
 	// switch to other process if needed
 	if (count_items(ready_procs) <= 0) {
-		TracePrintf(3, "kernel_Wait: no items on the ready queue \n");
+		TracePrintf(3, "kernel_Wait: no items on the ready queue - exiting\n");
 		exit(ERROR);
 	}
 	else {
 		if (goto_next_process(uc, 0) != SUCCESS) {
-			TracePrintf(3, "kernel_Wait: failed to kontext switch");
+			TracePrintf(3, "kernel_Wait: failed to kontext switch - exiting\n");
 			exit(ERROR);
 		}
 	}
 
+	// pc should be pointing here after the wait
 	// at thois point, the only scenario is that we are returning from being
 	// blocked so her we removing exited child and removing it 
+	if (list_count(parent->zombies) < 1) {
+		TracePrintf(3, "kernel_Wait: returned after unknown block - exiting\n")
+	}
+
+	// remove exited child from the pcb list
+	pcb *child_pcb = list_pop(parent->zombies);
+	child_pid_retval = child_pcb->process_id;
+	
+	// remove exited child from the global list
+	*status_ptr = *((int *) child_pcb);
+	list_remove(zombies, child_pcb)
 
 
 	// return the pid of the child that returned (mind == blown)
