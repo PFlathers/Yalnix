@@ -14,7 +14,7 @@ Checkpoint 1:
  ✔ globals.h @done (17-10-08 10:17)
  ✔ kernel.c template @done (17-10-08 10:17)
  ☐ documentation folder
- ☐ split .h files in the include
+ ✔ split .h files in the include @done (17-10-27 14:49)
    ☐ README in there
  ✔ list.c               @done (17-10-08 21:29)
  ✔ get vm running       @patrick  @done (17-10-08 21:29)
@@ -68,7 +68,7 @@ Checkpoint 3 (general requirements):
 
 Checkpoint 3 (process things not to forget):
   SetKernelBrk :
-    ☐ see if I have to read register or I can have a global @general_questions
+    ✔ see if I have to read register or I can have a global @general_questions @done (17-10-27 14:47)
     ☐ check that address is withing bounds .\src\kernel.c:246:8 @bruno, @implementation
     ☐ add safety check at .\src\kernel.c:281:8 @bruno, @implementation
     ☐ remove genera
