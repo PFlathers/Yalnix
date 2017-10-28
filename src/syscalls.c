@@ -90,14 +90,57 @@ int kernel_Fork(UserContext *user_context)
 	TracePrintf(6, "kernel_Fork: done with memcpy and allocate pagetables\n");
 
 
-	// copy parent's memory to child process
+	/* copy parent's memory to child process */
 	// (don't know how to do it efficiently)
 
-	// restore old PTE for destination page
+	// this is the one page below the bottom of the stack, I.e.
+	// we copy our child's frame here so that we know where
+	// to return
+	int dest = (KERNEL_STACK_BASE >> PAGESHIFT) - 1;
+	unsigned int bcp_dest_pfn = r0_ptlist[dest].pfn;
+	unsigned int bcp_dest_val = r0_ptlist[dest].valid;
 
+
+	// destination should be valid
+	r0_ptlist[dest].valid = (u_int) 0x1;
+
+
+	int src;
+	int dst = dest << PAGESHIFT;
+
+	// restore old PTE for destination page
+	for (i = 0; i<KERNEL_PAGE_COUNT; i++) {
+		// move in the virtual adress of the kernel stack
+		src = KERNEL_STACK_BASE + (i*PAGESIZE);
+
+		// destination will have pfn of the child's process page table
+		r0_ptlist[dest].pfn = (*(child->region0_pt + i)).pfn;
+		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+		// actually copy the frame
+		memcpy((void *) dst, (void *) src, PAGESIZE);
+	}
+
+	for (i = 0; i<VREG_1_PAGE_COUNT; i++) {
+		if ((*(child->region1_pt + i)).valid == 0x1){
+			src = VMEM_1_BASE + (i*PAGESIZE);
+
+			r0_ptlist[dest].pfn = (*(child->region1_pt + i)).pfn;
+			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+			// actually copy the frame
+			memcpy((void *) dst, (void *) src, PAGESIZE);
+		}
+	}
+
+	// restore
+	r0_ptlist[dest].pfn = bcp_dest_pfn;
+	r0_ptlist[dest].valid = bcp_dest_val;
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
 	// book keeping
 	// add kid to parent's list (potentially init)
+	child->parent = parent;
 	if (parent->children == NULL){
 		parent->children = init_list();
 	}
@@ -109,7 +152,7 @@ int kernel_Fork(UserContext *user_context)
 
 	TracePrintf(6, "kernel_Fork: context switch to new process\n");
 	// context switch to the kid
-	if (goto_next_process(user_context, 0) != 0){
+	if (context_switch(parent, child, user_context) != 0){
 		TracePrintf(1, "kernel_Fork: error switching failed\n");
 		exit(ERROR);
 	}
