@@ -17,7 +17,7 @@
  | project, you will implement an operating system kernel for the Yalnix operating 
  | system, running on a fictional computer system known as the DCS 58.
  |
- |   Known Bugs:  it doesn't really work
+ |   Known Bugs:  it doesn't really work (yet)
  |
  *===========================================================================*/
 
@@ -647,5 +647,3 @@ void scheduler(void)
 
 }
 
-
-/*Switch PCBs*/
