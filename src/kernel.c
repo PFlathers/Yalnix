@@ -189,22 +189,6 @@ void start_idle_process(UserContext *user_context)
 }
 
 
-
-char *get_argument_list(char * cmd_args)
-{
-	arg_count = 0;
-
-	while (cmd_args[arg_count] != '\0'){
-		arg_count++;
-	}
-	// null terminated
-	arg_count++; 
-	char *argument_list[arg_count];
-	for (i = 0; i<arg_count; i++){
-		argument_list[i] = cmd_args[i];
-  	}
-}
-
 /* 
  * KernelStart
  *  Before allowing the execution of user processes, 
@@ -221,7 +205,6 @@ void KernelStart(char *cmd_args[],
 	/*LOCAL VARIABLES*/
 
 	int i; 
-	int arg_count; // number of variables passed 
 
 
 	// lowest frame in region 1 - see figure 2.2
@@ -298,7 +281,17 @@ void KernelStart(char *cmd_args[],
 
 
 	// parse arguments
-	char *argument_list[] = get_argument_list(cmd_args);
+	int arg_count = 0;
+
+	while (cmd_args[arg_count] != '\0'){
+		arg_count++;
+	}
+	// null terminated
+	arg_count++; 
+	char *argument_list[arg_count];
+	for (i = 0; i<arg_count; i++){
+		argument_list[i] = cmd_args[i];
+  	}
 	char *program_name = argument_list[0];
 
 
@@ -447,7 +440,7 @@ KernelContext *clone_kc_stack(KernelContext *kernel_context_in, void *current_pc
 
 
 	// copy current kernelto the next kc pointer
-	memcpy((void *) (next->kernel_context), (void *) curernt->kernel_context, sizeof(KernelContext));
+	memcpy((void *) (next->kernel_context), (void *) current->kernel_context, sizeof(KernelContext));
 
 	// set source and destination
 	unsigned int dest = ((KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT) << PAGESHIFT;
@@ -507,7 +500,7 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
 	// if we have not already bootstrapped the kernel of the new process, do it now
 	if (next->has_kc == 0) {
-		clone_kc_stack(kernel_context_in, curr_pcb, next_pcb);
+		clone_kc_stack(kernel_context_in, current_pcb, next_pcb);
 		next->has_kc = 1;
 		TracePrintf(6, "MyKCS: finished bootstrapping of proces %d \n", next->process_id);
 	}
