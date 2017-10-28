@@ -39,7 +39,7 @@ int kernel_Fork(UserContext *user_context)
 
 	
 	// create a new process and coppy the uc to it
-	TracePrintf(6, "kernel_Fork: creating new procees\n")
+	TracePrintf(6, "kernel_Fork: creating new procees\n");
 	child = new_process(parent->user_context);
 	// allocate space for stack and PTE
 	child->region1_pt = (struct pte *) malloc (VREG_1_PAGE_COUNT *sizeof(struct pte));
@@ -50,16 +50,16 @@ int kernel_Fork(UserContext *user_context)
 	// finish pcb with usefull information
 	child->heap_start_pg = parent->heap_start_pg;
 	child->brk_address = parent->brk_address;
-	TracePrintf(6, "kernel_Fork: done creating new procees\n")
+	TracePrintf(6, "kernel_Fork: done creating new procees\n");
 
 	// if successfull, create pagetables
-	TracePrintf(6, "kernel_Fork: memcpy and allocate pagetables\n")
+	TracePrintf(6, "kernel_Fork: memcpy and allocate pagetables\n");
 	// copy old ones
 	memcpy((void *) child->region1_pt, (void *) parent->region1_pt, (VREG_1_PAGE_COUNT * sizeof(struct pte)) );
 	memcpy((void *) child->region0_pt, (void *) parent->region0_pt, (KERNEL_PAGE_COUNT * sizeof(struct pte)) );
 
 	// allocate new physical frames for kernel
-	if (list_count(empty_frame_list) =< KERNEL_PAGE_COUNT){
+	if (list_count(empty_frame_list) <= KERNEL_PAGE_COUNT){
 		TracePrintf(1, "kernel_Fork: not enough memory for child's kernel stack");
 		exit(ERROR);
 	}
@@ -75,12 +75,12 @@ int kernel_Fork(UserContext *user_context)
 	}
 	for (i = 0; i<VREG_1_PAGE_COUNT; i++){
 		if ( (*(child->region1_pt + i)).valid == (u_long) 0x1 ){
-			list_count(empty_frame_list <= 0){
+			if( list_count(empty_frame_list) <= 0 ){
 				TracePrintf(1, "kernel_Fork: not enough memory for child's user memory");
 				exit(ERROR);
 			}
 
-			pfn_scratch = pop(empty_frame_list);
+			pfn_scratch = list_pop(empty_frame_list);
 			(*(child->region1_pt + i)).pfn = ((u_long) (((int)(pfn_scratch) * PAGESIZE) >> PAGESHIFT));
 		}
 		else{
@@ -165,7 +165,7 @@ int kernel_Fork(UserContext *user_context)
 		return child->process_id;
 	}
 		// if current proc is child return 0
-	else if (curr_proc->procees_id == child->process_id){
+	else if (curr_proc->process_id == child->process_id){
 		return 0;
 	}
 		// else return ERROR
@@ -215,14 +215,14 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	}
 
 	// check if process has children that exited
-	if (parent->zombies == NULL){
+	if (parent->zombiez == NULL){
 		if (list_count(parent->children) <= 0 ) {
 			TracePrintf(3, "kernel_Wait (ln40): %d called Wait without active children, and with no zombie children initialized\n", parent->process_id);
 			return(ERROR);
 		}
 	}
 
-	if (list_count(parent->zombies) <= 0 && list_count(parent->children) <= 0) {
+	if (list_count(parent->zombiez) <= 0 && list_count(parent->children) <= 0) {
 		TracePrintf(3, "kernel_Wait (ln46): %d called Wait without active or zombie children\n", parent->process_id);
 		return(ERROR);
 	}
@@ -232,17 +232,17 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 
 	// if has dead children, find them and remove them from the 
 	// parent->zombie list and global zombies list
-	if (list_count(parent->zombies) > 0) {
+	if (list_count(parent->zombiez) > 0) {
 		TracePrintf(6, "kernel_Wait: found zombie children\n");
 		// pop from parent list
-		pcb *child_pcb = list_pop(parent->zombies);
+		pcb *child_pcb = list_pop(parent->zombiez);
 		child_pid_retval = child_pcb->process_id;
 
 		// if my understanding is correct, status should be 
 		// the pointer to the process
 		*status_ptr = *((int *) child_pcb);
 		// remove from global list (found in kernel.h)
-		list_remove(zombies, child_pcb);
+		list_remove(zombie_procs, child_pcb);
 
 
 		// return the pid of the child that returned (mind == blown)
@@ -254,7 +254,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// if we have live kids waiting, 
 	// modify the same block structure we used for delay
 	parent->block->is_active = ACTIVE;
-	parent->block->type = WAIT_BLOCK;
+	parent->block->type = WAIT;
 	// data will point to the blocking process (in this case parent)
 	parent->block->data = (void *) parent;
 	 
@@ -262,7 +262,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	list_add(blocked_procs, parent);
 
 	// switch to other process if needed
-	if (count_items(ready_procs) <= 0) {
+	if (list_count(ready_procs) <= 0) {
 		TracePrintf(3, "kernel_Wait: no items on the ready queue - exiting\n");
 		exit(ERROR);
 	}
@@ -276,17 +276,17 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// pc should be pointing here after the wait
 	// at thois point, the only scenario is that we are returning from being
 	// blocked so her we removing exited child and removing it 
-	if (list_count(parent->zombies) < 1) {
-		TracePrintf(3, "kernel_Wait: returned after unknown block - exiting\n")
+	if (list_count(parent->zombiez) < 1) {
+		TracePrintf(3, "kernel_Wait: returned after unknown block - exiting\n");
 	}
 
 	// remove exited child from the pcb list
-	pcb *child_pcb = list_pop(parent->zombies);
+	pcb *child_pcb = list_pop(parent->zombiez);
 	child_pid_retval = child_pcb->process_id;
 	
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
-	list_remove(zombies, child_pcb)
+	list_remove(zombie_procs, child_pcb);
 
 
 	// return the pid of the child that returned (mind == blown)

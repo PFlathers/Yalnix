@@ -47,7 +47,7 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_GETPID:
         TracePrintf(3, "trapKernel: YALNIX_GETPID\n");
-        retval = kernel_Getpid(uc);
+        retval = kernel_GetPid(uc);
         break;
 
       case YALNIX_BRK:
@@ -55,7 +55,7 @@ void trapKernel(UserContext *uc)
         // check if valid
         // check if RW
         addr = (void *) uc->regs[0];
-        retval = Yalnix_Brk(addr);
+        retval = kernel_Brk(addr);
         break;
 
       default:
@@ -95,7 +95,7 @@ void trapClock(UserContext *uc)
     goto_next_process(uc, 1);
   }
   else{
-    TracePrintf(3, "trapClock: no process to switch to gonna keep going")
+    TracePrintf(3, "trapClock: no process to switch to gonna keep going");
   }
 
 
