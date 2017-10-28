@@ -33,14 +33,14 @@ KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
 
 
 #List all user programs here.
-USER_APPS = userland/init
+USER_APPS = userland/init test/fork_test test/wait_test
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
-USER_SRCS = userland/init.c
+USER_SRCS = userland/init.c test/fork_test.c test/wait_test.c
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-USER_OBJS = userland/init.o
+USER_OBJS = userland/init.o test/fork_test.o test/wait_test.o
 
 #List all of the header files necessary for your user programs
-USER_INCS = 
+USER_INCS = test/test.h
 
 #write to output program yalnix
 YALNIX_OUTPUT = yalnix
@@ -119,7 +119,6 @@ $(USER_APPS): $(USER_OBJS) $(USER_INCS)
 	$(ETCDIR)/yuserbuild.sh $@ $(DDIR58) $@.o
 	mv $(USER_APPS) ./bin
 	rm -f userland/*.o
-
 
 
 

@@ -80,7 +80,7 @@ int kernel_Fork(UserContext *user_context)
 				exit(ERROR);
 			}
 
-			pfn_scratch = list_pop(empty_frame_list);
+			pfn_scratch =(int)list_pop(empty_frame_list);
 			(*(child->region1_pt + i)).pfn = ((u_long) (((int)(pfn_scratch) * PAGESIZE) >> PAGESHIFT));
 		}
 		else{
