@@ -37,7 +37,7 @@
 | 			as a kid (return value == 0) and as a parent (return value ==
 | 			child's id). 
 *-------------------------------------------------------------------*/
-int kernel_Fork();
+int kernel_Fork(UserContext *user_context);
 
 int kernel_Exec(char *filename, char **argvec);
 
@@ -66,7 +66,7 @@ void kernel_Exit(int status);
  |
  |  Returns:  int with returing childs PID
  *-------------------------------------------------------------------*/
-int kernel_Wait(int * status_ptr);
+int kernel_Wait(int * status_ptr, UserContext *uc);
 
 int kernel_GetPid();
 

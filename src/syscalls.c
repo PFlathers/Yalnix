@@ -200,7 +200,7 @@ void kernel_Exit(int status)
  |
  |  Returns:  int with returing childs PID
  *-------------------------------------------------------------------*/
-int kernel_Wait(int * status_ptr)
+int kernel_Wait(int * status_ptr, UserContext *uc)
 {
 	TracePrintf(3, "kernel_Wait ### start \n");
 	int child_pid_retval;
