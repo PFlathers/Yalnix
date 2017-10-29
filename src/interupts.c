@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <hardware.h>
+#include <string.h>
 #include "pcb.h"
 #include "kernel.h"
 #include "syscalls.h"
+#include "globals.h"
 
 //Prototypes of kernel traps.
 //This will be flushed out later.
@@ -18,6 +20,15 @@ void trapKernel(UserContext *uc)
   switch(uc->code) { 
       case YALNIX_EXEC:
         TracePrintf(3, "trapKernel: YALNIX_EXEC\n");
+        char *fname_p = (char *) uc->regs[0];
+        char **arg_p = (char **) uc->regs[1];
+        int file_size = (strlen(fname_p) + 1) * sizeof(char);
+
+        char *filename = (char *) malloc(file_size);
+        ALLOC_CHECK(filename, "exec");
+        memcpy((void*) filename, (void*) fname_p, file_size);
+
+        kernel_Exec(uc, filename, arg_p); 
         break;
 
       case YALNIX_DELAY:

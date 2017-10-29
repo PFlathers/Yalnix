@@ -159,7 +159,7 @@ int kernel_Fork(UserContext *user_context)
 //I Changed user_context to parent->user_context cause we mem copyed it into the
 //parent's usercontext space. If we do not do this, then we get a stack address
 //not valid error.
-	if (context_switch(parent, child, parent->user_context) != 0){
+	if (context_switch(parent, child, user_context) != 0){
 		TracePrintf(1, "kernel_Fork: error switching failed\n");
 		exit(ERROR);
 	}
@@ -182,9 +182,77 @@ int kernel_Fork(UserContext *user_context)
 	}
 }
 
-int kernel_Exec(char *filename, char **argvec)
+int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 {
-	return 0;
+	TracePrintf(3, "kernel_Exec ### start \n");
+
+	int i,retval;
+	// cont the number of arguments
+	int argc = 0;
+	while (argvec[argc] != NULL){
+		argc++;
+	}
+
+	/*change pcb and uc to look lke a blank process */ 
+	pcb *proc = curr_proc;
+
+	// user context
+		// vector code and addess should be as is
+		// registers is cleared (there is 8 of them)
+	bzero((void *) uc->regs, (8*sizeof(u_long)) );
+		// privileged regs are modified in Load Program
+
+
+	// pcb 
+		// id, uc as is
+		// has_kc is set to 0 as we need to bootstap it
+	proc->has_kc = 0;
+		// heap and brk ase set in the Load Program 
+		// region0_pt trashed and reinintialized
+	int trash_pfn;
+	int assign_pfn;
+	for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+		// put old fame back on the empty list
+		trash_pfn = (( (*(proc->region0_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
+		list_add(empty_frame_list, (void *) trash_pfn);
+		// pop one and assign
+		assign_pfn = ((u_long) (((int)(list_pop(empty_frame_list)) * PAGESIZE) >> PAGESHIFT));
+		(*(proc->region0_pt + i)).pfn = assign_pfn;
+	}
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+		// region1_pt trashed and reinintialized
+
+	for (i = 0; i < VREG_1_PAGE_COUNT; i++) {
+		if ( (*(proc->region1_pt + i)).valid == 0x1 ){
+			// thrash the page
+			trash_pfn = (( (*(proc->region1_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
+			list_add(empty_frame_list, (void *) trash_pfn);
+			
+			// reset validity nad pfn to default
+			(*(proc->region1_pt + i)).pfn = (u_long) 0x0;
+			(*(proc->region1_pt + i)).valid = (u_long) 0x0;
+
+		}
+	}
+
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
+
+
+
+	/* load next program */
+
+	retval = LoadProgram(filename, argvec, proc);
+	if (retval != SUCCESS) {
+		TracePrintf(3, "kernel_Exec: could not load program \n");
+		exit(ERROR);
+	}
+
+	/* replicate the rest of the uc */ 
+	memcpy((void *) uc, (void *) proc->user_context, sizeof(UserContext));
+
+	/* return */
+	return SUCCESS;
+
 }
 
 
