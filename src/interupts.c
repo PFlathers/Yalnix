@@ -27,7 +27,7 @@ void trapKernel(UserContext *uc)
         char *filename = (char *) malloc(file_size);
         ALLOC_CHECK(filename, "exec");
         memcpy((void*) filename, (void*) fname_p, file_size);
-
+        TracePrintf(6, "trapKernel: calling exec on %s\n", filename);
         kernel_Exec(uc, filename, arg_p); 
         break;
 
