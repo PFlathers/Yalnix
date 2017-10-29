@@ -42,6 +42,9 @@ int kernel_Fork(UserContext *user_context)
 	// create a new process and coppy the uc to it
 	TracePrintf(6, "kernel_Fork: creating new procees\n");
 	child = new_process(parent->user_context);
+
+	memcpy((void *) child->user_context, (void *) parent->user_context, sizeof(UserContext));
+	
 	// allocate space for stack and PTE
 	child->region1_pt = (struct pte *) malloc (VREG_1_PAGE_COUNT *sizeof(struct pte));
 	ALLOC_CHECK(child->region1_pt, "kernel_Fork");
