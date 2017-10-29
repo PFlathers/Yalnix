@@ -373,6 +373,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		pcb *child_pcb = list_pop(parent->zombiez);
 		child_pid_retval = child_pcb->process_id;
 
+		TracePrintf(6, "kernel_Wait: I should remove procces: %d from zombie list \n", child_pcb->process_id);
 		// if my understanding is correct, status should be 
 		// the pointer to the process
 		*status_ptr = *((int *) child_pcb);
@@ -402,7 +403,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		exit(ERROR);
 	}
 	else {
-		if (goto_next_process(uc, 0) != SUCCESS) {
+		if (goto_next_process(uc, 1) != SUCCESS) {
 			TracePrintf(3, "kernel_Wait: failed to kontext switch - exiting\n");
 			exit(ERROR);
 		}
