@@ -327,7 +327,7 @@ void KernelStart(char *cmd_args[],
 
 	// TLB flush
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-	KernelContextSwitch(clone_kc_stack, (pcb *) idle_proc, NULL);
+	//KernelContextSwitch(clone_kc_stack, (pcb *) idle_proc, NULL);
 	TracePrintf(3, "KernelStart: finished context switching\n");
 
 
