@@ -36,6 +36,7 @@ int kernel_Fork(UserContext *user_context)
 	// store user context of parent (important for sp and pc)
 	parent = curr_proc;
 	memcpy((void *) parent->user_context, (void *) user_context, sizeof(UserContext));
+	TracePrintf(0, "%04x|%04x\n", parent->user_context->sp, user_context->sp);
 
 	
 	// create a new process and coppy the uc to it
@@ -73,7 +74,7 @@ int kernel_Fork(UserContext *user_context)
 		TracePrintf(1, "kernel_Fork: not enough memory for child's user memory");
 		exit(ERROR);
 	}
-	for (i = 0; i<VREG_1_PAGE_COUNT; i++){
+	for (i = 0; i < VREG_1_PAGE_COUNT; i++){
 		if ( (*(child->region1_pt + i)).valid == (u_long) 0x1 ){
 			if( list_count(empty_frame_list) <= 0 ){
 				TracePrintf(1, "kernel_Fork: not enough memory for child's user memory");
@@ -92,7 +93,7 @@ int kernel_Fork(UserContext *user_context)
 
 	/* copy parent's memory to child process */
 	// (don't know how to do it efficiently)
-
+//000000
 	// this is the one page below the bottom of the stack, I.e.
 	// we copy our child's frame here so that we know where
 	// to return
@@ -152,10 +153,12 @@ int kernel_Fork(UserContext *user_context)
 
 	TracePrintf(6, "kernel_Fork: context switch to new process\n");
 	// context switch to the kid
-	if (context_switch(parent, child, user_context) != 0){
+	
+	if (context_switch(parent, child, parent->user_context) != 0){
 		TracePrintf(1, "kernel_Fork: error switching failed\n");
 		exit(ERROR);
 	}
+	
 	TracePrintf(6, "kernel_Fork: done with context switch to new process\n");
 
 	TracePrintf(3, "kernel_Fork ### end \n");
@@ -179,8 +182,46 @@ int kernel_Exec(char *filename, char **argvec)
 	return 0;
 }
 
-void kernel_Exit(int status)
+void kernel_Exit(int status, UserContext *uc)
 {
+	TracePrintf(3, "kernel_exit ### start\n");
+	pcb *temp_proc = curr_proc;
+	pcb *next_pcb;
+	pcb *curr_pcb = curr_proc;
+
+	if (list_count(ready_procs) <= 0) {
+		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
+		exit(ERROR);
+	}
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+			exit(ERROR);
+		}
+	}
+
+	if(temp_proc->parent == NULL){
+		free(temp_proc->region0_pt);
+		free(temp_proc->region1_pt);
+		free(temp_proc);
+	} else {
+		pcb* child_pcb;
+		Node *child_node = curr_proc->children->head;
+		while(child_node->next != NULL){
+			child_pcb = (pcb*) child_node->data;
+			child_pcb->parent = NULL;
+			child_node = child_node->next;
+		}
+		child_pcb = (pcb*) child_node->data;
+		child_pcb->parent = NULL;
+		list_add(zombie_procs, temp_proc);
+		list_remove(ready_procs, temp_proc);
+		free(temp_proc->region0_pt);
+		free(temp_proc->region1_pt);
+		temp_proc->exit_status = status;
+	}
+	
+	TracePrintf(3, "kernel_exit ### end\n");
 }
 
 

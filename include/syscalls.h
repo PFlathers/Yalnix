@@ -41,7 +41,7 @@ int kernel_Fork(UserContext *user_context);
 
 int kernel_Exec(char *filename, char **argvec);
 
-void kernel_Exit(int status);
+void kernel_Exit(int status, UserContext *uc);
 
 
 /*------------------------------------------------- Kernel_Wait -----
