@@ -153,7 +153,9 @@ int kernel_Fork(UserContext *user_context)
 
 	TracePrintf(6, "kernel_Fork: context switch to new process\n");
 	// context switch to the kid
-	
+//I Changed user_context to parent->user_context cause we mem copyed it into the
+//parent's usercontext space. If we do not do this, then we get a stack address
+//not valid error.
 	if (context_switch(parent, child, parent->user_context) != 0){
 		TracePrintf(1, "kernel_Fork: error switching failed\n");
 		exit(ERROR);
@@ -182,12 +184,28 @@ int kernel_Exec(char *filename, char **argvec)
 	return 0;
 }
 
+
+/*-------------------------Kernel_Exit----------------------------------------
+ * Function: kernel_Exit
+ * Purpose: implemtes the exit syscall. for details please see syscalls.h
+ *
+ * (1) if we have kids, mark them as orphans.
+ * (2) free all resources associated with the process and mark its return
+ * status.
+ * (3) if this is the root process, halt the system.
+ *
+ * Parameters:
+ *	status: the exit status of the process.
+ *	uc: the current user context.
+ */
 void kernel_Exit(int status, UserContext *uc)
 {
 	TracePrintf(3, "kernel_exit ### start\n");
-	pcb *temp_proc = curr_proc;
-	pcb *next_pcb;
-	pcb *curr_pcb = curr_proc;
+	pcb *temp_proc = curr_proc; // Save a reference for freeing later
+	int OG_Process = 0;
+	if(temp_proc->process_id == 0){
+		OG_Process = 1;
+	}
 
 	if (list_count(ready_procs) <= 0) {
 		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
@@ -199,11 +217,12 @@ void kernel_Exit(int status, UserContext *uc)
 			exit(ERROR);
 		}
 	}
-
+	// If its an orphan, we dont care
 	if(temp_proc->parent == NULL){
 		free(temp_proc->region0_pt);
 		free(temp_proc->region1_pt);
 		free(temp_proc);
+	// If its not an orphan, mark its children as orphans.
 	} else {
 		pcb* child_pcb;
 		Node *child_node = curr_proc->children->head;
@@ -222,6 +241,10 @@ void kernel_Exit(int status, UserContext *uc)
 	}
 	
 	TracePrintf(3, "kernel_exit ### end\n");
+	// If our root process stops, then we halt the system.
+	if(OG_Process){
+		Halt();
+	}
 }
 
 
