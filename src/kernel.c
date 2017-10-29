@@ -495,6 +495,26 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 int goto_next_process(UserContext *user_context, int repeat_bool)
 {
 	TracePrintf(1, "goto_next_process ### Start \n");
+
+
+        Node *temp = ready_procs->head;
+        pcb *p;
+        TracePrintf(3, "READY IDS\n");
+        while(temp != NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "proc id: %d\n", p->process_id);
+                temp = temp->next;
+        }
+
+        temp = all_procs->head;
+        TracePrintf(3, "ALL IDS\n");
+        while(temp != NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "proc id: %d\n", p->process_id);
+                temp = temp->next;
+        }
+
+
 	if (repeat_bool) {
 		list_add(ready_procs, (void *) curr_proc);
 	}
