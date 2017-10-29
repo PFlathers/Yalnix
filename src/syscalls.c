@@ -278,16 +278,11 @@ void kernel_Exit(int status, UserContext *uc)
 		OG_Process = 1;
 	}
 
-	if (list_count(ready_procs) <= 0) {
-		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-		exit(ERROR);
-	}
-	else {
-		if (goto_next_process(uc, 0) != SUCCESS) {
-			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
-			exit(ERROR);
-		}
-	}
+	int has_kids = ((proc->children == NULL) ? 0 : 1);
+  	int has_exited_kids = ((proc->exited_children == NULL) ? 0 : 1);
+  	int has_parent = ((proc->parent == NULL) ? 0 : 1);
+
+
 	// If its an orphan, we dont care
 	if(temp_proc->parent == NULL){
 		free(temp_proc->region0_pt);
@@ -309,6 +304,19 @@ void kernel_Exit(int status, UserContext *uc)
 		free(temp_proc->region0_pt);
 		free(temp_proc->region1_pt);
 		temp_proc->exit_status = status;
+	}
+	
+
+
+	if (list_count(ready_procs) <= 0) {
+		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
+		exit(ERROR);
+	}
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+			exit(ERROR);
+		}
 	}
 	
 	TracePrintf(3, "kernel_exit ### end\n");
