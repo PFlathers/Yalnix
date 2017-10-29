@@ -44,8 +44,8 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_EXIT:
         TracePrintf(3, "trapKernel: YALNIX_EXIT\n");
-	int status = (int) uc->regs[0];
-	kernel_Exit(status, uc);
+      	int status = (int) uc->regs[0];
+      	kernel_Exit(status, uc);
         break;
 
       case YALNIX_WAIT:

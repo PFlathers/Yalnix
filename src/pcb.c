@@ -22,7 +22,7 @@
 
 pcb *new_process(UserContext *uc)
 {
-
+	TracePrintf(3, "new_process ### enter\n");
 	// malloc new pcb
 	pcb *new_pcb = (pcb *) malloc( sizeof(pcb) );
 	ALLOC_CHECK(new_pcb, "PCB: new_process");
@@ -54,6 +54,8 @@ pcb *new_process(UserContext *uc)
 	// set new proc id - this is a global from kernel.h
 	new_pcb->process_id = available_process_id;
 	available_process_id++;
+	TracePrintf(6, "new_process: current proc id is %d, next one will be %d\n", new_pcb->process_id, available_process_id);
+
 	// modify user/kernel context? 
 
 	// initialize all pcb fields 
@@ -64,6 +66,7 @@ pcb *new_process(UserContext *uc)
   	new_pcb->brk_address = 0;
   	new_pcb->heap_start_pg = 0;
 
+TracePrintf(3, "new_process ### end\n");
 
 	return new_pcb;
 }

@@ -42,7 +42,6 @@ int kernel_Fork(UserContext *user_context)
 	// create a new process and coppy the uc to it
 	TracePrintf(6, "kernel_Fork: creating new procees\n");
 	child = new_process(parent->user_context);
-
 	memcpy((void *) child->user_context, (void *) parent->user_context, sizeof(UserContext));
 	
 	// allocate space for stack and PTE
@@ -148,7 +147,7 @@ int kernel_Fork(UserContext *user_context)
 	if (parent->children == NULL){
 		parent->children = init_list();
 	}
-	list_add(parent->children, child);
+	list_add(parent->children, (void *) child);
 
 	// add to all and ready procs
 	list_add(all_procs, child);
