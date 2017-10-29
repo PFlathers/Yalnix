@@ -84,6 +84,9 @@ void KernelStart(char *cmd_args[],
                  UserContext *user_context);
 void init_global(int);
 void init_pagetables(int, int);
+void config_registers();
+void create_idle_proc(UserContext *user_context);
+void create_init_proc(UserContext *user_context, char *cmd_args[]);
 
 int SetKernelBrk(void * addr);
 void DoIdle();

@@ -126,41 +126,9 @@ void init_pagetables(int r1_base_frame, int r1_top_frame)
 		r1_ptlist[frame_iter - r1_base_frame] = new_pt_entry;
 	}
 }
-/* 
- * KernelStart
- *  Before allowing the execution of user processes, 
- * the KernelStart routine 
- * should perform any initialization necessary 
- * for your kernel or required by the hardware. 
- */
-void KernelStart(char *cmd_args[], 
-                 unsigned int phys_mem_size,
-                 UserContext *user_context) 
+
+void config_registers()
 {
-	TracePrintf(0, "KernelStart ### Start\n");
-
-	/*LOCAL VARIABLES*/
-
-	int i; 
-	int arg_count; // number of variables passed 
-
-
-	// lowest frame in region 1 - see figure 2.2
-	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
-	// highest frame in region 1 - see 3ipure 2.2
-	int r1_top_frame = UP_TO_PAGE(VMEM_1_LIMIT) >> PAGESHIFT;
-
-
-	
-	/*GLOBAL VARIABLES*/
-	init_global(phys_mem_size);
-
-	/* PAGE TABLES */
-	init_pagetables(r1_base_frame, r1_top_frame);
-
-
-	/* CONFUGURE REGS */
-
 	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
   	WriteRegister(REG_VECTOR_BASE, (unsigned int) &interrupt_vector);
 
@@ -181,12 +149,10 @@ void KernelStart(char *cmd_args[],
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 	TracePrintf(8, "TLB flushed!\n");
 
+}
 
-	/* 
-	 * PROCESS HANDLING 
-	 * IDLE
-	 */
-
+void create_idle_proc(UserContext *user_context)
+{
 	// Create idle process based on current user context
 	// allocates within the function (see pcb.c)
 	// global idle_proc pcb defined in kernel.h
@@ -228,13 +194,11 @@ void KernelStart(char *cmd_args[],
 	memcpy((void *)idle_proc->region0_pt,
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
+}
 
-
-	/* 
-	 * PROCESS HANDLING 
-	 * INIT
-	 */
-
+void create_init_proc(UserContext *user_context, char *cmd_args[])
+{
+	int i;
 	 // base it of of the init (so that I don't have to re-do things)
 	 pcb *init_proc = (pcb *) new_process(user_context);
 
@@ -303,12 +267,58 @@ void KernelStart(char *cmd_args[],
   			TracePrintf(3, "LoadProgram failed; code %d", lpr);
   		}
   	}
+}
+/* 
+ * KernelStart
+ *  Before allowing the execution of user processes, 
+ * the KernelStart routine 
+ * should perform any initialization necessary 
+ * for your kernel or required by the hardware. 
+ */
+void KernelStart(char *cmd_args[], 
+                 unsigned int phys_mem_size,
+                 UserContext *user_context) 
+{
+	TracePrintf(0, "KernelStart ### Start\n");
+
+	/*LOCAL VARIABLES*/
+
+	int i; 
+	int arg_count; // number of variables passed 
+
+
+	// lowest frame in region 1 - see figure 2.2
+	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
+	// highest frame in region 1 - see 3ipure 2.2
+	int r1_top_frame = UP_TO_PAGE(VMEM_1_LIMIT) >> PAGESHIFT;
+
+
+	
+	/*GLOBAL VARIABLES*/
+	init_global(phys_mem_size);
+
+	/* PAGE TABLES */
+	init_pagetables(r1_base_frame, r1_top_frame);
+
+	/* CONFUGURE REGS */
+	config_registers();
+
+
+	/* 
+	 * PROCESS HANDLING 
+	 * IDLE
+	 */
+	create_idle_proc(user_context);
+
+	/* 
+	 * PROCESS HANDLING 
+	 * INIT
+	 */
+	create_init_proc(user_context, cmd_args);
 
 	/* 
 	 * BOOKKEEPING 
 	 */
-
- 
 	list_add(all_procs, (void *) idle_proc);
 	curr_proc = idle_proc;
 	// // copy idle's usercontext into the current usercontext
@@ -316,7 +326,6 @@ void KernelStart(char *cmd_args[],
 
 
 	TracePrintf(0, "KernelStart ### End \n");
-
 } 
 
 /*
