@@ -423,7 +423,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
 	list_remove(zombie_procs, child_pcb);
-	list_remove(all_procs, child_pcb);
+	list_remove(all_procs, child_pcb); 
 
 
 	// return the pid of the child that returned (mind == blown)
