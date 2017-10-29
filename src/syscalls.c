@@ -174,9 +174,33 @@ int kernel_Fork(UserContext *user_context)
 	}
 }
 
-int kernel_Exec(char *filename, char **argvec)
+int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 {
-	return 0;
+	TracePrintf(3, "kernel_Exec ### start \n");
+
+	// cont the number of arguments
+	int argc = 0;
+	while (argvec[argc] != NULL){
+		argc++;
+	}
+
+	/*change pcb and uc to look lke a blank process */ 
+
+	pcb *proc = curr_proc;
+
+	// user context
+		// vector code and addess should be as is
+		// registers is cleared
+		// privileged regs are modified in Load Program
+
+
+	// pcb 
+		// id, uc as is
+		// has_kc is set to 0 as we need to bootstap it
+		// region0/1_pt trashed and reinintialized
+		// heap and brk ase set in the Load Program 
+
+
 }
 
 void kernel_Exit(int status)
