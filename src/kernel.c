@@ -42,7 +42,38 @@ void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd)
   TracePrintf(1, "SetKernelData ### End\n");
 }
 
+void init_global(int phys_mem_size)
+{
+	int frame_iter;
+	// break starts as kernel_data_end
+	kernel_brk = kernel_data_end;	
 
+	// physical memory
+	// constants in hardware.h
+	// memory shifts explained in pg 24, bullet 4
+	total_physical_frames = phys_mem_size / PAGESIZE;
+	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
+	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
+
+	// init me baybe
+	empty_frame_list = init_list();
+	// Create the List of empty frames (NEEDS EDITING)
+  	for (frame_iter = physical_kernel_frames; frame_iter < total_physical_frames; frame_iter++){
+		list_add(empty_frame_list, (void *) frame_iter);
+  	}
+
+
+	// under is a mess, clean it up
+
+	available_process_id = 0;	// at start we run at 0
+
+
+	// process tracking lists (per sean's suggestion)
+	ready_procs = (List *)init_list();
+	blocked_procs = (List *)init_list();
+	all_procs = (List *)init_list(); 
+	zombie_procs = (List *)init_list(); 
+}
 /* 
  * KernelStart
  *  Before allowing the execution of user processes, 
@@ -70,35 +101,7 @@ void KernelStart(char *cmd_args[],
 
 	
 	/*GLOBAL VARIABLES*/
-
-	// break starts as kernel_data_end
-	kernel_brk = kernel_data_end;	
-
-	// physical memory
-	// constants in hardware.h
-	// memory shifts explained in pg 24, bullet 4
-	total_physical_frames = phys_mem_size / PAGESIZE;
-	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
-	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
-
-	// init me baybe
-	empty_frame_list = init_list();
-	// Create the List of empty frames (NEEDS EDITING)
-  	for (i = physical_kernel_frames; i < total_physical_frames; i++){
-		list_add(empty_frame_list, (void *) i);
-  	}
-
-
-	// under is a mess, clean it up
-
-	available_process_id = 0;	// at start we run at 0
-
-
-	// process tracking lists (per sean's suggestion)
-	ready_procs = (List *)init_list();
-	blocked_procs = (List *)init_list();
-	all_procs = (List *)init_list(); 
-	zombie_procs = (List *)init_list(); 
+	init_global(phys_mem_size);
 
 
 
