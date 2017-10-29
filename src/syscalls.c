@@ -174,10 +174,29 @@ int kernel_Fork(UserContext *user_context)
 	}
 }
 
+
+/*------------------------------------------------- kernel_Exec -----
+|  Function kernel_Exec
+|
+|  Purpose:  Replace the currently running program in the calling process’s 
+|  memory with the program. stored in the file named by filename. 
+| The argument argvec points to a vector of arguments to pass to the new 
+| program as its argument list.
+|
+|  Parameters:
+|      UserContext *uc (IN/OUT) -- user context of currently
+| 				running process - used to bootstrap the new procees
+| 				with same vector code and address
+|	   char *filename (IN) - time of the program to load
+|	   char **argvec (IN) - list of arguments to program in "filename" 		
+|
+|  Returns:  SUCCESS if the new program started, ERROR otherwise
+*-------------------------------------------------------------------*/
 int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 {
 	TracePrintf(3, "kernel_Exec ### start \n");
 
+	int i,retval;
 	// cont the number of arguments
 	int argc = 0;
 	while (argvec[argc] != NULL){
@@ -185,21 +204,64 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	}
 
 	/*change pcb and uc to look lke a blank process */ 
-
 	pcb *proc = curr_proc;
 
 	// user context
 		// vector code and addess should be as is
-		// registers is cleared
+		// registers is cleared (there is 8 of them)
+	bzero((void *) uc->regs, (8*sizeof(u_long)) )
 		// privileged regs are modified in Load Program
 
 
 	// pcb 
 		// id, uc as is
 		// has_kc is set to 0 as we need to bootstap it
-		// region0/1_pt trashed and reinintialized
+	proc->has_kc = 0;
 		// heap and brk ase set in the Load Program 
+		// region0_pt trashed and reinintialized
+	int trash_pfn;
+	int assign_pfn;
+	for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+		// put old fame back on the empty list
+		trash_pfn = (( (*(proc->region0_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
+		list_add(empty_frame_list, (void *) trash_pfn);
+		// pop one and assign
+		assign_pfn = ((u_long) (((int)(list_pop(empty_frame_list)) * PAGESIZE) >> PAGESHIFT));
+		(*(proc->region0_pt + i)).pfn = assign_pfn;
+	}
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+		// region1_pt trashed and reinintialized
 
+	for (i = 0; i < VREG_1_PAGE_COUNT; i++) {
+		if ( (*(proc->region1_pt + i)).valid == 0x1 ){
+			// thrash the page
+			trash_pfn = (( (*(proc->region1_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
+			list_add(empty_frame_list, (void *) trash_pfn);
+			
+			// reset validity nad pfn to default
+			(*(proc->region1_pt + i)).pfn = (u_long) 0x0;
+			(*(proc->region1_pt + i)).valid = (u_long) 0x0;
+
+		}
+	}
+
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
+
+
+
+	/* load next program */
+
+	retval = LoadProgram(filename, argvec, proc);
+	if (retval != SUCCESS) {
+		TracePrintf(3, "kernel_Exec: could not load program \n");
+		exit(ERROR);
+	}
+
+	/* replicate the rest of the uc */ 
+	memcpy((void *) uc, (void *) proc->user_context, sizeof(UserContext));
+
+	/* return */
+	return SUCCESS;
 
 }
 

@@ -39,7 +39,35 @@
 *-------------------------------------------------------------------*/
 int kernel_Fork(UserContext *user_context);
 
-int kernel_Exec(char *filename, char **argvec);
+
+/*------------------------------------------------- kernel_Exec -----
+|  Function kernel_Exec
+|
+|  Description:  Replace the currently running program in the calling process’s 
+|  memory with the program. stored in the file named by filename. 
+| The argument argvec points to a vector of arguments to pass to the new 
+| program as its argument list. When the new program begins running, 
+| its argv[argc] is NULL. By convention the first argument in the argument 
+| list passed to a new program (argvec[0]) is also the name of the new 
+| program to be run, but this is just a convention; the actual file name 
+| to run is determined only by the filename argument. On success, 
+| there is no return from this call in the calling program, and instead, 
+| the new program begins executing in this process at its entry point, and its 
+| main(argc, argv) routine is called. On failure, if the calling process has 
+| not been destroyed already, this call returns ERROR and does not run the 
+| new program. (However, if the kernel has already torn down the caller 
+| before encountering the error, then there is no process to return to!)
+|
+|  Parameters:
+|      UserContext *uc (IN/OUT) -- user context of currently
+| 				running process - used to bootstrap the new procees
+| 				with same vector code and address
+|	   char *filename (IN) - time of the program to load
+|	   char **argvec (IN) - list of arguments to program in "filename" 		
+|
+|  Returns:  SUCCESS if the new program started, ERROR otherwise
+*-------------------------------------------------------------------*/
+int kernel_Exec(UserContext *uc, char *filename, char **argvec);
 
 void kernel_Exit(int status);
 
