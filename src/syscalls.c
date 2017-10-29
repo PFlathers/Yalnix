@@ -165,14 +165,15 @@ int kernel_Fork(UserContext *user_context)
 	
 	TracePrintf(6, "kernel_Fork: done with context switch to new process\n");
 
-	TracePrintf(3, "kernel_Fork ### end \n");
 	// return
 		// if current proc is parent return child id
 	if (curr_proc->process_id == parent->process_id){
+		TracePrintf(3, "kernel_Fork ### return to parent  \n");
 		return child->process_id;
 	}
 		// if current proc is child return 0
 	else if (curr_proc->process_id == child->process_id){
+		TracePrintf(3, "kernel_Fork ### return to child  \n");
 		return 0;
 	}
 		// else return ERROR
