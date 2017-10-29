@@ -74,6 +74,58 @@ void init_global(int phys_mem_size)
 	all_procs = (List *)init_list(); 
 	zombie_procs = (List *)init_list(); 
 }
+
+void init_pagetables(int r1_base_frame, int r1_top_frame)
+{
+	int frame_iter;
+    // Build the initial page tables for Region 0 (pg 50, bullet 4)
+   	// Page table entry is 32-bits wide (but does not use all 32 bits).
+	// struct pte defined in hardware.h
+	for (frame_iter = 0; frame_iter < physical_kernel_frames; frame_iter++) {
+    	// PTE struct
+    	struct pte new_pt_entry;
+
+    	// If counter is above stack base or
+  		// below the used frames make it valid
+		if ((frame_iter < used_physical_kernel_frames) || (frame_iter >= (KERNEL_STACK_BASE >> PAGESHIFT)))
+		   new_pt_entry.valid = (u_long) 0x1;
+		else
+		   new_pt_entry.valid = (u_long) 0x0; 
+
+		// if memory is bellow kernel data start 
+		// (i.e if it's kernel stach), we can read or exec,
+		// if userland we can read or write (see pg 28, bullet 2) 
+		if (frame_iter < (((unsigned int)kernel_data_start) >> PAGESHIFT))
+      		new_pt_entry.prot = (u_long) (PROT_READ | PROT_EXEC); // exec and read protections
+		else
+      		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE); // read and write protections
+
+		// pft (24 bits as defined on pg 28, bullet 3)
+		//field contains the page frame number (the physical memory page number) 
+		// of the page of physical memory to which this virtual memory page is 
+		//mapped by this page table entry
+		// If i get this correctly, that should just be base + ith page's address
+		new_pt_entry.pfn = (u_long) ((PMEM_BASE + (frame_iter * PAGESIZE)) >> PAGESHIFT);
+		
+		// set up a pagetable entry to be sth like
+		r0_ptlist[frame_iter] = new_pt_entry;
+  
+    }
+
+
+	// Build the initial page tables for Region 1 (pg 50, bullet 4)
+	for (frame_iter = r1_base_frame; frame_iter < r1_top_frame; frame_iter++) {
+		struct pte new_pt_entry; // New pte entry
+
+		// So far, page is invalid, has read/write protections, and no pfn
+		new_pt_entry.valid = (u_long) 0x0;
+		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE);
+		new_pt_entry.pfn = (u_long) 0x0;
+
+		// Add the page to the pagetable (accounting for 0-indexing - not sure if I need to add 1)
+		r1_ptlist[frame_iter - r1_base_frame] = new_pt_entry;
+	}
+}
 /* 
  * KernelStart
  *  Before allowing the execution of user processes, 
@@ -103,57 +155,8 @@ void KernelStart(char *cmd_args[],
 	/*GLOBAL VARIABLES*/
 	init_global(phys_mem_size);
 
-
-
 	/* PAGE TABLES */
-
-    // Build the initial page tables for Region 0 (pg 50, bullet 4)
-   	// Page table entry is 32-bits wide (but does not use all 32 bits).
-	// struct pte defined in hardware.h
-	for (i = 0; i < physical_kernel_frames; i++) {
-    	// PTE struct
-    	struct pte new_pt_entry;
-
-    	// If counter is above stack base or
-  		// below the used frames make it valid
-		if ((i < used_physical_kernel_frames) || (i >= (KERNEL_STACK_BASE >> PAGESHIFT)))
-		   new_pt_entry.valid = (u_long) 0x1;
-		else
-		   new_pt_entry.valid = (u_long) 0x0; 
-
-		// if memory is bellow kernel data start 
-		// (i.e if it's kernel stach), we can read or exec,
-		// if userland we can read or write (see pg 28, bullet 2) 
-		if (i < (((unsigned int)kernel_data_start) >> PAGESHIFT))
-      		new_pt_entry.prot = (u_long) (PROT_READ | PROT_EXEC); // exec and read protections
-		else
-      		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE); // read and write protections
-
-		// pft (24 bits as defined on pg 28, bullet 3)
-		//field contains the page frame number (the physical memory page number) 
-		// of the page of physical memory to which this virtual memory page is 
-		//mapped by this page table entry
-		// If i get this correctly, that should just be base + ith page's address
-		new_pt_entry.pfn = (u_long) ((PMEM_BASE + (i * PAGESIZE)) >> PAGESHIFT);
-		
-		// set up a pagetable entry to be sth like
-		r0_ptlist[i] = new_pt_entry;
-  
-    }
-
-
-	// Build the initial page tables for Region 1 (pg 50, bullet 4)
-	for (i = r1_base_frame; i < r1_top_frame; i++) {
-		struct pte new_pt_entry; // New pte entry
-
-		// So far, page is invalid, has read/write protections, and no pfn
-		new_pt_entry.valid = (u_long) 0x0;
-		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE);
-		new_pt_entry.pfn = (u_long) 0x0;
-
-		// Add the page to the pagetable (accounting for 0-indexing - not sure if I need to add 1)
-		r1_ptlist[i - r1_base_frame] = new_pt_entry;
-	}
+	init_pagetables(r1_base_frame, r1_top_frame);
 
 
 	/* CONFUGURE REGS */

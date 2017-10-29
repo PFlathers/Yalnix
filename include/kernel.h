@@ -83,6 +83,7 @@ void KernelStart(char *cmd_args[],
                  unsigned int phys_mem_size,
                  UserContext *user_context);
 void init_global(int);
+void init_pagetables(int, int);
 
 int SetKernelBrk(void * addr);
 void DoIdle();
