@@ -284,19 +284,15 @@ void kernel_Exit(int status, UserContext *uc)
 		OG_Process = 1;
 	}
 
-	if (OG_Process && (list_count(ready_procs) <= 0)){
-		Halt();
-	}
 
-
-	int has_kids = ((temp_proc->children == NULL) ? 0 : 1);
-  	int has_zombiez = ((temp_proc->zombiez == NULL) ? 0 : 1);
-  	int has_parent = ((temp_proc->parent == NULL) ? 0 : 1);
-
-
-
-  	if (has_kids) {
-  		pcb* child_pcb = NULL;
+	// If its an orphan, we dont care
+	if(temp_proc->parent == NULL){
+		free(temp_proc->region0_pt);
+		free(temp_proc->region1_pt);
+		free(temp_proc);
+	// If its not an orphan, mark its children as orphans.
+	} else {
+		pcb* child_pcb;
 		Node *child_node = curr_proc->children->head;
 		while(child_node->next != NULL){
 			child_pcb = (pcb*) child_node->data;
@@ -305,99 +301,32 @@ void kernel_Exit(int status, UserContext *uc)
 		}
 		child_pcb = (pcb*) child_node->data;
 		child_pcb->parent = NULL;
-		// list_add(zombie_procs, temp_proc);
-		// list_remove(ready_procs, temp_proc);
-		// free(temp_proc->region0_pt);
-		// free(temp_proc->region1_pt);
-		// temp_proc->exit_status = status;
-
-  	}
-
-  	// if (has_zombiez) {
-
-  	// }
-
-  	if (has_parent){
-  		pcb *parent = temp_proc->parent;
-
-  		list_remove(parent->children, (void *) temp_proc);
-
-  		if (parent->zombiez == NULL){
-  			parent->zombiez = init_list();
-  		}
-
-  		list_add(parent->zombiez, temp_proc);
-  	}
-
-  	list_remove(all_procs, (void *) temp_proc);
-  	list_add(zombies, (void *) temp_proc);
-
-  	int i, trash_pfn, assign_pfn;
-  	for (i = 0; i < KERNEL_PAGE_COUNT; i++){
-		// put old fame back on the empty list
-		trash_pfn = (( (*(temp_proc->region0_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
-		list_add(empty_frame_list, (void *) trash_pfn);
-		// pop one and assign
-		(*(proc->region0_pt + i)).pfn = (u_long) 0x0;
-	    (*(proc->region0_pt + i)).valid = (u_long) 0x0;
-
-	}
-
-	for (i = 0; i < VREG_1_PAGE_COUNT; i++) {
-		if ( (*(proc->region1_pt + i)).valid == 0x1 ){
-			// thrash the page
-			trash_pfn = (( (*(proc->region1_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
-			list_add(empty_frame_list, (void *) trash_pfn);
-			
-			// reset validity nad pfn to default
-			(*(proc->region1_pt + i)).pfn = (u_long) 0x0;
-			(*(proc->region1_pt + i)).valid = (u_long) 0x0;
-
-		}
-	}	
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-
-
-
-	if(temp_proc->parent == NULL){
+		list_add(zombie_procs, temp_proc);
+		list_remove(ready_procs, temp_proc);
 		free(temp_proc->region0_pt);
 		free(temp_proc->region1_pt);
-		if (has_kids){
-			temp_proc->children;
-		}
-		if (has_zombiez){
-			free(temp_proc->zombiez);
-		}
-	  	free(temp_proc->user_context);
-		free(temp_proc->kernel_context);
-	}
-	
-	
-	pcb *next = list_pop(ready_procs);
-	while (next->has_kc == 0 ){
-		list_add(ready_procs, (void *) next);
-		next = list_pop(ready_procs);
-	}
 
-	if (context_switch((pcb *) NULL, next, uc) != SUCCESS) {
+		temp_proc->exit_status = status;
+	}
+	
+
+
+	if (list_count(ready_procs) <= 0) {
+		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
 		exit(ERROR);
 	}
-
-
-	// if (list_count(ready_procs) <= 0) {
-	// 	TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-	// 	exit(ERROR);
-	// }
-	// else {
-	// 	if (goto_next_process(uc, 0) != SUCCESS) {
-	// 		TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
-	// 		exit(ERROR);
-	// 	}
-	// }
-
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+			exit(ERROR);
+		}
+	}
+	
 	TracePrintf(3, "kernel_exit ### end\n");
 	// If our root process stops, then we halt the system.
-
+	if(OG_Process){
+		Halt();
+	}
 }
 
 
