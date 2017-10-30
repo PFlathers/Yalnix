@@ -1,3 +1,26 @@
+/*=============================================================================
+ |   Assignment:  Yalnix Kernel
+ |
+ |       Author:  Patrick Flathers and Bruno Korbar
+ |     Language:  C compiled by Sean's magical 
+ |   To Compile:  run `make` in the source folder; find results in bin folder
+ |
+ |        Class:  COSC58
+ |   Instructor:  Sean Smith
+ |     Due Date:  too soon
+ |
+ +-----------------------------------------------------------------------------
+ |
+ | Description:  Through this assignment, you will be able to learn how a real 
+ | operating system kernel works, managing the hardware resources of the computer 
+ | system and providing services to user processes running on the system. In the 
+ | project, you will implement an operating system kernel for the Yalnix operating 
+ | system, running on a fictional computer system known as the DCS 58.
+ |
+ |   Known Bugs:  it doesn't really work (yet)
+ |
+ *===========================================================================*/
+
 #include <hardware.h>
 
 #include "kernel.h"
@@ -587,5 +610,3 @@ void scheduler(void)
 
 }
 
-
-/*Switch PCBs*/
