@@ -171,7 +171,7 @@ int kernel_Fork(UserContext *user_context)
 		TracePrintf(3, "kernel_Fork ### return to parent  \n");
 		return child->process_id;
 	}	// if current proc is child return 0
-	else if (curr_proc== child){
+	else if (curr_proc == child){
 		TracePrintf(3, "kernel_Fork ### return to child  \n");
 		return 0;
 	}	// else return ERROR
