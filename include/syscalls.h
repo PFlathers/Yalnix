@@ -7,6 +7,7 @@
 // structures instead of them being defined here. 
 #include "pipe.h"
 #include "tty.h"
+#include "pcb.h"
 
 
 
@@ -44,6 +45,7 @@ int kernel_Exec(UserContext*, char *filename, char **argvec);
 void kernel_Exit(int status, UserContext *uc);
 
 
+void free_pagetables(pcb* myproc);
 /*------------------------------------------------- Kernel_Wait -----
  |  Function kernel_Wait
  |
