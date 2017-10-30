@@ -23,6 +23,7 @@
 | 			as a kid (return value == 0) and as a parent (return value ==
 | 			child's id). 
 *-------------------------------------------------------------------*/
+//TODO: Fix this.
 int kernel_Fork(UserContext *user_context)
 {
 	TracePrintf(3, "kernel_Fork ### start \n");
@@ -95,7 +96,7 @@ int kernel_Fork(UserContext *user_context)
 
 	/* copy parent's memory to child process */
 	// (don't know how to do it efficiently)
-//000000
+        //
 	// this is the one page below the bottom of the stack, I.e.
 	// we copy our child's frame here so that we know where
 	// to return
@@ -180,6 +181,17 @@ int kernel_Fork(UserContext *user_context)
 	}
 }
 
+/* --------------------------kernel_Exec-----------------------------------
+ * Loads a program into the current process and begins execution of that program.
+ *
+ * Function variables:
+ *      uc: the current user context
+ *      filename: the file that we have to execute
+ *      argev; the arguements that we are going to pass to LoadProg so that we 
+ *              can load the program and pass it the proper arguements.
+ * Returns Sucess if we sucessfully exec the program. returns ERORR if there is
+ * a problem with Load Prog. Common error is that the file doesnt exist...
+ *------------------------------------------------------------------------*/
 int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 {
 	TracePrintf(3, "kernel_Exec ### start \n");
@@ -271,7 +283,7 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
  * Parameters:
  *	status: the exit status of the process.
  *	uc: the current user context.
- */
+ *-------------------------------------------------------------------------*/
 void kernel_Exit(int status, UserContext *uc)
 {
 	TracePrintf(3, "kernel_exit ### start\n");
@@ -337,11 +349,19 @@ void kernel_Exit(int status, UserContext *uc)
 		Halt();
 	}
 }
-
+/*
+ * Helper function that frees the pagetables of a pcb by returning them to 
+ * empty_frame_list for use in another process later.
+ *
+ * Function variables:
+ *      myproc: the process that we want to recycle to pagetables.
+ */
 void free_pagetables(pcb* myproc)
 {
         int i;
         int trash_pfn;
+
+        //Recycle the kernel page tables
         for (i = 0; i < KERNEL_PAGE_COUNT; i ++){
                 if( (*(myproc->region0_pt + i)).valid == 0x1){
                         (*(myproc->region0_pt + i)).valid = (u_long) 0x0;
@@ -350,7 +370,8 @@ void free_pagetables(pcb* myproc)
                         (*(myproc->region0_pt + i)).pfn = (u_long) 0x0;
                 }
         }
-
+        
+        //Recycle the userland page tables
         for (i = 0; i < VREG_1_PAGE_COUNT; i++){
                 if( (*(myproc->region1_pt + i)).valid == 0x1 ){
                         trash_pfn = (( (*(myproc->region1_pt + i)).pfn << PAGESHIFT)/PAGESIZE);
@@ -360,6 +381,8 @@ void free_pagetables(pcb* myproc)
                         (*(myproc->region1_pt + i)).valid= (u_long) 0x0;
                 }
         }
+
+        //Dont forget to flush.
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 }
 

@@ -65,6 +65,15 @@ void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd)
   TracePrintf(1, "SetKernelData ### End\n");
 }
 
+
+/*
+ * Initializes the process lists which are: ready_procs, all_procs, blocked_procs, zombie_procs
+ * Initializes the empty_frame list so we can create pagetabels later.
+ * Sets the first process id to 0.
+ *
+ * function variables: 
+ *      phy_mem_size: the actual size of how much ram we have to work with.
+ */
 void init_global(int phys_mem_size)
 {
 	int frame_iter;
@@ -98,10 +107,24 @@ void init_global(int phys_mem_size)
 	zombie_procs = (List *)init_list(); 
 }
 
+/*
+ * Initializes the pages tables for the kernel space and user space. For our current
+ * new process. Append these page tables to r1_ptlist or r0_ptlist respectively.
+ *
+ * r1_plist : user space entries. read and write permissions
+ * r0_plist : kernel space entries. read and exec permisisons
+ *
+ * function variables:
+ *      r1_base_frame: the bottom location of the frames for the page table entires
+ *      r1_top_frame: the top of the frames for the page table entires. 
+ * Pages tables entries exist between base and top.
+ * 
+ *
+ */
 void init_pagetables(int r1_base_frame, int r1_top_frame)
 {
 	int frame_iter;
-    // Build the initial page tables for Region 0 (pg 50, bullet 4)
+        // Build the initial page tables for Region 0 (pg 50, bullet 4)
    	// Page table entry is 32-bits wide (but does not use all 32 bits).
 	// struct pte defined in hardware.h
 	for (frame_iter = 0; frame_iter < physical_kernel_frames; frame_iter++) {
@@ -150,6 +173,14 @@ void init_pagetables(int r1_base_frame, int r1_top_frame)
 	}
 }
 
+/*
+ * Configures the the registers so that interrupts will go to our intterupt table, 
+ * put references to the page table entries in the registers, flush the TLB so that 
+ * our new page table entires will be accessable. (possibly move the flush to the 
+ * init_pagetables fucntion since we need to flush before use, but makes sense to 
+ * group with the other registers).
+ *
+ */
 void config_registers()
 {
 	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
@@ -171,9 +202,18 @@ void config_registers()
 	// (when do we not want to have flush all and use other consts?)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 	TracePrintf(8, "TLB flushed!\n");
-
 }
 
+/*
+ * Creates out first process. the master process. pid of 0. just idles so we 
+ * always have a function to switch to in the scheduler. If this process dies,
+ * we halt the system as is implemented in kernel_exit.
+ *
+ * Function variables:
+ *      user_context: pointer to a UserContext, which is the first user context,
+ *              given to kernel start from the intialization of the kernel.
+ *
+ */
 void create_idle_proc(UserContext *user_context)
 {
 	// Create idle process based on current user context
@@ -219,6 +259,18 @@ void create_idle_proc(UserContext *user_context)
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
 }
 
+/*
+ * Creates the second process for the kernel. Manually created since we did not
+ * have fork at the time which we were doing context switching.
+ *
+ * TODO: replace this with somekind of fork.
+ *
+ * Function variables: 
+ *      user_context: refers to the user contexted passed to kernel start.
+ *      cmd_args: the arguements passed to the kernel start along with the 
+ *              intializing program.
+ *
+ */
 void create_init_proc(UserContext *user_context, char *cmd_args[])
 {
 	int i;
@@ -427,7 +479,19 @@ void DoIdle() {
   } 
 } 
 
-
+/*
+ * Clones the kernel context stack so that if a process does not yet have a 
+ * kernel context stack, it can get one. 
+ *
+ * function variables:
+ *      kernel_context_in: idk why we are passing this as we do not use it.
+ *      current_pcb: the current process that is running.
+ *      next_pcb: the next process that we want to run that does not have a
+ *              kernel context stack yet.
+ *
+ *      TODO: figure out why we are passing kernel_context_in;
+ *      
+ */
 void *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
 {
 	TracePrintf(2, "clone_kc_stack ### Start : my guess \n");
@@ -471,6 +535,15 @@ void *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *
 
 
 /* magic function from 5.2 */ 
+/*
+ * copies the kernel context into the current pcb.
+ * creates a new kernel context stack if the next_pcb does not have one.
+ * function variables:
+ *      kernel_context_in: the current kernel context.
+ *      current_pcb: the current process that is running, we save the kc into it.
+ *      next_pcb: the next process that we want to run that does not have a
+ *              kernel context stack yet.
+ */
 KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
 {
 	TracePrintf(2, "MyKCS ### Start : my guess \n");
@@ -515,6 +588,15 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 }
 
 /* switch to a new process - makes life easier for syscalls */
+/*
+ * Essentially proactively calling the scheduler when we need to switch processes
+ * in a syscall. 
+ *
+ * function variables:
+ *      user_context: the current context in userland
+ *      repeat_bool: 0 if we do not need to add the current process back into the 
+ *              shceduler, 1 if we do.
+ */
 int goto_next_process(UserContext *user_context, int repeat_bool)
 {
 	TracePrintf(1, "goto_next_process ### Start \n");
@@ -556,7 +638,9 @@ int goto_next_process(UserContext *user_context, int repeat_bool)
 	
 }
 
-
+/*
+ * Switches the context from the current pcb to the next pcb.
+ */
 int context_switch(pcb *current, pcb *next, UserContext *user_context)
 {
 	TracePrintf(2, "ContextSwitch ### Start \n");
