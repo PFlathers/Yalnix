@@ -185,6 +185,7 @@ int kernel_Fork(UserContext *user_context)
 int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 {
 	TracePrintf(3, "kernel_Exec ### start \n");
+        TracePrintf(3, "%s" , filename);
 
 	int i,retval;
 	// cont the number of arguments
@@ -192,7 +193,7 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	while (argvec[argc] != NULL){
 		argc++;
 	}
-
+        TracePrintf(3, "1\n");
 	/*change pcb and uc to look lke a blank process */ 
 	pcb *proc = curr_proc;
 
@@ -203,6 +204,7 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 		// privileged regs are modified in Load Program
 
 
+        TracePrintf(3, "2\n");
 	// pcb 
 		// id, uc as is
 		// has_kc is set to 0 as we need to bootstap it
@@ -222,6 +224,7 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 		// region1_pt trashed and reinintialized
 
+        TracePrintf(3, "3\n");
 	for (i = 0; i < VREG_1_PAGE_COUNT; i++) {
 		if ( (*(proc->region1_pt + i)).valid == 0x1 ){
 			// thrash the page
@@ -238,6 +241,8 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
 
+        TracePrintf(3, "filename: %s\n", filename);
+        TracePrintf(3, "proc: %d\n", proc->process_id);
 
 	/* load next program */
 
@@ -277,12 +282,22 @@ void kernel_Exit(int status, UserContext *uc)
 	if(temp_proc->process_id == 0){
 		OG_Process = 1;
 	}
-
+/*
 	int has_kids = ((proc->children == NULL) ? 0 : 1);
   	int has_exited_kids = ((proc->exited_children == NULL) ? 0 : 1);
   	int has_parent = ((proc->parent == NULL) ? 0 : 1);
+*/
 
-
+	if (list_count(ready_procs) <= 0) {
+		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
+		exit(ERROR);
+	}
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+			exit(ERROR);
+		}
+	}
 	// If its an orphan, we dont care
 	if(temp_proc->parent == NULL){
 		free(temp_proc->region0_pt);
@@ -308,16 +323,6 @@ void kernel_Exit(int status, UserContext *uc)
 	
 
 
-	if (list_count(ready_procs) <= 0) {
-		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-		exit(ERROR);
-	}
-	else {
-		if (goto_next_process(uc, 0) != SUCCESS) {
-			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
-			exit(ERROR);
-		}
-	}
 	
 	TracePrintf(3, "kernel_exit ### end\n");
 	// If our root process stops, then we halt the system.
