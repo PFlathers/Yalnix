@@ -152,6 +152,7 @@ int kernel_Fork(UserContext *user_context)
 	// add to all and ready procs
 	list_add(all_procs, child);
 	list_add(ready_procs, child);
+	list_add(ready_procs, parent);
 
 	TracePrintf(6, "kernel_Fork: context switch to new process\n");
 	// context switch to the kid
@@ -167,16 +168,14 @@ int kernel_Fork(UserContext *user_context)
 
 	// return
 		// if current proc is parent return child id
-	if (curr_proc->process_id == parent->process_id){
+	if (curr_proc == parent){
 		TracePrintf(3, "kernel_Fork ### return to parent  \n");
 		return child->process_id;
-	}
-		// if current proc is child return 0
-	else if (curr_proc->process_id == child->process_id){
+	}	// if current proc is child return 0
+	else if (curr_proc== child){
 		TracePrintf(3, "kernel_Fork ### return to child  \n");
 		return 0;
-	}
-		// else return ERROR
+	}	// else return ERROR
 	else{
 		return ERROR;
 	}
