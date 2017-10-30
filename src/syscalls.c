@@ -159,7 +159,7 @@ int kernel_Fork(UserContext *user_context)
 //I Changed user_context to parent->user_context cause we mem copyed it into the
 //parent's usercontext space. If we do not do this, then we get a stack address
 //not valid error.
-	if (context_switch(parent, child, user_context) != 0){
+	if (context_switch(parent, child, parent->user_context) != 0){
 		TracePrintf(1, "kernel_Fork: error switching failed\n");
 		exit(ERROR);
 	}
@@ -203,7 +203,6 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	while (argvec[argc] != NULL){
 		argc++;
 	}
-        TracePrintf(3, "1\n");
 	/*change pcb and uc to look lke a blank process */ 
 	pcb *proc = curr_proc;
 
@@ -214,7 +213,6 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 		// privileged regs are modified in Load Program
 
 
-        TracePrintf(3, "2\n");
 	// pcb 
 		// id, uc as is
 		// has_kc is set to 0 as we need to bootstap it
@@ -234,7 +232,6 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 		// region1_pt trashed and reinintialized
 
-        TracePrintf(3, "3\n");
 	for (i = 0; i < VREG_1_PAGE_COUNT; i++) {
 		if ( (*(proc->region1_pt + i)).valid == 0x1 ){
 			// thrash the page
@@ -251,8 +248,13 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
 
+        TracePrintf(3, "kexev: %s\n", argvec[0]);
         TracePrintf(3, "filename: %s\n", filename);
         TracePrintf(3, "proc: %d\n", proc->process_id);
+        TracePrintf(3, "kexev: %s\n", argvec[0]);
+        for (i = 0; i < argc; i ++){
+                TracePrintf(3, "%s\n", argvec[i]);
+        }
 
 	/* load next program */
 

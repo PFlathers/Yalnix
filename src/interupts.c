@@ -28,6 +28,7 @@ void trapKernel(UserContext *uc)
         ALLOC_CHECK(filename, "exec");
         memcpy((void*) filename, (void*) fname_p, file_size);
         TracePrintf(6, "trapKernel: calling exec on %s\n", filename);
+        TracePrintf(3, "tk:%s\n", arg_p[0]);
         kernel_Exec(uc, filename, arg_p); 
         break;
 
@@ -40,6 +41,7 @@ void trapKernel(UserContext *uc)
       case YALNIX_FORK:
         TracePrintf(3, "trapKernel: YALNIX_FORK\n");
         retval = kernel_Fork(uc);
+          TracePrintf(0, "retval: %d\n", retval);
         break;
 
       case YALNIX_EXIT:
