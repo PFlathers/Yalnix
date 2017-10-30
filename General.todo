@@ -14,7 +14,7 @@ Checkpoint 1:
  ✔ globals.h @done (17-10-08 10:17)
  ✔ kernel.c template @done (17-10-08 10:17)
  ☐ documentation folder
- ☐ split .h files in the include
+ ✔ split .h files in the include @done (17-10-27 14:49)
    ☐ README in there
  ✔ list.c               @done (17-10-08 21:29)
  ✔ get vm running       @patrick  @done (17-10-08 21:29)

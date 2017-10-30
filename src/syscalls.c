@@ -143,12 +143,12 @@ int kernel_Fork(UserContext *user_context)
 
 	// book keeping
 	// add kid to parent's list (potentially init)
-	child->parent = parent;
+	child->parent = (pcb *) curr_proc;
 	if (parent->children == NULL){
 		parent->children = init_list();
 	}
 	list_add(parent->children, (void *) child);
-
+	TracePrintf(6, "kernel_Fork: child's parent is %d \n", child->parent->process_id);
 	// add to all and ready procs
 	list_add(all_procs, child);
 	list_add(ready_procs, (void *) parent);
@@ -389,6 +389,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// if not, return error as the user was dumb enough to call wait wihtout them
 	pcb *parent = curr_proc;
 	TracePrintf(6, "kernel_Wait: curr waiting id: %d\n", curr_proc->process_id);
+
 	if (parent->children == NULL){
 		TracePrintf(3, "kernel_Wait (ln31): %d called Wait without children initialized\n", parent->process_id);
 		return(ERROR);
@@ -402,8 +403,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 			return(ERROR);
 		}
 	}
-
-	if (list_count(parent->zombiez) <= 0 && list_count(parent->children) <= 0) {
+	else if (list_count(parent->children) <= 0 && list_count(parent->zombiez) <= 0) {
 		TracePrintf(3, "kernel_Wait (ln46): %d called Wait without active or zombie children\n", parent->process_id);
 		return(ERROR);
 	}
@@ -413,7 +413,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 
 	// if has dead children, find them and remove them from the 
 	// parent->zombie list and global zombies list
-	if (list_count(parent->zombiez) > 0) {
+	if (parent->zombiez != NULL && list_count(parent->zombiez) > 0) {
 		TracePrintf(6, "kernel_Wait: found zombie children\n");
 		// pop from parent list
 		pcb *child_pcb = list_pop(parent->zombiez);
@@ -432,7 +432,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		return child_pid_retval; 
 	}
 	
-
+	TracePrintf(6, "kernel_Wait: parent's pid %d", parent->process_id);
 	// if we have live kids waiting, 
 	// modify the same block structure we used for delay
 	parent->block->is_active = ACTIVE;
@@ -441,7 +441,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	parent->block->data = (void *) parent;
 	 
 	/* book keeping */
-	list_add(blocked_procs, parent);
+	list_add(blocked_procs, (void *) parent);
 
 	// switch to other process if needed
 	if (list_count(ready_procs) <= 0) {
@@ -460,17 +460,17 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// blocked so her we removing exited child and removing it 
 	if (list_count(parent->zombiez) < 1) {
 		TracePrintf(3, "kernel_Wait: returned after unknown block - exiting\n");
+		return(ERROR);
 	}
 
 	// remove exited child from the pcb list
-	pcb *child_pcb = list_pop(parent->zombiez);
+	pcb *child_pcb = (pcb *) list_pop(parent->zombiez);
 	child_pid_retval = child_pcb->process_id;
 	
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
 	list_remove(zombie_procs, child_pcb);
-	list_remove(all_procs, child_pcb); 
-
+	
 
 	// return the pid of the child that returned (mind == blown)
 	TracePrintf(3, "kernel_Wait ### end \n");

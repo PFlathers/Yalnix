@@ -33,14 +33,14 @@ KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
 
 
 #List all user programs here.
-USER_APPS = userland/wait
+USER_APPS = userland/fork
 #userland/init userland/wait test/fork_test test/wait_test test/exec_test
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
-USER_SRCS = userland/wait.c
+USER_SRCS = userland/fork.c
 #userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c
 
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-USER_OBJS = userland/wait.o
+USER_OBJS = userland/fork.o
 #userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o
 
 

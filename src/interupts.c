@@ -99,6 +99,14 @@ void trapClock(UserContext *uc)
                 temp = temp->next;
         }
 
+        TracePrintf(3, "ZOMBIE PROCS\n");
+        temp = zombie_procs->head;
+        while (temp!=NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "%d\n", p->process_id);
+                temp = temp->next;
+        }
+
 
 
   if (list_count(blocked_procs) > 0) {
@@ -125,7 +133,8 @@ void trapClock(UserContext *uc)
   TracePrintf(3, "trapClock: proc is Id: %d\n", curr_proc->process_id);
   if (list_count(ready_procs) > 0){
     TracePrintf(3, "trapClock: Switching processes\n");
-    goto_next_process(uc, 1);
+    int rc = goto_next_process(uc, 1);
+    TracePrintf(6, "trapClock: done switching processes\n");
   }
   else{
     TracePrintf(3, "trapClock: no process to switch to gonna keep going");

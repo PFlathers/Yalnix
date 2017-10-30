@@ -26,7 +26,6 @@ int main(int argc, char *argv[]) {
     *stat_ptr = 0;
     TracePrintf(1, "PARENT about to wait for child\n");
     rc = Wait(stat_ptr);
-    return(0);
   }
 
   return(-1); 
