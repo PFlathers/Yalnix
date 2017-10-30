@@ -623,10 +623,10 @@ int goto_next_process(UserContext *user_context, int repeat_bool)
 	if (repeat_bool) {
 		list_add(ready_procs, (void *) curr_proc);
 	}
-        TracePrintf(6, "goto_next_process: about to pop a molly \n");
+        TracePrintf(6, "goto_next_process: about to pop a process\n");
 	// context switching
 	pcb *next_proc = (pcb *) list_pop(ready_procs);
-        TracePrintf(6, "goto_next_process: poppedz a molly, switching to %d \n", next_proc->process_id);
+        TracePrintf(6, "goto_next_process: popped a process, switching to %d \n", next_proc->process_id);
 
 	if (context_switch(curr_proc, next_proc, user_context) != 0){
 		return FAILURE;

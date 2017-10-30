@@ -12,7 +12,7 @@
 void trapKernel(UserContext *uc)
 {
   int clock_ticks;
-  int retval;
+  int retval = 0;
   int exit_code;
   void *addr;
 
@@ -75,6 +75,7 @@ void trapKernel(UserContext *uc)
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
     }
+  uc->regs[0] = retval;
 }
 
 void trapClock(UserContext *uc)
