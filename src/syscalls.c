@@ -305,6 +305,7 @@ void kernel_Exit(int status, UserContext *uc)
 			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
 			exit(ERROR);
 		}
+                TracePrintf(0, "Sucess");
 	}
 
         //But what if it has zombie children?
@@ -312,14 +313,18 @@ void kernel_Exit(int status, UserContext *uc)
         // helpful. We now grant you sweet release.
        if(temp_proc->zombiez != NULL && list_count(temp_proc->zombiez) > 0){
                 pcb *zombie_child;
+                TracePrintf(0, "1Sucess");
                 while(list_count(temp_proc->zombiez) > 0){
                        zombie_child = (pcb*) list_pop(temp_proc->zombiez); 
                        free_pagetables(zombie_child);
                        free(zombie_child);
+
+                        TracePrintf(0, "2Sucess");
                 }
                 free(temp_proc->zombiez);
        } 
-
+        
+        TracePrintf(0, "3Sucess");
 
         //if it has children, mark them as orphans
         if(temp_proc->children != NULL && list_count(temp_proc->children) > 0){
@@ -333,9 +338,11 @@ void kernel_Exit(int status, UserContext *uc)
                 free(temp_proc->children);
         }
 
+        TracePrintf(0, "4Sucess");
 	// If its an orphan, we dont care
 	if(temp_proc->parent == NULL){
 
+                TracePrintf(0, "5Sucess");
                 list_remove(all_procs,(void*) temp_proc);
                 list_remove(zombie_procs,(void*) temp_proc);
                 list_remove(blocked_procs,(void *) temp_proc);
@@ -344,9 +351,11 @@ void kernel_Exit(int status, UserContext *uc)
                 free_pagetables(temp_proc);
 		free(temp_proc);
                 return;
-
+                
         // it becomes a zombie
         } else{
+                
+                TracePrintf(0, "6Sucess");
                 list_add(zombie_procs,(void*) temp_proc);
                 list_remove(temp_proc->parent->children,(void*) temp_proc);
                 if (temp_proc->parent->zombiez == NULL){
@@ -354,6 +363,7 @@ void kernel_Exit(int status, UserContext *uc)
                 }
                 list_add(temp_proc->parent->zombiez,(void*) temp_proc);
         }
+        TracePrintf(0, "7--");
 
 
         free_pagetables(temp_proc);

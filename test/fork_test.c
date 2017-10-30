@@ -3,9 +3,10 @@
 
 int main()
 {
-	int i = Fork();
+//	int i = Fork();
         char *args[] = {"init", 0};
-        TracePrintf("%d\n", i);
+ //       TracePrintf("%d\n", i);
+        /*
 	if(i == 0){
 		while(1){
                 TracePrintf(0, "I is child");
@@ -18,7 +19,7 @@ int main()
                         Pause();
                 }
         }
-
+*/
 
 	TracePrintf(0, "I is parent");
 	
