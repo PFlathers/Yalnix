@@ -278,10 +278,16 @@ void kernel_Exit(int status, UserContext *uc)
 {
 	TracePrintf(3, "kernel_exit ### start\n");
 	pcb *temp_proc = curr_proc; // Save a reference for freeing later
+	
 	int OG_Process = 0;
 	if(temp_proc->process_id == 0){
 		OG_Process = 1;
 	}
+
+	if (OG_Process && (list_count(ready_procs) <= 0)){
+		Halt();
+	}
+
 
 	int has_kids = ((temp_proc->children == NULL) ? 0 : 1);
   	int has_zombiez = ((temp_proc->zombiez == NULL) ? 0 : 1);
@@ -290,7 +296,7 @@ void kernel_Exit(int status, UserContext *uc)
 
 
   	if (has_kids) {
-  		pcb* child_pcb;
+  		pcb* child_pcb = NULL;
 		Node *child_node = curr_proc->children->head;
 		while(child_node->next != NULL){
 			child_pcb = (pcb*) child_node->data;
@@ -364,16 +370,13 @@ void kernel_Exit(int status, UserContext *uc)
 		}
 	  	free(temp_proc->user_context);
 		free(temp_proc->kernel_context);
-		free(temp_proc);
 	}
+	
 	
 	pcb *next = list_pop(ready_procs);
 	while (next->has_kc == 0 ){
 		list_add(ready_procs, (void *) next);
 		next = list_pop(ready_procs);
-	}
-	if(OG_Process){
-		Halt();
 	}
 
 	if (context_switch((pcb *) NULL, next, uc) != SUCCESS) {
