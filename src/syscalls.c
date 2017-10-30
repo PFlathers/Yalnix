@@ -283,6 +283,16 @@ void kernel_Exit(int status, UserContext *uc)
 		OG_Process = 1;
 	}
 
+	if (list_count(ready_procs) <= 0) {
+		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
+		exit(ERROR);
+	}
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+			exit(ERROR);
+		}
+	}
 
 	// If its an orphan, we dont care
 	if(temp_proc->parent == NULL){
@@ -310,16 +320,6 @@ void kernel_Exit(int status, UserContext *uc)
 	
 
 
-	if (list_count(ready_procs) <= 0) {
-		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-		exit(ERROR);
-	}
-	else {
-		if (goto_next_process(uc, 0) != SUCCESS) {
-			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
-			exit(ERROR);
-		}
-	}
 	
 	TracePrintf(3, "kernel_exit ### end\n");
 	// If our root process stops, then we halt the system.
