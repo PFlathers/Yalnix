@@ -81,6 +81,26 @@ void trapClock(UserContext *uc)
 {
   TracePrintf(1, "trapClock ### start \n");
 
+        Node *temp = all_procs->head;
+        pcb *p;
+
+        TracePrintf(3, "ALL PROCS\n");
+        while (temp!=NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "%d\n", p->process_id);
+                temp = temp->next;
+        }
+
+        TracePrintf(3, "READY PROCS\n");
+        temp = ready_procs->head;
+        while (temp!=NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "%d\n", p->process_id);
+                temp = temp->next;
+        }
+
+
+
   if (list_count(blocked_procs) > 0) {
     Node *curr_on_delay = (Node *) blocked_procs->head;
 
