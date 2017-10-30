@@ -151,7 +151,7 @@ int kernel_Fork(UserContext *user_context)
 
 	// add to all and ready procs
 	list_add(all_procs, child);
-	list_add(ready_procs, child);
+	list_add(ready_procs, (void *) parent);
 
 	TracePrintf(6, "kernel_Fork: context switch to new process\n");
 	// context switch to the kid
@@ -414,7 +414,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		exit(ERROR);
 	}
 	else {
-		if (goto_next_process(uc, 1) != SUCCESS) {
+		if (goto_next_process(uc, 0) != SUCCESS) {
 			TracePrintf(3, "kernel_Wait: failed to kontext switch - exiting\n");
 			exit(ERROR);
 		}
