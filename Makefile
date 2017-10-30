@@ -18,7 +18,7 @@
 #
 
 #make all will make all the kernel objects and user objects
-ALL = $(KERNEL_ALL) $(USER_APPS) 
+ALL = $(KERNEL_ALL) $(USER_APPS) clean-apps
 KERNEL_ALL = yalnix
 
 #List all kernel source files here.  
@@ -33,18 +33,12 @@ KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
 
 
 #List all user programs here.
-USER_APPS = test/fork_test
-#userland/fork
-#userland/init userland/wait test/fork_test test/wait_test test/exec_test
+USER_APPS = userland/fork userland/init userland/wait test/fork_test test/wait_test test/exec_test
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
-USER_SRCS = test/fork_test.c
-#userland/fork.c
-#userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c
+USER_SRCS = userland/fork.c userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c
 
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-USER_OBJS = test/fork_test.o
-#userland/fork.o
-#userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o
+USER_OBJS = test/fork_test.o userland/fork.o userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o
 
 
 #List all of the header files necessary for your user programs
@@ -105,7 +99,9 @@ CPPFLAGS= -m32 -fno-builtin -I. -I$(INCDIR) -I include/ -g -DLINUX
 all: $(ALL)	
 
 clean:
-	rm -f bin/* src/*.o userland/*.o *~ TTYLOG* TRACE $(YALNIX_OUTPUT) $(USER_APPS)  core.* DISK
+	rm -f bin/*~ bin/TTYLOG* bin/TRACE bin/$(YALNIX_OUTPUT) bin/core.* bin/DISK
+cleaner:
+	rm -f bin/* src/*.o userland/*.o 
 	
 count:
 	wc $(KERNEL_SRCS) $(USER_SRCS)
@@ -125,8 +121,10 @@ $(KERNEL_ALL): $(KERNEL_OBJS) $(KERNEL_LIBS) $(KERNEL_INCS)
 
 $(USER_APPS): $(USER_OBJS) $(USER_INCS)
 	$(ETCDIR)/yuserbuild.sh $@ $(DDIR58) $@.o
-	mv $(USER_APPS) ./bin
+	mv $(@) ./bin
+clean-apps:
 	rm -f userland/*.o
+	rm -f test/*.o
 
 
 
