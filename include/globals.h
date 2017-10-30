@@ -7,6 +7,7 @@
 #define FAILURE 1
 #define ALLOCATION_ERROR (-3)
 #define KILL 42
+#define ERROR (-1)
 
 
 /* macros */
