@@ -284,6 +284,8 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
  *	status: the exit status of the process.
  *	uc: the current user context.
  *-------------------------------------------------------------------------*/
+// TODO: Figure out if we need to free the kernel context and/or user context
+// of the pcb.
 void kernel_Exit(int status, UserContext *uc)
 {
 	TracePrintf(3, "kernel_exit ### start\n");
@@ -304,16 +306,31 @@ void kernel_Exit(int status, UserContext *uc)
 			exit(ERROR);
 		}
 	}
-//But what if it has zombie children?
+
+        //But what if it has zombie children?
+        // Thank you Zombie Children from informing us you died. It was very
+        // helpful. We now grant you sweet release.
+       if(temp_proc->zombiez != NULL && list_count(temp_proc->zombiez) > 0){
+                pcb *zombie_child;
+                while(list_count(temp_proc->zombiez) > 0){
+                       zombie_child = (pcb*) list_pop(temp_proc->zombiez); 
+                       free_pagetables(zombie_child);
+                       free(zombie_child);
+                }
+                free(temp_proc->zombiez);
+       } 
+
+
         //if it has children, mark them as orphans
         if(temp_proc->children != NULL && list_count(temp_proc->children) > 0){
-                pcb* child_pcb;
+                pcb *child_pcb;
                 Node *child_node = curr_proc->children->head;
                 while(child_node != NULL){
                         child_pcb = (pcb*) child_node->data;
                         child_pcb->parent = NULL;
                         child_node = child_node->next;
                 }
+                free(temp_proc->children);
         }
 
 	// If its an orphan, we dont care
