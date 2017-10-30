@@ -292,32 +292,43 @@ void kernel_Exit(int status, UserContext *uc)
 			exit(ERROR);
 		}
 	}
+//But what if it has zombie children?
+        //if it has children, mark them as orphans
+        if(temp_proc->children != NULL && list_count(temp_proc->children) > 0){
+                pcb* child_pcb;
+                Node *child_node = curr_proc->children->head;
+                while(child_node != NULL){
+                        child_pcb = (pcb*) child_node->data;
+                        child_pcb->parent = NULL;
+                        child_node = child_node->next;
+                }
+        }
 
 	// If its an orphan, we dont care
 	if(temp_proc->parent == NULL){
-		free(temp_proc->region0_pt);
-		free(temp_proc->region1_pt);
+
+                list_remove(all_procs,(void*) temp_proc);
+                list_remove(zombie_procs,(void*) temp_proc);
+                list_remove(blocked_procs,(void *) temp_proc);
+                list_remove(ready_procs,(void*) temp_proc);
+
+                free_pagetables(temp_proc);
 		free(temp_proc);
-	// If its not an orphan, mark its children as orphans.
-	} else {
-		pcb* child_pcb;
-		Node *child_node = curr_proc->children->head;
-		while(child_node->next != NULL){
-			child_pcb = (pcb*) child_node->data;
-			child_pcb->parent = NULL;
-			child_node = child_node->next;
-		}
-		child_pcb = (pcb*) child_node->data;
-		child_pcb->parent = NULL;
-		list_add(zombie_procs, temp_proc);
-		list_remove(ready_procs, temp_proc);
-		free(temp_proc->region0_pt);
-		free(temp_proc->region1_pt);
+                return;
 
-		temp_proc->exit_status = status;
-	}
-	
+        // it becomes a zombie
+        } else{
+                list_add(zombie_procs,(void*) temp_proc);
+                list_remove(temp_proc->parent->children,(void*) temp_proc);
+                if (temp_proc->parent->zombiez == NULL){
+                        init_list(temp_proc->parent->zombiez);
+                }
+                list_add(temp_proc->parent->zombiez,(void*) temp_proc);
+        }
 
+
+        free_pagetables(temp_proc);
+        temp_proc->exit_status = status;
 
 	
 	TracePrintf(3, "kernel_exit ### end\n");
@@ -325,6 +336,31 @@ void kernel_Exit(int status, UserContext *uc)
 	if(OG_Process){
 		Halt();
 	}
+}
+
+void free_pagetables(pcb* myproc)
+{
+        int i;
+        int trash_pfn;
+        for (i = 0; i < KERNEL_PAGE_COUNT; i ++){
+                if( (*(myproc->region0_pt + i)).valid == 0x1){
+                        (*(myproc->region0_pt + i)).valid = (u_long) 0x0;
+                        trash_pfn = (( (*(myproc->region0_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
+                        list_add(empty_frame_list, (void *) trash_pfn);
+                        (*(myproc->region0_pt + i)).pfn = (u_long) 0x0;
+                }
+        }
+
+        for (i = 0; i < VREG_1_PAGE_COUNT; i++){
+                if( (*(myproc->region1_pt + i)).valid == 0x1 ){
+                        trash_pfn = (( (*(myproc->region1_pt + i)).pfn << PAGESHIFT)/PAGESIZE);
+                        list_add(empty_frame_list, (void*) trash_pfn);
+
+                        (*(myproc->region1_pt + i)).pfn = (u_long) 0x0;
+                        (*(myproc->region1_pt + i)).valid= (u_long) 0x0;
+                }
+        }
+        WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 }
 
 
@@ -358,7 +394,6 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		TracePrintf(3, "kernel_Wait (ln31): %d called Wait without children initialized\n", parent->process_id);
 		return(ERROR);
 	}
-
 
 
 	// check if process has children that exited
