@@ -143,12 +143,12 @@ int kernel_Fork(UserContext *user_context)
 
 	// book keeping
 	// add kid to parent's list (potentially init)
-	child->parent = parent;
+	child->parent = (pcb *) curr_proc;
 	if (parent->children == NULL){
 		parent->children = init_list();
 	}
 	list_add(parent->children, (void *) child);
-
+	TracePrintf(6, "kernel_Fork: child's parent is %d \n", child->parent->process_id);
 	// add to all and ready procs
 	list_add(all_procs, child);
 	list_add(ready_procs, (void *) parent);
@@ -383,7 +383,7 @@ void free_pagetables(pcb* myproc)
 int kernel_Wait(int * status_ptr, UserContext *uc)
 {
 	TracePrintf(3, "kernel_Wait ### start \n");
-	int child_pid_retval = -63;
+	int child_pid_retval;
 	
 	// check if process has children
 	// if not, return error as the user was dumb enough to call wait wihtout them
@@ -432,7 +432,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		return child_pid_retval; 
 	}
 	
-
+	TracePrintf(6, "kernel_Wait: parent's pid %d", parent->process_id);
 	// if we have live kids waiting, 
 	// modify the same block structure we used for delay
 	parent->block->is_active = ACTIVE;
