@@ -30,8 +30,6 @@
 #include "interupts.h"
 #include "loadprog.h"
 
-KernelContext *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb);
-
 
 // Interrupt vector (pg50, bull 1)
 void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
@@ -67,11 +65,9 @@ void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd)
   TracePrintf(1, "SetKernelData ### End\n");
 }
 
-
-void init_global_variables(unsigned int phys_mem_size)
+void init_global(int phys_mem_size)
 {
-	int i;
-
+	int frame_iter;
 	// break starts as kernel_data_end
 	kernel_brk = kernel_data_end;	
 
@@ -82,15 +78,17 @@ void init_global_variables(unsigned int phys_mem_size)
 	physical_kernel_frames = (VMEM_0_LIMIT >> PAGESHIFT);
 	used_physical_kernel_frames = UP_TO_PAGE(kernel_brk) >> PAGESHIFT;
 
-	// initializ list of empty frames and add their id as data
+	// init me baybe
 	empty_frame_list = init_list();
 	// Create the List of empty frames (NEEDS EDITING)
-  	for (i = physical_kernel_frames; i < total_physical_frames; i++){
-		list_add(empty_frame_list, (void *) i);
+  	for (frame_iter = physical_kernel_frames; frame_iter < total_physical_frames; frame_iter++){
+		list_add(empty_frame_list, (void *) frame_iter);
   	}
 
-  	// at the beginnign of the kernel, first available proccess is 0
-	available_process_id = 0;	
+
+	// under is a mess, clean it up
+
+	available_process_id = 0;	// at start we run at 0
 
 
 	// process tracking lists (per sean's suggestion)
@@ -98,24 +96,21 @@ void init_global_variables(unsigned int phys_mem_size)
 	blocked_procs = (List *)init_list();
 	all_procs = (List *)init_list(); 
 	zombie_procs = (List *)init_list(); 
-
 }
 
-void init_pagetables(unsigned int phys_mem_size, int r1_base_frame, int r1_top_frame)
+void init_pagetables(int r1_base_frame, int r1_top_frame)
 {
-	int i;
-	/* BOOTSTRAP PAGE TABLES <_> R0 */
-
+	int frame_iter;
     // Build the initial page tables for Region 0 (pg 50, bullet 4)
    	// Page table entry is 32-bits wide (but does not use all 32 bits).
 	// struct pte defined in hardware.h
-	for (i = 0; i < physical_kernel_frames; i++) {
+	for (frame_iter = 0; frame_iter < physical_kernel_frames; frame_iter++) {
     	// PTE struct
     	struct pte new_pt_entry;
 
     	// If counter is above stack base or
   		// below the used frames make it valid
-		if ((i < used_physical_kernel_frames) || (i >= (KERNEL_STACK_BASE >> PAGESHIFT)))
+		if ((frame_iter < used_physical_kernel_frames) || (frame_iter >= (KERNEL_STACK_BASE >> PAGESHIFT)))
 		   new_pt_entry.valid = (u_long) 0x1;
 		else
 		   new_pt_entry.valid = (u_long) 0x0; 
@@ -123,7 +118,7 @@ void init_pagetables(unsigned int phys_mem_size, int r1_base_frame, int r1_top_f
 		// if memory is bellow kernel data start 
 		// (i.e if it's kernel stach), we can read or exec,
 		// if userland we can read or write (see pg 28, bullet 2) 
-		if (i < (((unsigned int)kernel_data_start) >> PAGESHIFT))
+		if (frame_iter < (((unsigned int)kernel_data_start) >> PAGESHIFT))
       		new_pt_entry.prot = (u_long) (PROT_READ | PROT_EXEC); // exec and read protections
 		else
       		new_pt_entry.prot = (u_long) (PROT_READ | PROT_WRITE); // read and write protections
@@ -133,17 +128,16 @@ void init_pagetables(unsigned int phys_mem_size, int r1_base_frame, int r1_top_f
 		// of the page of physical memory to which this virtual memory page is 
 		//mapped by this page table entry
 		// If i get this correctly, that should just be base + ith page's address
-		new_pt_entry.pfn = (u_long) ((PMEM_BASE + (i * PAGESIZE)) >> PAGESHIFT);
+		new_pt_entry.pfn = (u_long) ((PMEM_BASE + (frame_iter * PAGESIZE)) >> PAGESHIFT);
 		
 		// set up a pagetable entry to be sth like
-		r0_ptlist[i] = new_pt_entry;
+		r0_ptlist[frame_iter] = new_pt_entry;
   
     }
 
 
-    /* BOOTSTRAP PAGE TABLES <_> R0 */
 	// Build the initial page tables for Region 1 (pg 50, bullet 4)
-	for (i = r1_base_frame; i < r1_top_frame; i++) {
+	for (frame_iter = r1_base_frame; frame_iter < r1_top_frame; frame_iter++) {
 		struct pte new_pt_entry; // New pte entry
 
 		// So far, page is invalid, has read/write protections, and no pfn
@@ -152,9 +146,14 @@ void init_pagetables(unsigned int phys_mem_size, int r1_base_frame, int r1_top_f
 		new_pt_entry.pfn = (u_long) 0x0;
 
 		// Add the page to the pagetable (accounting for 0-indexing - not sure if I need to add 1)
-		r1_ptlist[i - r1_base_frame] = new_pt_entry;
+		r1_ptlist[frame_iter - r1_base_frame] = new_pt_entry;
 	}
+}
 
+void config_registers()
+{
+	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
+  	WriteRegister(REG_VECTOR_BASE, (unsigned int) &interrupt_vector);
 
   	// this is my guess based on: pg50, bullet 4
   	// 							  Table 3.3
@@ -163,16 +162,26 @@ void init_pagetables(unsigned int phys_mem_size, int r1_base_frame, int r1_top_f
 	WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
 	WriteRegister(REG_PTLR0, (unsigned int) VREG_0_PAGE_COUNT);
 	WriteRegister(REG_PTLR1, (unsigned int) VREG_1_PAGE_COUNT); 
+
+	// Enable virtual memory as in table 3.3
+	WriteRegister(REG_VM_ENABLE, 1);
+	TracePrintf(1, "Virtual Memory Enabled!\n");
+	
+	// Flush the tlb as in pg29, bullet 1
+	// (when do we not want to have flush all and use other consts?)
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+	TracePrintf(8, "TLB flushed!\n");
+
 }
 
-
-void start_idle_process(UserContext *user_context)
+void create_idle_proc(UserContext *user_context)
 {
 	// Create idle process based on current user context
 	// allocates within the function (see pcb.c)
-	// global idle_proc pcb defined in kernel.h    
+	// global idle_proc pcb defined in kernel.h
+           
 	idle_proc = (pcb *) new_process(user_context); 
-	
+
 	// take two frames	
 	int idle_stack_frame1 = (int) list_pop(empty_frame_list);          
 	int idle_stack_frame2 = (int) list_pop(empty_frame_list); 
@@ -208,26 +217,80 @@ void start_idle_process(UserContext *user_context)
 	memcpy((void *)idle_proc->region0_pt,
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
-
 }
 
-
-
-char *get_argument_list(char * cmd_args)
+void create_init_proc(UserContext *user_context, char *cmd_args[])
 {
-	arg_count = 0;
+	int i;
+	 // base it of of the init (so that I don't have to re-do things)
+	 pcb *init_proc = (pcb *) new_process(user_context);
 
-	while (cmd_args[arg_count] != '\0'){
-		arg_count++;
-	}
-	// null terminated
-	arg_count++; 
-	char *argument_list[arg_count];
-	for (i = 0; i<arg_count; i++){
-		argument_list[i] = cmd_args[i];
+	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
+	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
+	 bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
+
+	 // memory in region 1 should be invalid, 
+	 for (i=0; i < VREG_1_PAGE_COUNT; i++) {
+	 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
+	 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+	 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
+	 }
+
+
+
+	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
+	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
+    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
+
+    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int) list_pop(empty_frame_list) * PAGESIZE) >> PAGESHIFT);;
+	 }
+
+	// TLB flush
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+
+ 	// init_proc is the first child of idle_proc!
+	init_proc->parent = idle_proc;
+  	idle_proc->children = init_list();
+  	list_add(idle_proc->children, (void *)init_proc);
+
+  	if (cmd_args[0] == '\0') {
+  		list_add(all_procs, (void *)idle_proc);
+
+  		curr_proc = idle_proc;
+
+
+  		// copy idle's UC into the current UC
+  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
+  		TracePrintf(0, "KernelStart ### End \n");
+
+  	} else{
+  		int arg_count = 0;
+
+  		while (cmd_args[arg_count] != '\0'){
+  			arg_count++;
+  		}
+  		// null terminated
+  		arg_count++; 
+
+  		char *argument_list[arg_count];
+  		for (i = 0; i<arg_count; i++){
+  			argument_list[i] = cmd_args[i];
+  		}
+
+  		char *program_name = argument_list[0];
+
+  		int lpr;
+  		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
+  			list_add(all_procs, (void *) init_proc);
+  			list_add(ready_procs, (void*) init_proc);
+  			TracePrintf(3, "LoadProgram added %s on the ready list; code %d", program_name, lpr);
+  		} else{
+  			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
+  			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
+  		}
   	}
 }
-
 /* 
  * KernelStart
  *  Before allowing the execution of user processes, 
@@ -255,129 +318,37 @@ void KernelStart(char *cmd_args[],
 
 	
 	/*GLOBAL VARIABLES*/
-	init_global_variables(phys_mem_size);
-	// inits r0 and r1 pagetables and writes them to the REG_PTBR0/1
-	init_pagetables(phys_mem_size, r1_base_frame, r1_top_frame);
+	init_global(phys_mem_size);
 
+	/* PAGE TABLES */
+	init_pagetables(r1_base_frame, r1_top_frame);
 
 	/* CONFUGURE REGS */
-
-	// interrupt vector at REG_VEC_BASE (pg50, bullet 2)
-  	WriteRegister(REG_VECTOR_BASE, (unsigned int) &interrupt_vector);
-
-	// Enable virtual memory as in table 3.3
-	WriteRegister(REG_VM_ENABLE, 1);
-	TracePrintf(6, "KernelStart: Virtual Memory Enabled!\n");
-	
-	// Flush the tlb as in pg29, bullet 1
-	// (when do we not want to have flush all and use other consts?)
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-	TracePrintf(6, "KernelStart: TLB flushed!\n");
+	config_registers();
 
 
 	/* 
 	 * PROCESS HANDLING 
 	 * IDLE
 	 */
-
-	 start_idle_process(user_context);
+	create_idle_proc(user_context);
 
 	/* 
 	 * PROCESS HANDLING 
 	 * INIT
 	 */
-
-	 // base it of of the init (so that I don't have to re-do things)
-	 pcb *init_proc = (pcb *) new_process(idle_proc->user_context);
-
-	 // Make space for Kernel and user space
-	 init_proc->region0_pt = (struct pte *)malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
-	 init_proc->region1_pt = (struct pte *)malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
-	 bzero((char *)(init_proc->region1_pt), VREG_1_PAGE_COUNT * sizeof(struct pte));
-
-	 // memory in region 1 should be invalid, 
-	 for (i=0; i < VREG_1_PAGE_COUNT; i++) {
-	 	(*(init_proc->region1_pt + i)).valid = (u_long) 0x0;
-	 	(*(init_proc->region1_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-	 	(*(init_proc->region1_pt + i)).pfn = (u_long) 0x0;
-	 }
-
-	 // kernel stack memory is RW and popped from the empty frames
-	 for (i = 0; i < KERNEL_PAGE_COUNT; i++){
-	 	(*(init_proc->region0_pt + i)).valid = (u_long) 0x1;
-    	(*(init_proc->region0_pt + i)).prot = (u_long) (PROT_READ | PROT_WRITE);
-
-    	(*(init_proc->region0_pt + i)).pfn = (u_long) (((int) list_pop(empty_frame_list) * PAGESIZE) >> PAGESHIFT);;
-	 }
-
-	 // clear out the tlb
-	 WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-
-
-	 // I'm not sure if this is the optimal way to do this
-	 init_proc->parent = idle_proc;
-	 idle_proc->children = init_list();
-	 list_add(idle_proc->children, (void *) init_proc);
-
-
-	// parse arguments
-	char *argument_list[] = get_argument_list(cmd_args);
-	char *program_name = argument_list[0];
-
-
-	int lpr;
-   	if (program_name == '\0') {
-  		// if there are no processes idle is running
-  		list_add(all_procs, idle_proc);
-  		curr_proc = idle_proc;
-
-  		// current UC is idle's uc
-  		memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
-
-
-  		TracePrintf(0, "KernelStart ### End \n");
-
-  	} else{
-  		lpr = LoadProgram(program_name, argument_list, init_proc);
-	}
-  		
-
-	if (lpr == SUCCESS){
-		list_add(all_procs, (void *) init_proc);
-		list_add(ready_procs, (void*) init_proc);
-		TracePrintf(3, "LoadProgram added %s on the ready list; code %d", program_name, lpr);
-	} 
-	else{
-		WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
-		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-		TracePrintf(3, "LoadProgram failed; code %d", lpr);
-	}
-  	
-
-
-	// TLB flush
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-	KernelContextSwitch(clone_kc_stack, (pcb *) idle_proc, NULL);
-	TracePrintf(3, "KernelStart: finished context switching\n");
-
+	create_init_proc(user_context, cmd_args);
 
 	/* 
 	 * BOOKKEEPING 
 	 */
-
- 
 	list_add(all_procs, (void *) idle_proc);
 	curr_proc = idle_proc;
-
-
-	TracePrintf(3, "KernelStart: update stack pointers etc\n");
-	// copy idle's usercontext into the current usercontext
-	memcpy(user_context, curr_proc->user_context, sizeof(UserContext));
-
+	// // copy idle's usercontext into the current usercontext
+	memcpy(user_context, idle_proc->user_context, sizeof(UserContext));
 
 
 	TracePrintf(0, "KernelStart ### End \n");
-
 } 
 
 /*
@@ -457,60 +428,45 @@ void DoIdle() {
 } 
 
 
-// Copies contents of current kernel stack frames
-// into the frames allocated to this pcb's kernel stack
-KernelContext *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
+void *clone_kc_stack(KernelContext *kernel_context_in, void *current_pcb, void *next_pcb)
 {
 	TracePrintf(2, "clone_kc_stack ### Start : my guess \n");
 	//casts
 	pcb *current = (pcb *) current_pcb;
-	pcb *next = (pcb *) next_pcb;
-
+	pcb *next = (pcb *) next_pcb; 
 	int i;
 
+	unsigned int dest = ((KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT) << PAGESHIFT;
+	unsigned int src = KERNEL_STACK_BASE;
 
 	// copy current kernelto the next kc pointer
-	memcpy((void *) (next->kernel_context), (void *) curernt->kernel_context, sizeof(KernelContext));
+	memcpy((void *) (next->kernel_context), (void *) (current->kernel_context), sizeof(KernelContext));
 
-	// set source and destination
-	unsigned int dest = ((KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT) << PAGESHIFT;
- 	unsigned int src = KERNEL_STACK_BASE;
-
-	// declare backup
 	u_long bcp_valid[KERNEL_PAGE_COUNT];
 	u_long bcp_pfn[KERNEL_PAGE_COUNT];
 
-
-	// backup the kernel stack frame
 	for (i = 0; i<KERNEL_PAGE_COUNT; i++) {
 		bcp_valid[i] = r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].valid;
 		bcp_pfn[i] = r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].pfn;
 
-		// est validity and page frame number
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].valid = (u_long) 0x1; 
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].pfn = ((*(next->region0_pt + i)).pfn);
 	}
-	// flush me baby flush me baby
+
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
-	// bootstrap the new kernel stack with the contents of the old one
-	TracePrintf(6, "clone_kc_stack: bootstrapping the new kernel proc \n");
 	memcpy( (void *)dest, (void *)src, KERNEL_STACK_MAXSIZE);
-	TracePrintf(6, "clone_kc_stack: finished bootstrapping the new kernel proc \n");
 
-	// restore the old values
+
 	for (i = 0; i<KERNEL_PAGE_COUNT; i++) {
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].valid = bcp_valid[i];
 		r0_ptlist[(KERNEL_STACK_BASE >> PAGESHIFT) - KERNEL_PAGE_COUNT + i].pfn = bcp_pfn[i];
 	}
 
-	// flush me baby flush me, tonigth
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 
-    // get back to where you once belonged 
 	TracePrintf(2, "clone_kc_stack ### END \n");
-    return kernel_context_in;
-
+    return next->kernel_context;
 }
 
 
@@ -519,20 +475,17 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 {
 	TracePrintf(2, "MyKCS ### Start : my guess \n");
 	//casts
-
 	pcb *current = (pcb *) current_pcb;
 	pcb *next = (pcb *) next_pcb; 
-
-	int i;
 
 	// save current kc
 	memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
 
-	// if we have not already bootstrapped the kernel of the new process, do it now
-	if (next->has_kc == 0) {
-		clone_kc_stack(kernel_context_in, curr_pcb, next_pcb);
+	// bootstrap the kernel if we are starting
+	if (next->has_kc == 0){
+		clone_kc_stack(kernel_context_in, current_pcb, next_pcb);
 		next->has_kc = 1;
-		TracePrintf(6, "MyKCS: finished bootstrapping of proces %d \n", next->process_id);
+		TracePrintf(3, "Copied idle's into next\n"); 
 	}
 
 	// save current k stack
@@ -550,17 +503,13 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
 
     // update pt register
-    WriteRegister(REG_PTLR0, MAX_PT_LEN);
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    WriteRegister(REG_PTBR1, (unsigned int) next->region1_pt);
 
-    // Remap Region 1 page table and flush entire region 1 TLB
-	WriteRegister(REG_PTBR1, (unsigned int) next->region1_pt);    
-	WriteRegister(REG_PTLR1, MAX_PT_LEN);
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
+    // flush the TLB
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 
     // return	
     TracePrintf(2, "MyKCS ### End : my guess \n");
-    
     return next->kernel_context;
 
 }
@@ -569,21 +518,41 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 int goto_next_process(UserContext *user_context, int repeat_bool)
 {
 	TracePrintf(1, "goto_next_process ### Start \n");
+
+
+        Node *temp = ready_procs->head;
+        pcb *p;
+        TracePrintf(3, "READY IDS\n");
+        while(temp != NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "proc id: %d\n", p->process_id);
+                temp = temp->next;
+        }
+
+        temp = all_procs->head;
+        TracePrintf(3, "ALL IDS\n");
+        while(temp != NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "proc id: %d\n", p->process_id);
+                temp = temp->next;
+        }
+
+
 	if (repeat_bool) {
 		list_add(ready_procs, (void *) curr_proc);
 	}
-
+        TracePrintf(6, "goto_next_process: about to pop a molly \n");
 	// context switching
 	pcb *next_proc = (pcb *) list_pop(ready_procs);
+        TracePrintf(6, "goto_next_process: poppedz a molly, switching to %d \n", next_proc->process_id);
 
 	if (context_switch(curr_proc, next_proc, user_context) != 0){
-		TracePrintf(1, "goto_next_process: context switching failed \n");
 		return FAILURE;
 	}
 
 	TracePrintf(1, "goto_next_process ### End \n");
 
-	return SUCCESS;
+	return 0;
 	
 }
 
@@ -591,7 +560,6 @@ int goto_next_process(UserContext *user_context, int repeat_bool)
 int context_switch(pcb *current, pcb *next, UserContext *user_context)
 {
 	TracePrintf(2, "ContextSwitch ### Start \n");
-	
 	// save UC of the current one
 	if (current != NULL){
 		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
@@ -620,7 +588,6 @@ void scheduler(void)
 {
 	TracePrintf(2, "Scheduler ### Start \n");
 
-
 	unsigned int i;
 	int retval;
 
@@ -628,13 +595,9 @@ void scheduler(void)
 	pcb *curr_pcb = curr_proc;
 
 	if (list_count(ready_procs) > 0){
-		next_pcb = (pcb *) list_pop(ready_procs);
-		if (!next_pcb)
-		{
-			TracePrintf(2, "fuuuuuck \n");
-		}
+		next_pcb = list_pop(ready_procs);
 		curr_proc = next_pcb;
-		TracePrintf(2, "fuuuuuck \n");
+
 		retval = KernelContextSwitch(MyKCS, (void *) curr_pcb, (void *) next_pcb);
 	}
 

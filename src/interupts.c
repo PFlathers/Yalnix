@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <hardware.h>
+#include <string.h>
 #include "pcb.h"
 #include "kernel.h"
 #include "syscalls.h"
+#include "globals.h"
 
 //Prototypes of kernel traps.
 //This will be flushed out later.
@@ -18,6 +20,15 @@ void trapKernel(UserContext *uc)
   switch(uc->code) { 
       case YALNIX_EXEC:
         TracePrintf(3, "trapKernel: YALNIX_EXEC\n");
+        char *fname_p = (char *) uc->regs[0];
+        char **arg_p = (char **) uc->regs[1];
+        int file_size = (strlen(fname_p) + 1) * sizeof(char);
+
+        char *filename = (char *) malloc(file_size);
+        ALLOC_CHECK(filename, "exec");
+        memcpy((void*) filename, (void*) fname_p, file_size);
+        TracePrintf(6, "trapKernel: calling exec on %s\n", filename);
+        kernel_Exec(uc, filename, arg_p); 
         break;
 
       case YALNIX_DELAY:
@@ -28,19 +39,28 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_FORK:
         TracePrintf(3, "trapKernel: YALNIX_FORK\n");
+        retval = kernel_Fork(uc);
         break;
 
       case YALNIX_EXIT:
         TracePrintf(3, "trapKernel: YALNIX_EXIT\n");
+      	int status = (int) uc->regs[0];
+      	kernel_Exit(status, uc);
         break;
 
       case YALNIX_WAIT:
         TracePrintf(3, "trapKernel: YALNIX_WAIT\n");
+        // check if in range
+        // check if pages are valid
+        // check if RW
+
+        int *status_pt = (int *) uc->regs[0];
+        retval = kernel_Wait(status_pt, uc);
         break;
 
       case YALNIX_GETPID:
         TracePrintf(3, "trapKernel: YALNIX_GETPID\n");
-        retval = kernel_Getpid(uc);
+        retval = kernel_GetPid(uc);
         break;
 
       case YALNIX_BRK:
@@ -48,7 +68,7 @@ void trapKernel(UserContext *uc)
         // check if valid
         // check if RW
         addr = (void *) uc->regs[0];
-        retval = Yalnix_Brk(addr);
+        retval = kernel_Brk(addr);
         break;
 
       default:
@@ -60,6 +80,34 @@ void trapKernel(UserContext *uc)
 void trapClock(UserContext *uc)
 {
   TracePrintf(1, "trapClock ### start \n");
+
+        Node *temp = all_procs->head;
+        pcb *p;
+
+        TracePrintf(3, "ALL PROCS\n");
+        while (temp!=NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "%d\n", p->process_id);
+                temp = temp->next;
+        }
+
+        TracePrintf(3, "READY PROCS\n");
+        temp = ready_procs->head;
+        while (temp!=NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "%d\n", p->process_id);
+                temp = temp->next;
+        }
+
+        TracePrintf(3, "ZOMBIE PROCS\n");
+        temp = zombie_procs->head;
+        while (temp!=NULL){
+                p = (pcb*) temp->data;
+                TracePrintf(3, "%d\n", p->process_id);
+                temp = temp->next;
+        }
+
+
 
   if (list_count(blocked_procs) > 0) {
     Node *curr_on_delay = (Node *) blocked_procs->head;
@@ -85,10 +133,11 @@ void trapClock(UserContext *uc)
   TracePrintf(3, "trapClock: proc is Id: %d\n", curr_proc->process_id);
   if (list_count(ready_procs) > 0){
     TracePrintf(3, "trapClock: Switching processes\n");
-    goto_next_process(uc, 1);
+    int rc = goto_next_process(uc, 1);
+    TracePrintf(6, "trapClock: done switching processes\n");
   }
   else{
-    TracePrintf(3, "trapClock: no process to switch to gonna keep going")
+    TracePrintf(3, "trapClock: no process to switch to gonna keep going");
   }
 
 

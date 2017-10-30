@@ -70,6 +70,7 @@ List *empty_frame_list;
 unsigned int available_process_id;
 
 
+
 // process tracking lists -
 List *ready_procs;
 List *blocked_procs;
@@ -107,9 +108,15 @@ void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd);
 void KernelStart(char *cmd_args[], 
                  unsigned int phys_mem_size,
                  UserContext *user_context);
+void init_global(int);
+void init_pagetables(int, int);
+void config_registers();
+void create_idle_proc(UserContext *user_context);
+void create_init_proc(UserContext *user_context, char *cmd_args[]);
 
 int SetKernelBrk(void * addr);
 void DoIdle();
 int goto_next_process(UserContext *user_context, int repeat_bool);
+int context_switch(pcb *current, pcb *next, UserContext *user_context);
 void scheduler(void);
 #endif
