@@ -359,6 +359,8 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		return(ERROR);
 	}
 
+
+
 	// check if process has children that exited
 	if (parent->zombiez == NULL){
 		if (list_count(parent->children) <= 0 ) {
@@ -372,7 +374,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 		return(ERROR);
 	}
 
-
+	TracePrintf(6, "kernel_Wait: done with cheking\n");
 	/* Actual work under */
 
 	// if has dead children, find them and remove them from the 
