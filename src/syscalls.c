@@ -152,7 +152,6 @@ int kernel_Fork(UserContext *user_context)
 	// add to all and ready procs
 	list_add(all_procs, child);
 	list_add(ready_procs, child);
-	list_add(ready_procs, parent);
 
 	TracePrintf(6, "kernel_Fork: context switch to new process\n");
 	// context switch to the kid
