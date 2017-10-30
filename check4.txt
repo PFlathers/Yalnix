@@ -1,0 +1,30 @@
+### Checkpoint 4
+
+
+##### 0. If your code is not in the main branch, how do we check it out?
+
+- code is contained in _feat.checkpoint4_ branch. To access it, use [this link](https://gitlab.cs.dartmouth.edu/bjuncek/cs58-F17-droptables/repository/feat.checkpoint4/archive.zip) for a direct download or `git clone -b feat.checkpoint4 <prefered_repo_link>`. Note that we do not provide repo link as we don't know your prefered mode of authentification.
+
+
+##### 1. Did you make the checkpoint? 
+We made the checkpoint in the following ways:
+        - Exec works.
+
+        - Fork kinda works. When it returns, the child process executes the parents
+        code, and waits for itself. Since it doesn't have children, wait returns an error
+        and the child exits as though it did not have a parent. Since the the child
+        did not have a parent, it does not save its exit status. When the parent waits
+        for the child, it segfaults because the parent's pointer to the child points to 
+        garbage. When tested without waiting, it clearly shows that we fork, 
+        have two processes running and are returning twice, however they seem
+        to be running the same code. **Test files can be found in userland/fork.c**
+
+        - Exit works to the best of our testing. Given a process, it properly recycles
+        the pagetables and either sets a exit status if it has a parent, or is freed
+        if it is an orphan.
+
+        - Wait works to the best of out testing. It behaves correctly if a process does
+        not have children or zombies, and returns an error. We can not test the 
+        block-status because we segfault before that.
+
+##### 2. Any other questions?
