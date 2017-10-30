@@ -3,6 +3,7 @@ int main(int argc, char *argv[]) {
   TracePrintf(1, "\t===>In wait_short.c\n");
 
   int pid;
+  int i;
   pid = GetPid();
   
   int rc = Fork();
