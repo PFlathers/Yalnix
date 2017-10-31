@@ -19,7 +19,7 @@ int main()
 	}
 
 //        Exec("init", args);
-        Wait(&i);
+        //Wait(&i);
 
 	TracePrintf(0, "I is parent");
 	

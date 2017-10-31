@@ -159,7 +159,7 @@ int kernel_Fork(UserContext *user_context)
 //I Changed user_context to parent->user_context cause we mem copyed it into the
 //parent's usercontext space. If we do not do this, then we get a stack address
 //not valid error.
-	if (context_switch(parent, child, parent->user_context) != 0){
+	if (context_switch(parent, child, user_context) != 0){
 		TracePrintf(1, "kernel_Fork: error switching failed\n");
 		exit(ERROR);
 	}
