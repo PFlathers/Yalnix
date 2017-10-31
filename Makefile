@@ -18,7 +18,7 @@
 #
 
 #make all will make all the kernel objects and user objects
-ALL = $(KERNEL_ALL) $(USER_APPS) clean-apps
+ALL = $(KERNEL_ALL) $(USER_APPS)
 KERNEL_ALL = yalnix
 
 #List all kernel source files here.  
@@ -122,9 +122,7 @@ $(KERNEL_ALL): $(KERNEL_OBJS) $(KERNEL_LIBS) $(KERNEL_INCS)
 $(USER_APPS): $(USER_OBJS) $(USER_INCS)
 	$(ETCDIR)/yuserbuild.sh $@ $(DDIR58) $@.o
 	mv $(@) ./bin
-clean-apps:
-	rm -f userland/*.o
-	rm -f test/*.o
+	rm -f $@.o
 
 
 
