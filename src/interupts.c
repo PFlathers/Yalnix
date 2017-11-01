@@ -6,8 +6,13 @@
 #include "syscalls.h"
 #include "globals.h"
 
-//Prototypes of kernel traps.
-//This will be flushed out later.
+/* local utilities */
+int check_pointer_range(u_long ptr);
+
+
+
+
+/* actual interupts */
 
 void trapKernel(UserContext *uc)
 {
@@ -20,6 +25,15 @@ void trapKernel(UserContext *uc)
   switch(uc->code) { 
       case YALNIX_EXEC:
         TracePrintf(3, "trapKernel: YALNIX_EXEC\n");
+
+        if ( check_pointer_range(uc->regs[0]) \
+          || check_pointer_range(uc->regs[1]) ){
+
+          TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
+          retval = ERROR;
+          break;
+        }
+
         char *fname_p = (char *) uc->regs[0];
         char **arg_p = (char **) uc->regs[1];
         int file_size = (strlen(fname_p) + 1) * sizeof(char);
@@ -53,6 +67,11 @@ void trapKernel(UserContext *uc)
       case YALNIX_WAIT:
         TracePrintf(3, "trapKernel: YALNIX_WAIT\n");
         // check if in range
+        if ( check_pointer_range(uc->regs[0] ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
         // check if pages are valid
         // check if RW
 
@@ -66,7 +85,12 @@ void trapKernel(UserContext *uc)
         break;
 
       case YALNIX_BRK:
-        // check if in raed
+        // check if in range
+        if ( check_pointer_range(uc->regs[0] ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
         // check if valid
         // check if RW
         addr = (void *) uc->regs[0];
@@ -77,6 +101,8 @@ void trapKernel(UserContext *uc)
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
     }
+
+  // set return value  
   uc->regs[0] = retval;
 }
 
@@ -177,3 +203,20 @@ void trapname6(UserContext *uc){}
 void trapname7(UserContext *uc){}
 void trapname8(UserContext *uc){}
 void trapname9(UserContext *uc){}
+
+
+
+/* =============== UTILITIES ========================== */
+
+
+
+int check_pointer_range(u_long ptr) 
+{                                                         
+  // if argument is withing outside the bounds return 1, else return 0
+  if((unsigned int) ptr < VMEM_1_BASE || (unsigned int) ptr > VMEM_1_LIMIT){
+    return 1;
+  }                                                                      
+  else {
+    return 0;
+  }                                                                            
+}   
