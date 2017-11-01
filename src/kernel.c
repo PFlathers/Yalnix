@@ -448,7 +448,9 @@ int SetKernelBrk(void * addr)
 
 		// from addr of pade to bottom of stack invalid
 		for (i  = page_addr; i< stack_bottom; i++){
-			r0_ptlist[i].valid = (u_long) 0x0;
+                        if ( r0_ptlist[i].valid == 0x1){
+                                r0_ptlist[i].valid = (u_long) 0x0;
+                        }
 		}
 		
 		// brk = addr
