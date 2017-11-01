@@ -562,8 +562,9 @@ int kernel_Brk(void *addr)
 	// heap
 	for (i = heap_bottom; i<= heap_top; i++){
 		if ((*(curr_proc->region1_pt + i)).valid != 0x1) {
-			if (list_count(empty_frame_list) < 1){
-				TracePrintf(2, "Brk: out of memory");
+			// check for empty space
+                        if (list_count(empty_frame_list) < 1){
+				TracePrintf(2, "kernel_Brk: out of memory");
 				return ERROR;
 			}
 
