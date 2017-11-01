@@ -162,10 +162,21 @@ void trapMath(UserContext *uc)
 
 void trapTTYReceive(UserContext *uc)
 {
+        int len, retval, tty_id = (int) uc->regs[0];
+
+        char *buffer = malloc(sizeof(char) * TERMINAL_MAX_LINE);
+
+        memcpy((void*) buffer, (void*) uc->regs[1], sizeof(char) * TERMINAL_MAX_LINE);
+        int len = strlen(buffer);
+        int retval = TtyRead(tty_id, buffer, len);
+
+        uc->regs[0] = retval;
+
 }
 
 void trapTTYTransmit(UserContext *uc)
 {
+
 }
 
 void trapname1(UserContext *uc){}
