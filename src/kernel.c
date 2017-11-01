@@ -419,7 +419,12 @@ int SetKernelBrk(void * addr)
 	int i;
 
 	// Check that the address is within bounds
-	
+	if ((unsigned int) addr > (unsigned int) KERNEL_STACK_BASE || \
+                           addr < kernel_data_start){
+
+                TracePrintf(3, "SetKernelBrk: ERROR ### addres: %p out of bounds", addr);
+                return ERROR;
+        }
 
 	// get VM status from register
 	unsigned int vm_enabled = ReadRegister(REG_VM_ENABLE);
@@ -436,7 +441,9 @@ int SetKernelBrk(void * addr)
 
 		// from bottom to addr of page, update validity as (u_long) 0x01
 		for (i = page_bottom; i <= page_addr; i++){
-			r0_ptlist[i].valid = (u_long) 0x1;
+			if ( r0_ptlist[i].valid == 0x1){
+                                r0_ptlist[i].valid = (u_long) 0x1;
+                        }
 		}
 
 		// from addr of pade to bottom of stack invalid
