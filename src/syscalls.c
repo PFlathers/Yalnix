@@ -334,11 +334,11 @@ void kernel_Exit(int status, UserContext *uc)
                        list_remove(zombie_procs, (void*) zombie_child);
                        list_remove(all_procs, (void*) zombie_child);
                        //free_pagetables(zombie_child);
-                       //free(zombie_child);
+                       free(zombie_child);
 
                         TracePrintf(0, "2Sucess");
                 }
-                //free(temp_proc->zombiez);
+                free(temp_proc->zombiez);
        } 
       
         
@@ -353,7 +353,7 @@ void kernel_Exit(int status, UserContext *uc)
                         child_pcb->parent = NULL;
                         child_node = child_node->next;
                 }
-                //free(temp_proc->children);
+                free(temp_proc->children);
         }
 
         TracePrintf(0, "4Sucess");
@@ -367,7 +367,7 @@ void kernel_Exit(int status, UserContext *uc)
                 list_remove(ready_procs,(void*) temp_proc);
 
                 //free_pagetables(temp_proc);
-		//free(temp_proc);
+		free(temp_proc);
                 TracePrintf(3, "2kernel_exit ### end\n");
                 cycle_process(uc);
                 return;
@@ -391,7 +391,6 @@ void kernel_Exit(int status, UserContext *uc)
         TracePrintf(0, "7--");
 
 
-        //free_pagetables(temp_proc);
         temp_proc->exit_status = status;
 
 	
@@ -407,7 +406,7 @@ void cycle_process(UserContext *uc)
 {
 	if (list_count(ready_procs) < 1) {
 		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-		//exit(ERROR);
+		exit(ERROR);
 	}
 	else {
 		if (goto_next_process(uc, 0) != SUCCESS) {
@@ -449,6 +448,8 @@ void free_pagetables(pcb* myproc)
                         (*(myproc->region1_pt + i)).valid= (u_long) 0x0;
                 }
         }
+        free(myproc->user_context);
+        free(myproc->kernel_context);
 
         //Dont forget to flush.
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);

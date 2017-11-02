@@ -215,12 +215,15 @@ void trapClock(UserContext *uc)
 void trapIllegal(UserContext *uc)
 {
         TracePrintf(0, "Generally Illegal\n");
+      	int status = -1;
+      	kernel_Exit(status, uc);
+        uc->regs[0] = status;
 }
 
 void trapMemory(UserContext *uc)
 {
         TracePrintf(0, "Illegal Memory, now exiting\n");
-      	int status = (int) uc->regs[0];
+      	int status = -1;
       	kernel_Exit(status, uc);
         uc->regs[0] = status;
 }
@@ -228,6 +231,9 @@ void trapMemory(UserContext *uc)
 void trapMath(UserContext *uc)
 {
         TracePrintf(0, "Illegal Math\n");
+      	int status = -1;
+      	kernel_Exit(status, uc);
+        uc->regs[0] = status;
 }
 
 void trapTTYReceive(UserContext *uc)
