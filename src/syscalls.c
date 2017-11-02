@@ -309,37 +309,38 @@ void kernel_Exit(int status, UserContext *uc)
 	pcb *temp_proc = curr_proc; // Save a reference for freeing later
 	
 	int OG_Process = 0;
+        list_remove(all_procs, (void*) temp_proc);
+        list_remove(ready_procs,(void*) temp_proc);
+        TracePrintf(3, "kernel_exit ### exiting\n");
+        //cycle_process(uc);
+
+        
 	if(temp_proc->process_id == 0){
 		OG_Process = 1;
 	}
 
-	if (list_count(ready_procs) <= 0) {
-		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-		exit(ERROR);
-	}
-	else {
-		if (goto_next_process(uc, 0) != SUCCESS) {
-			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
-			exit(ERROR);
-		}
-                TracePrintf(0, "Sucess");
-	}
 
         //But what if it has zombie children?
         // Thank you Zombie Children from informing us you died. It was very
         // helpful. We now grant you sweet release.
+        
+       
        if(temp_proc->zombiez != NULL && list_count(temp_proc->zombiez) > 0){
                 pcb *zombie_child;
                 TracePrintf(0, "1Sucess");
                 while(list_count(temp_proc->zombiez) > 0){
+                        TracePrintf(0, "killing zombie children");
                        zombie_child = (pcb*) list_pop(temp_proc->zombiez); 
-                       free_pagetables(zombie_child);
-                       free(zombie_child);
+                       list_remove(zombie_procs, (void*) zombie_child);
+                       list_remove(all_procs, (void*) zombie_child);
+                       //free_pagetables(zombie_child);
+                       //free(zombie_child);
 
                         TracePrintf(0, "2Sucess");
                 }
-                free(temp_proc->zombiez);
+                //free(temp_proc->zombiez);
        } 
+      
         
         TracePrintf(0, "3Sucess");
 
@@ -352,7 +353,7 @@ void kernel_Exit(int status, UserContext *uc)
                         child_pcb->parent = NULL;
                         child_node = child_node->next;
                 }
-                free(temp_proc->children);
+                //free(temp_proc->children);
         }
 
         TracePrintf(0, "4Sucess");
@@ -365,8 +366,10 @@ void kernel_Exit(int status, UserContext *uc)
                 list_remove(blocked_procs,(void *) temp_proc);
                 list_remove(ready_procs,(void*) temp_proc);
 
-                free_pagetables(temp_proc);
-		free(temp_proc);
+                //free_pagetables(temp_proc);
+		//free(temp_proc);
+                TracePrintf(3, "2kernel_exit ### end\n");
+                cycle_process(uc);
                 return;
                 
         // it becomes a zombie
@@ -374,16 +377,21 @@ void kernel_Exit(int status, UserContext *uc)
                 
                 TracePrintf(0, "6Sucess");
                 list_add(zombie_procs,(void*) temp_proc);
+                TracePrintf(0, "6.1Sucess");
                 list_remove(temp_proc->parent->children,(void*) temp_proc);
+                TracePrintf(0, "6.2Sucess");
+                list_remove(ready_procs, (void*) temp_proc);
+                TracePrintf(0, "6.3Sucess");
                 if (temp_proc->parent->zombiez == NULL){
-                        init_list(temp_proc->parent->zombiez);
+                        temp_proc->parent->zombiez = init_list();
                 }
+                TracePrintf(0, "6.4Sucess");
                 list_add(temp_proc->parent->zombiez,(void*) temp_proc);
         }
         TracePrintf(0, "7--");
 
 
-        free_pagetables(temp_proc);
+        //free_pagetables(temp_proc);
         temp_proc->exit_status = status;
 
 	
@@ -391,6 +399,22 @@ void kernel_Exit(int status, UserContext *uc)
 	// If our root process stops, then we halt the system.
 	if(OG_Process){
 		Halt();
+	}
+        cycle_process(uc);
+        
+}
+void cycle_process(UserContext *uc)
+{
+	if (list_count(ready_procs) < 1) {
+		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
+		//exit(ERROR);
+	}
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+			exit(ERROR);
+		}
+                TracePrintf(0, "Sucess");
 	}
 }
 /*
