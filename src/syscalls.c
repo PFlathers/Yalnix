@@ -366,7 +366,7 @@ void kernel_Exit(int status, UserContext *uc)
                 list_remove(blocked_procs,(void *) temp_proc);
                 list_remove(ready_procs,(void*) temp_proc);
 
-                //free_pagetables(temp_proc);
+                free_pagetables(temp_proc);
 		free(temp_proc);
                 TracePrintf(3, "2kernel_exit ### end\n");
                 cycle_process(uc);
@@ -427,13 +427,14 @@ void free_pagetables(pcb* myproc)
 {
         int i;
         int trash_pfn;
-
+ 
         //Recycle the kernel page tables
         for (i = 0; i < KERNEL_PAGE_COUNT; i ++){
                 if( (*(myproc->region0_pt + i)).valid == 0x1){
-                        (*(myproc->region0_pt + i)).valid = (u_long) 0x0;
-                        trash_pfn = (( (*(myproc->region0_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
+                        trash_pfn = FRAME_TO_PAGE( (*(myproc->region0_pt + i)).pfn );
                         list_add(empty_frame_list, (void *) trash_pfn);
+
+                        (*(myproc->region0_pt + i)).valid = (u_long) 0x0;
                         (*(myproc->region0_pt + i)).pfn = (u_long) 0x0;
                 }
         }
@@ -441,7 +442,7 @@ void free_pagetables(pcb* myproc)
         //Recycle the userland page tables
         for (i = 0; i < VREG_1_PAGE_COUNT; i++){
                 if( (*(myproc->region1_pt + i)).valid == 0x1 ){
-                        trash_pfn = (( (*(myproc->region1_pt + i)).pfn << PAGESHIFT)/PAGESIZE);
+                        trash_pfn = FRAME_TO_PAGE( (*(myproc->region0_pt + i)).pfn );
                         list_add(empty_frame_list, (void*) trash_pfn);
 
                         (*(myproc->region1_pt + i)).pfn = (u_long) 0x0;
