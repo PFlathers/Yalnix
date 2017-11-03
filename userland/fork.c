@@ -1,9 +1,16 @@
 #include <yalnix.h>
+#include <string.h>
 
 int main()
 {
 	int i = Fork();
-        char *args[] = {"init", 0};
+        char* a = (char*) malloc(sizeof(char) *10);
+        char* b = (char*) malloc(sizeof(char) *10);
+
+        strcpy(a, "init");
+        strcpy(b, '\0');
+
+        char *args[] = {a,b};
         TracePrintf("%d\n", i);
 	if(i == 0){
 		while(1){

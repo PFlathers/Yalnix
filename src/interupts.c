@@ -6,13 +6,20 @@
 #include "syscalls.h"
 #include "globals.h"
 
-//Prototypes of kernel traps.
-//This will be flushed out later.
+/* local utilities */
+int check_pointer_range(u_long ptr);
+int check_pointer_write(u_long ptr) ;                                                         
+
+int check_pointer_valid(u_long ptr) ;                                                    
+
+
+
+/* actual interupts */
 
 void trapKernel(UserContext *uc)
 {
   int clock_ticks;
-  int retval;
+  int retval = 0;
   int exit_code;
   void *addr;
 
@@ -20,6 +27,30 @@ void trapKernel(UserContext *uc)
   switch(uc->code) { 
       case YALNIX_EXEC:
         TracePrintf(3, "trapKernel: YALNIX_EXEC\n");
+
+        if ( check_pointer_range(uc->regs[0]) \
+          || check_pointer_range(uc->regs[1]) ){
+
+          TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
+          retval = ERROR;
+          break;
+        }
+
+        if ( check_pointer_valid(uc->regs[0]) \
+          || check_pointer_valid(uc->regs[1]) ){
+
+          TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
+          retval = ERROR;
+          break;
+        }
+        if ( is_rw(uc->regs[0]) \
+          || is_rw(uc->regs[1]) ){
+
+          TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
+          retval = ERROR;
+          break;
+        }
+
         char *fname_p = (char *) uc->regs[0];
         char **arg_p = (char **) uc->regs[1];
         int file_size = (strlen(fname_p) + 1) * sizeof(char);
@@ -28,6 +59,8 @@ void trapKernel(UserContext *uc)
         ALLOC_CHECK(filename, "exec");
         memcpy((void*) filename, (void*) fname_p, file_size);
         TracePrintf(6, "trapKernel: calling exec on %s\n", filename);
+        TracePrintf(3, "tk:%s\n", arg_p[0]);
+
         kernel_Exec(uc, filename, arg_p); 
         break;
 
@@ -40,6 +73,7 @@ void trapKernel(UserContext *uc)
       case YALNIX_FORK:
         TracePrintf(3, "trapKernel: YALNIX_FORK\n");
         retval = kernel_Fork(uc);
+          TracePrintf(0, "retval: %d\n", retval);
         break;
 
       case YALNIX_EXIT:
@@ -51,8 +85,23 @@ void trapKernel(UserContext *uc)
       case YALNIX_WAIT:
         TracePrintf(3, "trapKernel: YALNIX_WAIT\n");
         // check if in range
+        if ( check_pointer_range(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
         // check if pages are valid
+        if ( check_pointer_valid(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
         // check if RW
+        if ( is_rw(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
 
         int *status_pt = (int *) uc->regs[0];
         retval = kernel_Wait(status_pt, uc);
@@ -64,9 +113,24 @@ void trapKernel(UserContext *uc)
         break;
 
       case YALNIX_BRK:
-        // check if in raed
-        // check if valid
+        // check if in range
+        if ( check_pointer_range(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
+        // check if pages are valid
+        if ( check_pointer_valid(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
         // check if RW
+        if ( is_rw(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
         addr = (void *) uc->regs[0];
         retval = kernel_Brk(addr);
         break;
@@ -75,6 +139,9 @@ void trapKernel(UserContext *uc)
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
     }
+
+  // set return value  
+  uc->regs[0] = retval;
 }
 
 void trapClock(UserContext *uc)
@@ -147,14 +214,26 @@ void trapClock(UserContext *uc)
 
 void trapIllegal(UserContext *uc)
 {
+        TracePrintf(0, "Generally Illegal\n");
+      	int status = -1;
+      	kernel_Exit(status, uc);
+        uc->regs[0] = status;
 }
 
 void trapMemory(UserContext *uc)
 {
+        TracePrintf(0, "Illegal Memory, now exiting\n");
+      	int status = -1;
+      	kernel_Exit(status, uc);
+        uc->regs[0] = status;
 }
 
 void trapMath(UserContext *uc)
 {
+        TracePrintf(0, "Illegal Math\n");
+      	int status = -1;
+      	kernel_Exit(status, uc);
+        uc->regs[0] = status;
 }
 
 void trapTTYReceive(UserContext *uc)
@@ -174,3 +253,60 @@ void trapname6(UserContext *uc){}
 void trapname7(UserContext *uc){}
 void trapname8(UserContext *uc){}
 void trapname9(UserContext *uc){}
+
+
+
+/* =============== UTILITIES ========================== */
+
+
+
+int check_pointer_range(u_long ptr) 
+{                                                         
+  // if argument is withing outside the bounds return 1, else return 0
+  if((unsigned int) ptr < VMEM_1_BASE || (unsigned int) ptr > VMEM_1_LIMIT){
+    return 1;
+  }                                                                      
+  else {
+    return 0;
+  }                                                                            
+}   
+
+
+int check_pointer_valid(u_long ptr)
+{                                                          
+  struct pte *ptr_pte;
+  ptr_pte = curr_proc->region1_pt + (ptr >> PAGESHIFT) - 128;
+
+  if (ptr_pte->valid != (u_long) 0x1)
+    return 1;
+  else
+    return 0;
+};                                                                                  
+                                                                                    
+int check_pointer_read(u_long ptr) 
+{                                                          
+  struct pte *ptr_pte;
+  ptr_pte = curr_proc->region1_pt + (ptr >> PAGESHIFT) - 128;
+
+  if (ptr_pte->prot | (u_long) PROT_READ)
+    return 0;
+  else
+    return 1;
+};                                                                                  
+                                                                                    
+int check_pointer_write(u_long ptr) 
+{                                                         
+  struct pte *ptr_pte;
+  ptr_pte = curr_proc->region1_pt + (ptr >> PAGESHIFT) - 128;
+
+  if (ptr_pte->prot | (u_long) PROT_WRITE)
+    return 0;
+  else
+    return 1;
+
+};
+
+int is_rw(u_long ptr)
+{
+  return (check_pointer_write(ptr) || check_pointer_read(ptr));
+}              

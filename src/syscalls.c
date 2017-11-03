@@ -23,163 +23,190 @@
 | 			as a kid (return value == 0) and as a parent (return value ==
 | 			child's id). 
 *-------------------------------------------------------------------*/
+//TODO: Fix this.
 int kernel_Fork(UserContext *user_context)
 {
-	TracePrintf(3, "kernel_Fork ### start \n");
+        TracePrintf(3, "kernel_Fork ### Start\n");
 
-	int i;
-	int pfn_scratch;
+        pcb *child;
+        pcb *parent; 
 
-	pcb *child; // local pcb of child fprocess
-	pcb *parent; // local pcb of parent
+        int temp_pfn; // store the most recently poped pfn
+        int dest_pg; //page in kernel for mappin a frame 
 
-	// store user context of parent (important for sp and pc)
-	parent = curr_proc;
-	memcpy((void *) parent->user_context, (void *) user_context, sizeof(UserContext));
-	TracePrintf(0, "%04x|%04x\n", parent->user_context->sp, user_context->sp);
+        int bcp_pfn;
+        int bcp_valid;
 
-	
-	// create a new process and coppy the uc to it
-	TracePrintf(6, "kernel_Fork: creating new procees\n");
-	child = new_process(parent->user_context);
-	memcpy((void *) child->user_context, (void *) parent->user_context, sizeof(UserContext));
-	
-	// allocate space for stack and PTE
-	child->region1_pt = (struct pte *) malloc (VREG_1_PAGE_COUNT *sizeof(struct pte));
-	ALLOC_CHECK(child->region1_pt, "kernel_Fork");
-	child->region0_pt = (struct pte *) malloc(KERNEL_PAGE_COUNT * sizeof(struct pte));
-	ALLOC_CHECK(child->region0_pt, "kernel_Fork");
-	
-	// finish pcb with usefull information
-	child->heap_start_pg = parent->heap_start_pg;
-	child->brk_address = parent->brk_address;
-	TracePrintf(6, "kernel_Fork: done creating new procees\n");
+        int retval, i;
 
-	// if successfull, create pagetables
-	TracePrintf(6, "kernel_Fork: memcpy and allocate pagetables\n");
-	// copy old ones
-	memcpy((void *) child->region1_pt, (void *) parent->region1_pt, (VREG_1_PAGE_COUNT * sizeof(struct pte)) );
-	memcpy((void *) child->region0_pt, (void *) parent->region0_pt, (KERNEL_PAGE_COUNT * sizeof(struct pte)) );
+        // current process becomes parent
+        parent = curr_proc;
+        memcpy((void *) parent->user_context, (void *) user_context, sizeof(UserContext));
 
-	// allocate new physical frames for kernel
-	if (list_count(empty_frame_list) <= KERNEL_PAGE_COUNT){
-		TracePrintf(1, "kernel_Fork: not enough memory for child's kernel stack");
-		exit(ERROR);
-	}
-	for (i = 0; i < KERNEL_PAGE_COUNT; i++){
-		pfn_scratch =  (int) list_pop(empty_frame_list);
-		(*(child->region0_pt + i)).pfn = ((u_long) (((int)(pfn_scratch) * PAGESIZE) >> PAGESHIFT));
-	}
+        // bootstrap the new process for the child
+        child = new_process(user_context);
 
-	// -//- for region 1
-	if (list_count(empty_frame_list) <= VREG_1_PAGE_COUNT){
-		TracePrintf(1, "kernel_Fork: not enough memory for child's user memory");
-		exit(ERROR);
-	}
-	for (i = 0; i < VREG_1_PAGE_COUNT; i++){
-		if ( (*(child->region1_pt + i)).valid == (u_long) 0x1 ){
-			if( list_count(empty_frame_list) <= 0 ){
-				TracePrintf(1, "kernel_Fork: not enough memory for child's user memory");
-				exit(ERROR);
-			}
-
-			pfn_scratch =(int) list_pop(empty_frame_list);
-			(*(child->region1_pt + i)).pfn = ((u_long) (((int)(pfn_scratch) * PAGESIZE) >> PAGESHIFT));
-		}
-		else{
-			(*(child->region1_pt + i)).pfn = (u_long) 0x0;
-		}
-	}
-	TracePrintf(6, "kernel_Fork: done with memcpy and allocate pagetables\n");
+        // init child's uc with the parent's uc
+        memcpy((void *) child->user_context, (void *) parent->user_context);
+        // but it needs new page tables
+        child->region0_pt = (struct pte *) malloc( KERNEL_PAGE_COUNT * sizeof(struct pte) );
+        ALLOC_CHECK(child->region0_pt, "kernel_Fork");
+        child->region1_pt = (struct pte *) malloc(VREG_1_PAGE_COUNT * sizeof(struct pte));
+        ALLOC_CHECK(child->region1_pt, "kernel_Fork");
 
 
-	/* copy parent's memory to child process */
-	// (don't know how to do it efficiently)
-//000000
-	// this is the one page below the bottom of the stack, I.e.
-	// we copy our child's frame here so that we know where
-	// to return
-	int dest = (KERNEL_STACK_BASE >> PAGESHIFT) - 1;
-	unsigned int bcp_dest_pfn = r0_ptlist[dest].pfn;
-	unsigned int bcp_dest_val = r0_ptlist[dest].valid;
+        // child's heap base page and brk are the same as parrents
+        child->heap_start_pg = parent->heap_start_pg;
+        child->brk_address = parent->brk_address;
+
+        TracePrintf(6, "kernel_Fork: succesfully bootstraped new proces \n");
+
+        TracePrintf(6, "kernel_Fork: starting pagetable copy\n");
+
+        // copy parent's pgtbl into child
+        memcpy((void *) child->region1_pt, (void *) parent->region1_pt, \
+                VREG_1_PAGE_COUNT * sizeof(struct pte));
+
+        memcpy( (void *) child->region0_pt, (void *) parent->region0_pt, \
+                KERNEL_PAGE_COUNT * sizeof(struct pte) );
+
+        TracePrintf(6, "kernel_Fork: end pagetable copy\n");
 
 
-	// destination should be valid
-	r0_ptlist[dest].valid = (u_int) 0x1;
+        TracePrintf(6, "kernel_Fork: create frames for pagetable\n");
+        for (i = 0; i<KERNEL_PAGE_COUNT; i++){
+                if (list_count(empty_frame_list) <= 0){
+                        return ERROR;
+                }
+
+                temp_pfn = (int) list_pop(empty_frame_list);
+                (*(child->region0_pt + i)).pfn = FRAME_TO_PAGE(temp_pfn);
+        }
 
 
-	int src;
-	int dst = dest << PAGESHIFT;
+        for (i=0; i<VREG_1_PAGE_COUNT; i++){
+                if ( (*(child->region1_pt + i)).valid == (u_long) 0x1 ) {
 
-	// restore old PTE for destination page
-	for (i = 0; i<KERNEL_PAGE_COUNT; i++) {
-		// move in the virtual adress of the kernel stack
-		src = KERNEL_STACK_BASE + (i*PAGESIZE);
+                        if (list_count(empty_frame_list) <= 0){
+                                return ERROR;
+                        }
+                        temp_pfn = (int) list_pop(empty_frame_list);
+                        (*(child->region1_pt + i)).pfn = FRAME_TO_PAGE(temp_pfn);
 
-		// destination will have pfn of the child's process page table
-		r0_ptlist[dest].pfn = (*(child->region0_pt + i)).pfn;
-		WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+                }
+                else{
+                        // invalidate the frame
+                        (*(child->region1_pt + i)).pfn = (u_long) 0x0;
+                }
+        }
+        TracePrintf(6, "kernel_Fork: end creating frames for pagetable\n");
 
-		// actually copy the frame
-		memcpy((void *) dst, (void *) src, PAGESIZE);
-	}
 
-	for (i = 0; i<VREG_1_PAGE_COUNT; i++) {
-		if ((*(child->region1_pt + i)).valid == 0x1){
-			src = VMEM_1_BASE + (i*PAGESIZE);
+        TracePrintf(6, "kernel_Fork: copy parent's memory into child\n");
+        dest_pg = (KERNEL_STACK_BASE >> PAGESHIFT) - 1;
 
-			r0_ptlist[dest].pfn = (*(child->region1_pt + i)).pfn;
-			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+        bcp_valid = r0_ptlist[dest_pg].valid;
+        bcp_pfn = r0_ptlist[dest_pg].pfn;
 
-			// actually copy the frame
-			memcpy((void *) dst, (void *) src, PAGESIZE);
-		}
-	}
+        // destination page is valid
+        r0_ptlist[dest_pg].valid = (u_long) 0x1;
 
-	// restore
-	r0_ptlist[dest].pfn = bcp_dest_pfn;
-	r0_ptlist[dest].valid = bcp_dest_val;
-	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+        // prepare for memcopy
+        unsigned int src, dst;
+        dst = dest_pg << PAGESHIFT;
 
-	// book keeping
-	// add kid to parent's list (potentially init)
-	child->parent = (pcb *) curr_proc;
-	if (parent->children == NULL){
-		parent->children = init_list();
-	}
-	list_add(parent->children, (void *) child);
-	TracePrintf(6, "kernel_Fork: child's parent is %d \n", child->parent->process_id);
-	// add to all and ready procs
-	list_add(all_procs, child);
-	list_add(ready_procs, (void *) parent);
 
-	TracePrintf(6, "kernel_Fork: context switch to new process\n");
-	// context switch to the kid
-//I Changed user_context to parent->user_context cause we mem copyed it into the
-//parent's usercontext space. If we do not do this, then we get a stack address
-//not valid error.
-	if (context_switch(parent, child, user_context) != 0){
-		TracePrintf(1, "kernel_Fork: error switching failed\n");
-		exit(ERROR);
-	}
-	
-	TracePrintf(6, "kernel_Fork: done with context switch to new process\n");
+        for (i=0; i<KERNEL_PAGE_COUNT; i++){
+                src = KERNEL_STACK_BASE + (i*PAGESIZE);
 
-	// return
-		// if current proc is parent return child id
-	if (curr_proc == parent){
-		TracePrintf(3, "kernel_Fork ### return to parent  \n");
-		return child->process_id;
-	}	// if current proc is child return 0
-	else if (curr_proc == child){
-		TracePrintf(3, "kernel_Fork ### return to child  \n");
-		return 0;
-	}	// else return ERROR
-	else{
-		return ERROR;
-	}
+                r0_ptlist[dest_pg].pfn = (*(child->region0_pt + i)).pfn;
+                WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+
+                memcpy((void*) dst, (void *) src, PAGESIZE);
+        }
+
+        TracePrintf(6, "\tCopied kernel frames\n");
+
+        for (i=0; i<VREG_1_PAGE_COUNT; i++) {
+                if ( (*(child->region1_pt + i)).valid == 0x1 ) {
+                        src = VMEM_1_BASE + (i * PAGESIZE);
+
+                        r0_ptlist[dest_pg].pfn = (*(child->region1_pt + i)).pfn;
+                        WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+
+                        memcpy((void*) dst, (void *) src, PAGESIZE);
+                }
+        }
+        TracePrintf(6, "\t Copied user frames \n");
+
+        r0_ptlist[dest_pg].valid = bcp_valid;
+        r0_ptlist[dest_pg].pfn = bcp_pfn;
+        TracePrintf(6, "\t Restored frames from backup \n");
+
+        WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+        TracePrintf(6, "kernel_Fork: end copy parent's memory into child\n");
+
+
+        TracePrintf(6, "kernel_Fork: bookkeeping\n");
+        TracePrintf(6, "\t: child->parent = parent\n");
+
+        child->parent = parent;
+        TracePrintf(6, "\t: parent->children = children\n");
+
+        if (parent->children == NULL){
+                parent->children = init_list();
+                bzero(parent->children, sizeof(List));
+        }
+
+
+        list_add(parent->children, (void *) child);
+        TracePrintf(6, "\t: add to child to allprocs and parent to ready procs \n");
+
+        list_add(all_procs, (void*) child);
+        list_add(ready_procs, (void *) parent);
+
+
+        TracePrintf(6, "kernel_Fork: context switch arr\n");
+        if (context_switch(parent, child, user_context) != 0) {
+                return ERROR;
+        }
+
+        TracePrintf(6, "kernel_Fork: end context switch arr\n");
+
+
+        TracePrintf(6, "kernel_Fork: return\n");
+        if (curr_proc == parent){
+                TracePrintf(6, "\t kernel_Fork; returning to parent  \n");
+                TracePrintf(3, "kernel_Fork ### end\n");
+                return child->process_id;
+
+        }
+        else if (curr_proc == child){
+                TracePrintf(6, "\t kernel_Fork; returning to child  \n");
+                TracePrintf(3, "kernel_Fork ### end\n");
+                return(0);         
+        }
+        else{
+                return ERROR;
+        }
+
 }
 
+	
+
+/* --------------------------kernel_Exec-----------------------------------
+ * Loads a program into the current process and begins execution of that program.
+ *
+ * Function variables:
+ *      uc: the current user context
+ *      filename: the file that we have to execute
+ *      argev; the arguements that we are going to pass to LoadProg so that we 
+ *              can load the program and pass it the proper arguements.
+ * Returns Sucess if we sucessfully exec the program. returns ERORR if there is
+ * a problem with Load Prog. Common error is that the file doesnt exist...
+ *------------------------------------------------------------------------*/
 int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 {
 	TracePrintf(3, "kernel_Exec ### start \n");
@@ -191,7 +218,6 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	while (argvec[argc] != NULL){
 		argc++;
 	}
-        TracePrintf(3, "1\n");
 	/*change pcb and uc to look lke a blank process */ 
 	pcb *proc = curr_proc;
 
@@ -202,7 +228,6 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 		// privileged regs are modified in Load Program
 
 
-        TracePrintf(3, "2\n");
 	// pcb 
 		// id, uc as is
 		// has_kc is set to 0 as we need to bootstap it
@@ -222,7 +247,6 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
 		// region1_pt trashed and reinintialized
 
-        TracePrintf(3, "3\n");
 	for (i = 0; i < VREG_1_PAGE_COUNT; i++) {
 		if ( (*(proc->region1_pt + i)).valid == 0x1 ){
 			// thrash the page
@@ -239,8 +263,13 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
 
+        TracePrintf(3, "kexev: %s\n", argvec[0]);
         TracePrintf(3, "filename: %s\n", filename);
         TracePrintf(3, "proc: %d\n", proc->process_id);
+        TracePrintf(3, "kexev: %s\n", argvec[0]);
+        for (i = 0; i < argc; i ++){
+                TracePrintf(3, "%s\n", argvec[i]);
+        }
 
 	/* load next program */
 
@@ -271,42 +300,67 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
  * Parameters:
  *	status: the exit status of the process.
  *	uc: the current user context.
- */
+ *-------------------------------------------------------------------------*/
+// TODO: Figure out if we need to free the kernel context and/or user context
+// of the pcb.
 void kernel_Exit(int status, UserContext *uc)
 {
 	TracePrintf(3, "kernel_exit ### start\n");
 	pcb *temp_proc = curr_proc; // Save a reference for freeing later
 	
 	int OG_Process = 0;
+        list_remove(all_procs, (void*) temp_proc);
+        list_remove(ready_procs,(void*) temp_proc);
+        TracePrintf(3, "kernel_exit ### exiting\n");
+        //cycle_process(uc);
+
+        
 	if(temp_proc->process_id == 0){
 		OG_Process = 1;
 	}
 
-	if (list_count(ready_procs) <= 0) {
-		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-		exit(ERROR);
-	}
-	else {
-		if (goto_next_process(uc, 0) != SUCCESS) {
-			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
-			exit(ERROR);
-		}
-	}
-//But what if it has zombie children?
+
+        //But what if it has zombie children?
+        // Thank you Zombie Children from informing us you died. It was very
+        // helpful. We now grant you sweet release.
+        
+       
+       if(temp_proc->zombiez != NULL && list_count(temp_proc->zombiez) > 0){
+                pcb *zombie_child;
+                TracePrintf(0, "1Sucess");
+                while(list_count(temp_proc->zombiez) > 0){
+                        TracePrintf(0, "killing zombie children");
+                       zombie_child = (pcb*) list_pop(temp_proc->zombiez); 
+                       list_remove(zombie_procs, (void*) zombie_child);
+                       list_remove(all_procs, (void*) zombie_child);
+                       //free_pagetables(zombie_child);
+                       free(zombie_child);
+
+                        TracePrintf(0, "2Sucess");
+                }
+                free(temp_proc->zombiez);
+       } 
+      
+        
+        TracePrintf(0, "3Sucess");
+
         //if it has children, mark them as orphans
         if(temp_proc->children != NULL && list_count(temp_proc->children) > 0){
-                pcb* child_pcb;
+                pcb *child_pcb;
                 Node *child_node = curr_proc->children->head;
                 while(child_node != NULL){
                         child_pcb = (pcb*) child_node->data;
                         child_pcb->parent = NULL;
                         child_node = child_node->next;
                 }
+                free(temp_proc->children);
         }
 
+        TracePrintf(0, "4Sucess");
 	// If its an orphan, we dont care
 	if(temp_proc->parent == NULL){
 
+                TracePrintf(0, "5Sucess");
                 list_remove(all_procs,(void*) temp_proc);
                 list_remove(zombie_procs,(void*) temp_proc);
                 list_remove(blocked_procs,(void *) temp_proc);
@@ -314,20 +368,29 @@ void kernel_Exit(int status, UserContext *uc)
 
                 free_pagetables(temp_proc);
 		free(temp_proc);
+                TracePrintf(3, "2kernel_exit ### end\n");
+                cycle_process(uc);
                 return;
-
+                
         // it becomes a zombie
         } else{
+                
+                TracePrintf(0, "6Sucess");
                 list_add(zombie_procs,(void*) temp_proc);
+                TracePrintf(0, "6.1Sucess");
                 list_remove(temp_proc->parent->children,(void*) temp_proc);
+                TracePrintf(0, "6.2Sucess");
+                list_remove(ready_procs, (void*) temp_proc);
+                TracePrintf(0, "6.3Sucess");
                 if (temp_proc->parent->zombiez == NULL){
-                        init_list(temp_proc->parent->zombiez);
+                        temp_proc->parent->zombiez = init_list();
                 }
+                TracePrintf(0, "6.4Sucess");
                 list_add(temp_proc->parent->zombiez,(void*) temp_proc);
         }
+        TracePrintf(0, "7--");
 
 
-        free_pagetables(temp_proc);
         temp_proc->exit_status = status;
 
 	
@@ -336,30 +399,60 @@ void kernel_Exit(int status, UserContext *uc)
 	if(OG_Process){
 		Halt();
 	}
+        cycle_process(uc);
+        
 }
-
+void cycle_process(UserContext *uc)
+{
+	if (list_count(ready_procs) < 1) {
+		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
+		exit(ERROR);
+	}
+	else {
+		if (goto_next_process(uc, 0) != SUCCESS) {
+			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+			exit(ERROR);
+		}
+                TracePrintf(0, "Sucess");
+	}
+}
+/*
+ * Helper function that frees the pagetables of a pcb by returning them to 
+ * empty_frame_list for use in another process later.
+ *
+ * Function variables:
+ *      myproc: the process that we want to recycle to pagetables.
+ */
 void free_pagetables(pcb* myproc)
 {
         int i;
         int trash_pfn;
+ 
+        //Recycle the kernel page tables
         for (i = 0; i < KERNEL_PAGE_COUNT; i ++){
                 if( (*(myproc->region0_pt + i)).valid == 0x1){
-                        (*(myproc->region0_pt + i)).valid = (u_long) 0x0;
-                        trash_pfn = (( (*(myproc->region0_pt + i)).pfn << PAGESHIFT) / PAGESIZE);
+                        trash_pfn = FRAME_TO_PAGE( (*(myproc->region0_pt + i)).pfn );
                         list_add(empty_frame_list, (void *) trash_pfn);
+
+                        (*(myproc->region0_pt + i)).valid = (u_long) 0x0;
                         (*(myproc->region0_pt + i)).pfn = (u_long) 0x0;
                 }
         }
-
+        
+        //Recycle the userland page tables
         for (i = 0; i < VREG_1_PAGE_COUNT; i++){
                 if( (*(myproc->region1_pt + i)).valid == 0x1 ){
-                        trash_pfn = (( (*(myproc->region1_pt + i)).pfn << PAGESHIFT)/PAGESIZE);
+                        trash_pfn = FRAME_TO_PAGE( (*(myproc->region0_pt + i)).pfn );
                         list_add(empty_frame_list, (void*) trash_pfn);
 
                         (*(myproc->region1_pt + i)).pfn = (u_long) 0x0;
                         (*(myproc->region1_pt + i)).valid= (u_long) 0x0;
                 }
         }
+        free(myproc->user_context);
+        free(myproc->kernel_context);
+
+        //Dont forget to flush.
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 }
 
@@ -498,20 +591,24 @@ int kernel_Brk(void *addr)
 	unsigned int stack_top = ((VMEM_1_LIMIT >> PAGESHIFT) - VREG_1_PAGE_COUNT);
 
 
-
 	// check the addresses
 	unsigned int u_addr = (unsigned int) addr; 
-	if (u_addr > (unsigned int) (stack_bottom << PAGESHIFT) || 
-		u_addr < (unsigned int) (heap_top << PAGESHIFT)){
-		TracePrintf(1, "Brk: address requestet out of bounds \n");
+        TracePrintf(3, "kernel_Brk: current brk = %u, requesting: %u ", curr_proc->brk_address, u_addr);
+
+        unsigned int stack_bottom_page = (unsigned int) (stack_bottom << PAGESHIFT);
+        unsigned int heap_top_page = (unsigned int) (heap_top << PAGESHIFT);
+	if (u_addr > stack_bottom_page || 
+		u_addr < heap_top_page ){
+		TracePrintf(1, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
 		return ERROR;
 	}
 
 	// heap
 	for (i = heap_bottom; i<= heap_top; i++){
 		if ((*(curr_proc->region1_pt + i)).valid != 0x1) {
-			if (list_count(empty_frame_list) < 1){
-				TracePrintf(2, "Brk: out of memory");
+			// check for empty space
+                        if (list_count(empty_frame_list) < 1){
+				TracePrintf(2, "kernel_Brk: out of memory");
 				return ERROR;
 			}
 

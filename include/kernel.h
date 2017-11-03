@@ -119,4 +119,5 @@ void DoIdle();
 int goto_next_process(UserContext *user_context, int repeat_bool);
 int context_switch(pcb *current, pcb *next, UserContext *user_context);
 void scheduler(void);
+void cycle_process(UserContext *uc);
 #endif
