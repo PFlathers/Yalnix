@@ -214,7 +214,9 @@ void trapClock(UserContext *uc)
 
 void trapIllegal(UserContext *uc)
 {
-        TracePrintf(0, "Generally Illegal\n");
+        TracePrintf(1, "trapIllegal ### start: now exiting \n");
+        TracePrintf(6, "\t Illegal pid = %d \n \t status: %d"\
+            curr_proc->process_id, uc->code);
       	int status = -1;
       	kernel_Exit(status, uc);
         uc->regs[0] = status;
@@ -224,13 +226,25 @@ void trapMemory(UserContext *uc)
 {
         TracePrintf(0, "Illegal Memory, now exiting\n");
       	int status = -1;
+
+        if (uc->code == YALNIX_ACCERR) {
+          TracePrintf(6, "Process had access error at %p \n", uc->code);
+        }
+        else if (uc->code == YALNIX_MAPERR) {
+          TracePrintf(6, "Process had a mapping error \n");
+        }
+
+
+
+        // should we check if there is no code? 
+
       	kernel_Exit(status, uc);
         uc->regs[0] = status;
 }
 
 void trapMath(UserContext *uc)
 {
-        TracePrintf(0, "Illegal Math\n");
+        TracePrintf(0, "trapMath ### start: now exiting\n");
       	int status = -1;
       	kernel_Exit(status, uc);
         uc->regs[0] = status;

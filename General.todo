@@ -100,8 +100,8 @@ Checkpoint 5:
  ☐ ttyread
  ☐ ttywrite
  ☐ check: 
-   ☐ trap illegal
-   ☐ trapMemory
+   ✔ trap illegal @done (17-11-03 09:51)
+   ☐ trapMemory - potentially add another thing?
    ☐ trapMath
    ☐ pipe?
  ☐ clean: 
