@@ -4,7 +4,14 @@
 
 int PipeInit(int *pipe_idp)
 {
-	return 0;
+	// allocate pipe, buffer, and queue for the pipe
+
+        // set pipe id, length
+        // bookkeeping
+
+
+        // save id in the user id pipe_idp
+        return 0;
 }
 
 int PipeRead(int pipe_id, void *buf, int len)

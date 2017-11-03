@@ -1,15 +1,14 @@
 #ifndef _PIPE_H_
 #define _PIPE_H_
 
+#define MAX_PIPE_LEN 512
+
 typedef struct _PIPE {
   int id;
   int length;
   char *buffer;
 
-
-  // probably something else, we should
-  // erad the textbook
-  
+  List *pipe_queue
 } _PIPE;
 typedef struct _PIPE Pipe;
 
