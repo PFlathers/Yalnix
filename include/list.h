@@ -12,6 +12,7 @@ typedef struct _Node Node;
 typedef struct _List{
 	Node *head;
 	Node *tail;
+        int count;
 } _List;
 typedef struct _List List;
 

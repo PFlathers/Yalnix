@@ -10,6 +10,10 @@
 #include "pcb.h"
 
 
+/* Macros */
+#define FRAME_TO_PAGE(n) ((u_long) (((int)(n) * PAGESIZE) >> PAGESHIFT))
+#define PAGE_TO_FRAME(n) (((n) << PAGESHIFT) / PAGESIZE)
+
 
 /* Public Facing Function Calls */
 

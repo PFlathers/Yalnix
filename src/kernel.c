@@ -332,10 +332,12 @@ void create_init_proc(UserContext *user_context, char *cmd_args[])
   		char *program_name = argument_list[0];
 
   		int lpr;
+                TracePrintf(0, "preloadprog count:%d\n", list_count(ready_procs));
   		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
   			list_add(all_procs, (void *) init_proc);
   			list_add(ready_procs, (void*) init_proc);
   			TracePrintf(3, "LoadProgram added %s on the ready list; code %d", program_name, lpr);
+                        TracePrintf(0, "loadprog count:%d\n", list_count(ready_procs));
   		} else{
   			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
   			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
@@ -609,7 +611,11 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 int goto_next_process(UserContext *user_context, int repeat_bool)
 {
 	TracePrintf(1, "goto_next_process ### Start \n");
-
+        
+        if (list_count(ready_procs) <= 0){
+                TracePrintf(0, "%d\n", list_count(ready_procs));
+                return 0;
+        }
 
         Node *temp = ready_procs->head;
         pcb *p;

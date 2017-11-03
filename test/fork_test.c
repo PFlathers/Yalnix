@@ -4,8 +4,8 @@
 int main()
 {
 	int i = Fork();
-        char* a = malloc(sizeof(char) *10);
-        char* b = malloc(sizeof(char) *10);
+        char* a = (char*) malloc(sizeof(char) *10);
+        char* b = (char*) malloc(sizeof(char) *10);
 
         strcpy(a, "init");
         strcpy(b, '\0');
