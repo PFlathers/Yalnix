@@ -78,17 +78,42 @@ Checkpoint 3 (process things not to forget):
 
 Checkpoint 4:
   Impplement:
-  ☐ fork
-  ☐ exec
+  ✔ fork @done (17-11-03 09:29)
+  ✔ exec @done (17-11-03 09:29)
   ✔ wait @done (17-10-27 07:45)
-  ☐ kernel interrupt handler for the above
+  ✔ kernel interrupt handler for the above @done (17-11-03 09:29)
   ☐ ...
   Test:
-  ☐ fork
-  ☐ exec
+  ✔ fork @done (17-11-03 09:29)
+  ✔ exec @done (17-11-03 09:29)
   ☐ wait
-  ☐ kernel interrupt handler for the above
+  ✔ kernel interrupt handler for the above @done (17-11-03 09:29)
   ☐ ...
   Fix:
   ☐ fork: efficient copy of the parent's memorys
+
+
+
+
+Checkpoint 5: 
+  Implement:
+ ☐ ttyread
+ ☐ ttywrite
+ ☐ check: 
+   ☐ trap illegal
+   ☐ trapMemory
+   ☐ trapMath
+   ☐ pipe?
+ ☐ clean: 
+   ☐ interrupts.c
+
+  Test: 
+ ☐ ttyread
+ ☐ ttywrite
+ ☐ check: 
+   ☐ trap illegal
+   ☐ trapMemory
+   ☐ trapMath
+   ☐ pipe?
+  Fix:
 
