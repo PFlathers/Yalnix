@@ -133,4 +133,5 @@ Checkpoint 5:
     ☐ add list of ttys in kernel.c/h
     ☐ add init ttys to kernel.c
     ☐ add init buffer to create_process in pcb.c
+    ☐ init read_len and shit I added in pcb.c or somewhere
     ☐ check if I use TtyTransmit correctly (manual, and hardware/yalnix.h)

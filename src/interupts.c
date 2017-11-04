@@ -287,15 +287,51 @@ void trapTTYReceive(UserContext *uc)
         TracePrintf(0, "trapTTYReceive ### start\n");
 
         // find the tty by uc->code
+        int tty_id = uc->code;
+        TTY *tty = NULL;
+        Node * node =  ttys->head;
+        while (node->next != NULL){
+                if (node->data->id == tty_id){
+                        tty = (TTY *) node->data;
+                        break;
+                }
+                node = node->next;
+        }
+        //edge case
+        if (node->next->data->id == tty_id) {
+                tty = tty->next->data;
+        }
+
+        if (tty == NULL) {
+                TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
+                                - should not happen \n", tty_id);
+                return ERROR;
+        }
 
         //allocate new buffer
+        Buffer *new = (Buffer *) malloc(sizeof(Buffer));
+        new->buf = (char *) malloc(TERMINAL_MAX_LINE);
         // call TtyRecieve
+        new->len = TtyReceive(tty->id, new->buf, TERMINAL_MAX_LINE);
+
+        
 
         // add the created buffer on the list of buffers
         // for that tty
+        list_add(tty->buffers, new);
+
+        
 
         // if there is anyone on the to_read list, 
         // put it back on the ready list
+        int len = new->len;
+        while ( (list_count(tty->to_read) > 0) && (len > 0) ) {
+                pcb *waiter = list_pop(tty->to_read);
+                list_add(ready_procs, waiter);
+                len = len - waiter->read_len;
+        }
+
+        TracePrintf(0, "trapTTYReceive ### end me baby\n");
 
 }
 
