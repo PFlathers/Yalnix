@@ -6,6 +6,7 @@
 typedef struct _PIPE {
   int id;
   int length;
+  int exp_length;
   char *buffer;
 
   List *pipe_queue

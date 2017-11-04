@@ -116,4 +116,8 @@ Checkpoint 5:
    ☐ trapMath
    ☐ pipe?
   Fix:
-
+    ☐ memory leaks in pipeInit - Make sure we free buffer and struct on fail
+    ☐ add resource id's to kernel.c/h
+    ☐ add list of pipes to kernel.c/h
+    ☐ define MAXPIPELEN
+    ☐ check segfault in piperead
