@@ -18,6 +18,7 @@ typedef struct _TTY {
 	int tty_id; // 1-4, given in assignment
 
 	List *to_write;
+        List *to_read;
 	List *buffers;
 
 	//missing probz a lot
