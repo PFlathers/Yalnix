@@ -74,6 +74,9 @@ typedef struct _PCB {
 	// and os segfaulty
 	struct pte *region0_pt;
 	struct pte *region1_pt;
+
+
+	int pipe_lenght;
 	
 } _PCB;
 typedef struct _PCB pcb;

@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "pipe.h"
+#include "kernel.h"
 
 
 int PipeInit(int *pipe_idp)
@@ -18,7 +19,7 @@ int PipeInit(int *pipe_idp)
         
 
         // set pipe id, length
-        pipe->id = glob_id_list++;
+        pipe->id = glob_resource_list++;
         pipe->length = 0;
         pipe->exp_length = 0;
         pipe->queue->head = NULL;
@@ -150,7 +151,8 @@ int PipeWrite(int pipe_id, void *buf, int len)
 	return len;
 }
 
-int PipeDestroy(int pipe_id)
-{
-	return 0;
-}
+// replace by kernel_Reclaim
+// int PipeDestroy(int pipe_id)
+// {
+// 	return 0;
+// }

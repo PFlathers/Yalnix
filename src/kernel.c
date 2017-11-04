@@ -98,6 +98,7 @@ void init_global(int phys_mem_size)
 	// under is a mess, clean it up
 
 	available_process_id = 0;	// at start we run at 0
+        glob_resource_list = 0;         // for pipes and stuff
 
 
 	// process tracking lists (per sean's suggestion)
@@ -105,6 +106,10 @@ void init_global(int phys_mem_size)
 	blocked_procs = (List *)init_list();
 	all_procs = (List *)init_list(); 
 	zombie_procs = (List *)init_list(); 
+
+
+        // book kepingz
+        pipes = (List *)init_list();
 }
 
 /*

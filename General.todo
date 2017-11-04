@@ -117,8 +117,8 @@ Checkpoint 5:
    ☐ pipe?
   Fix:
     ☐ memory leaks in pipeInit - Make sure we free buffer and struct on fail
-    ☐ add resource id's to kernel.c/h
-    ☐ add list of pipes to kernel.c/h
-    ☐ define MAXPIPELEN
-    ☐ check segfault in piperead
-    ☐ init pipe_lenght to 0 in create_process
+    ✔ add resource id's to kernel.c/h @done (17-11-03 21:05)
+    ✔ add list of pipes to kernel.c/h @done (17-11-03 21:03)
+    ✔ define MAXPIPELEN @done (17-11-03 21:00)
+    ✔ check segfault in piperead @done (17-11-03 21:00)
+    ✔ init pipe_lenght to 0 in create_process @done (17-11-03 21:01)  

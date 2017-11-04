@@ -1,7 +1,7 @@
 #ifndef _PIPE_H_
 #define _PIPE_H_
 
-#define MAX_PIPE_LEN 512
+#define MAX_PIPE_LEN 1024
 
 typedef struct _PIPE {
   int id;
@@ -19,6 +19,6 @@ int PipeRead(int pipe_id, void *buf, int len);
 
 int PipeWrite(int pipe_id, void *buf, int len);
 
-int PipeDestroy(int pipe_id);
+//int PipeDestroy(int pipe_id);
 
 #endif
