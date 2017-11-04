@@ -95,8 +95,6 @@ void init_global(int phys_mem_size)
   	}
 
 
-	// under is a mess, clean it up
-
 	available_process_id = 0;	// at start we run at 0
         glob_resource_list = 0;         // for pipes and stuff
 
@@ -110,6 +108,17 @@ void init_global(int phys_mem_size)
 
         // book kepingz
         pipes = (List *)init_list();
+
+        // init ttys - checkpoint 5
+        ttys = init_list();
+        for (int tty_iter = 0; tty_iter < NUM_TERMINALS; tty_iter++){
+                TTY *tempTTY = (TTY *) malloc(sizeof(TTY));
+                tempTTY->buffers = init_list();
+                tempTTY->to_read = init_list();
+                tempTTY->to_write = init_list();
+                tempTTY->id = tty_iter;
+                list_add(ttys, (void *) tempTTY);
+        }
 }
 
 /*
