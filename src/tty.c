@@ -49,22 +49,49 @@ int TtyWrite(int tty_id, void *buf, int len)
                 return ERROR;
         }
 
-        
+
+        /* allocate new write buffer in the current process */ 
+
+        // there shouldn't be anything left, but might be
+        // if process went to exit before freeing buffers
+        if (curr_proc->buffer->buf != NULL){
+                free(curr_proc->buffer->buf);
+        }
+
+        TracePrintf(6, "TtyWrite:\t Alloc (or realloc) pcb buffer to the heap \n");
+        curr_proc->buffer->buf = (char *) malloc(len * sizeof(char));
+        ALLOC_CHECK(curr_proc->buffer->buf, "ttyWrite - process buffer on the heap");
+        // copy buffer in it and set the length ot write buffer
+        memcpy(((Buffer *)curr_proc->buffer)->buf, buf, len);
+        curr_proc->buffer->len = len;
+        TracePrintf(6, "TtyWrite:\t Done with alloc (or realloc) pcb buffer to the heap \n");
 
 
-        // allocate new write buffer in the current process
-        // copy buffer in it
-        // set the length ot write buffer
-
-
-        // add current proc to to_writers of the current tty
-
-        // if we are the first/only, we can transmin now, 
+        // add current proc to to_write of the current tty
+        list_add(tty->to_write, (void *) curr_proc); 
+        TracePrintf(6, "TtyWrite: \t curr proc (%d) added to_write list \n", curr_proc->process_id);
+      
+        // if we are the first/only, we can write now, 
         // otherwise wait for kernel
+        if (list_count(tty->to_write) == 1) {
+                TracePrintf(6, "TtyWrite: \t curr proc (%d) send to terminal", curr_proc->process_id);
+                if (len > TERMINAL_MAX_LINE) {
+                                TtyTransmit(tty_id, buf, TERMINAL_MAX_LINE);
+                }
+                else {
+                        TtyTransmit(tty_id, buf, len);
+                }
+        }
+        else{
+                TracePrintf(6, "TtyWrite: \t there are writers in front of me, wait \n");
+        }
+
 
         // move on
         goto_next_process(curr_proc->user_context, 0);
 
+        // here, the waiting process should return after tty trap
+        TracePrintf(6, "TtyWrite: \t proc %d returned after waiting \n" curr_proc->process_id);
         TracePrintf(3, "TtyWrite ### End, returning %d\n", len);
         return len;
 }

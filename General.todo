@@ -130,3 +130,7 @@ Checkpoint 5:
     ✔ init pipe_lenght to 0 in create_process @done (17-11-03 21:01) 
     ☐ add/init list of buffers in kernel.c/h
     ☐ clean up interrupt utilities
+    ☐ add list of ttys in kernel.c/h
+    ☐ add init ttys to kernel.c
+    ☐ add init buffer to create_process in pcb.c
+    ☐ check if I use TtyTransmit correctly (manual, and hardware/yalnix.h)
