@@ -283,10 +283,32 @@ void trapMath(UserContext *uc)
 
 void trapTTYReceive(UserContext *uc)
 {
+
+        TracePrintf(0, "trapTTYReceive ### start\n");
+
+        // find the tty by uc->code
+
+        //allocate new buffer
+        // call TtyRecieve
+
+        // add the created buffer on the list of buffers
+        // for that tty
+
+        // if there is anyone on the to_read list, 
+        // put it back on the ready list
+
 }
 
 void trapTTYTransmit(UserContext *uc)
 {
+        // find the tty by uc->code
+
+        // check if we need to write more then once,
+        // otherwise call TtyTransmit
+
+        // check if there are waiting process, and call
+        // the transmit for them (see where I break it up
+        // in the syscall)
 }
 
 void trapname1(UserContext *uc){}
