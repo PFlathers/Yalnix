@@ -1,3 +1,6 @@
+#include <hardware.h>
+#include <string.h>
+
 #include "global.h"
 #include "list.h"
 #include "tty.h"
@@ -6,21 +9,80 @@
 
 int TtyRead(int tty_id, void *buf, int len)
 {
-        // if there are no stored bufferst to read from
-        // switch
+        TracePrintf(3, "TtyRead ### Start\n");
 
+        // look up tty by it's id
+        TTY *tty = NULL;
+        Node * node =  ttys->head;
+
+        while (node->next != NULL){
+                if (node->data->id == tty_id){
+                        tty = (TTY *) node->data;
+                        break;
+                }
+                node = node->next;
+        }
+        //edge case
+        if (node->next->data->id == tty_id) {
+                tty = tty->next->data;
+        }
+        if (tty == NULL) {
+                TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
+                                - should not happen \n", tty_id);
+                return ERROR;
+        }
+
+        Buffer *popped_buf = list_pop(tty->buffers);
+        // if there are no stored bufferst to read from switch and 
+        // wait untill inetrrupt gets us
+        if (!popped_buf) {
+                TracePrintf(6, "ttwRead: \t no buffer, wait for interrupt\n");
+                curr_proc->read_len = len;
+                list_add(tty->to_write, curr_proc);
+                goto_next_process(curr_proc->user_context, 0);
+
+
+                // should wake up here after enough process switches
+                TracePrintf(6, "ttwRead: \t woken after no buffer\n");
+                popped_buf = list_pop(tty->buffers);
+
+        }
 
         // check if our local buffer is full 
+        if (!popped_buf) {
+            TracePrintf(6, "ttwRead: ayayayayay\n");
+            return ERROR;    
+        }
 
         // memcpy that buffer to the in/out one
+        TracePrintf(6, "ttwRead: \t about to read buffer\n");
+        memcpy(buf, popped_buf->buf, len);
+        TracePrintf(6, "ttwRead: \t read buffer, reset pcb read counter\n");
+        curr_proc->read_len = 0;
 
-        // update bookkeeping
+        /* here is the thing that I'm unsure about, 
+        we should somehow store the rest of the buffer if we
+        haven't read the entire thing */
+        int full_len = strlen(popped_buf->buf);
+        int to_store = full_len - len; 
 
-        // if we didn't read the entire thing, put 
-        // it back on the tty->buffer's list
+        // if there is anything left
+        if (to_store > 0) {
+                TracePrintf(6, "ttwRead: didn't read entire thing\n");
+                len = len - to_store;
+                // buffer we want to store will be the pooped buffer
+                // shifted by the length we have read
+                char *stash_buf = popped_buf->buf + len;
+                memcpy(popped_buf->buf, stash_buf, to_store);
+                popped_buf->len = to_store;
+                list_add(tty->buffers, popped_buf);
+        }
+        else {
+                TracePrintf(6, "ttwRead: read entire thing first time\n");
+        }
 
 
-
+        TracePrintf(3, "TtyRead ### end\n");
 	return len;
 }
 
