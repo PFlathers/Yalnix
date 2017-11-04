@@ -49,7 +49,7 @@ int TtyWrite(int tty_id, void *buf, int len)
                 return ERROR;
         }
 
-
+        
 
 
         // allocate new write buffer in the current process
