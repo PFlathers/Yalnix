@@ -121,3 +121,4 @@ Checkpoint 5:
     ☐ add list of pipes to kernel.c/h
     ☐ define MAXPIPELEN
     ☐ check segfault in piperead
+    ☐ init pipe_lenght to 0 in create_process

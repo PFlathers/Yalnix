@@ -38,7 +38,7 @@ int PipeRead(int pipe_id, void *buf, int len)
         TracePrintf(3, "PipeRead ### start\n");
 
         Node *node = pipes->head;
-        Pipe *pipe;
+        Pipe *pipe = NULL;
 
         // find the pipe in the global list
         while(node->next != NULL){
@@ -67,6 +67,7 @@ int PipeRead(int pipe_id, void *buf, int len)
         // waiting list and switch to new process
         if (len > pipe->length){
                 pipe->exp_length = len;
+                curr_proc->pipe_lenght = len;
                 list_add(pipes, (void *) pipe);
                 goto_next_process(curr_proc->user_context, 0);
         }
@@ -95,7 +96,58 @@ int PipeRead(int pipe_id, void *buf, int len)
 
 int PipeWrite(int pipe_id, void *buf, int len)
 {
-	return 0;
+        TracePrintf(3, "PipeRead ### start\n");
+       Node *node = pipes->head;
+        Pipe *pipe = NULL;
+
+        // find the pipe in the global list
+        while(node->next != NULL){
+                if (node->data->id == pipe_id){
+                        pipe = (pipe *)node->data;
+                        break;
+                }
+                node = node->next;
+        }
+
+        // edge case 
+        if (node->next->data->id == pipe_id){
+                pipe = (pipe *) node->next->data->id;
+        }
+
+        // if there are no requested pipes,return error
+        if (!pipe){
+                return ERROR;
+        }
+
+
+        // check if we can write the full length
+        if (len > (MAX_PIPE_LEN - pipe->length)){
+                return ERROR;
+        }
+
+        // actuall writing from buffer to the pipe's buffer
+        // using mem move to avoid mess with memcopy, 
+        // patrick might find better way of doing it
+        memmove((void *)(pipe->buffer + pipe->length), (void *)buf, len);
+        pipe->length += length;
+
+
+
+        // handle processes in the queue
+        pcb *queued_proc = (pcb *) list_pop(pipe->queue);
+        if (queued_proc){
+                int required_length = queued_proc->pipe_lenght;
+                // if not enough chars, return to the waiting queue
+                if (required_length > pipe->length){
+                        list_add(pipe->queue, (void *) queued_proc);
+                }
+                else{
+                        list_add(ready_procs, (void *) queued_proc);
+                }
+        }
+
+        TracePrintf(3, "PipeRead ### end\n");
+	return len;
 }
 
 int PipeDestroy(int pipe_id)
