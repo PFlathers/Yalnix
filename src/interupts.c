@@ -5,6 +5,7 @@
 #include "kernel.h"
 #include "syscalls.h"
 #include "globals.h"
+#include "tty.h"
 
 /* local utilities */
 int check_pointer_range(u_long ptr);
@@ -135,10 +136,40 @@ void trapKernel(UserContext *uc)
         retval = kernel_Brk(addr);
         break;
 
+      // case YALNIX_TTY_WRITE:
+           // if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
+           //  TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
+           //  retval = ERROR;
+           //  break;
+           // }
+
+      //   tty_id = (int) uc->regs[0];
+      //   buf = (void *) uc->regs[1];
+      //   len = (int) uc->regs[2];
+      //   retval = TtyWrite(tty_id, buf, len);
+      //   break;
+
+      // case YALNIX_TTY_READ:
+           // if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
+           //  TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
+           //  retval = ERROR;
+           //  break;
+           // }
+      //   //check string validity in uc->regs
+
+      //   tty_id = (int) uc->regs[0];
+      //   buf = (void *) uc->regs[1];
+      //   len = (int) uc->regs[2];
+      //   retval = TtyRead(tty_id, buf, len);
+      //   break;
+
+
       default:
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
     }
+
+
 
   // set return value  
   uc->regs[0] = retval;
@@ -323,4 +354,19 @@ int check_pointer_write(u_long ptr)
 int is_rw(u_long ptr)
 {
   return (check_pointer_write(ptr) || check_pointer_read(ptr));
-}              
+}     
+
+
+int check_string_validity(u_long ptr, int len) {
+  int i;
+
+  for (i = 0; i < (len / PAGESIZE); i++) {
+    if (check_pointer_range(ptr + (i * PAGESIZE)) ||
+        check_pointer_valid(ptr + (i * PAGESIZE)) ||
+        is_rw(ptr + (i * PAGESIZE))
+        )
+      return 1;
+  }
+
+  return 0;
+}         
