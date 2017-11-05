@@ -23,7 +23,6 @@
 | 			as a kid (return value == 0) and as a parent (return value ==
 | 			child's id). 
 *-------------------------------------------------------------------*/
-//TODO: Fix this.
 int kernel_Fork(UserContext *user_context)
 {
         TracePrintf(3, "kernel_Fork ### Start\n");
@@ -472,6 +471,7 @@ void free_pagetables(pcb* myproc)
  |
  |  Returns:  int with returing childs PID
  *-------------------------------------------------------------------*/
+//TODO:Fix this
 int kernel_Wait(int * status_ptr, UserContext *uc)
 {
 	TracePrintf(3, "kernel_Wait ### start \n");
