@@ -215,7 +215,7 @@ void trapClock(UserContext *uc)
 void trapIllegal(UserContext *uc)
 {
         TracePrintf(1, "trapIllegal ### start: now exiting \n");
-        TracePrintf(6, "\t Illegal pid = %d \n \t status: %d"\
+        TracePrintf(6, "\t Illegal pid = %d \n \t status: %d",
             curr_proc->process_id, uc->code);
       	int status = -1;
       	kernel_Exit(status, uc);
