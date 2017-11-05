@@ -1,7 +1,4 @@
-#include <hardware.h>
-#include <string.h>
-
-#include "global.h"
+#include "globals.h"
 #include "list.h"
 #include "tty.h"
 #include "kernel.h"
