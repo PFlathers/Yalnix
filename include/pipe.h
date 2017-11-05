@@ -9,7 +9,7 @@ typedef struct _PIPE {
   int exp_length;
   char *buffer;
 
-  List *pipe_queue
+  List *pipe_queue;
 } _PIPE;
 typedef struct _PIPE Pipe;
 

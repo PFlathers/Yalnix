@@ -246,7 +246,7 @@ void trapClock(UserContext *uc)
 void trapIllegal(UserContext *uc)
 {
         TracePrintf(1, "trapIllegal ### start: now exiting \n");
-        TracePrintf(6, "\t Illegal pid = %d \n \t status: %d"\
+        TracePrintf(6, "\t Illegal pid = %d \n \t status: %d",
             curr_proc->process_id, uc->code);
       	int status = -1;
       	kernel_Exit(status, uc);
@@ -291,28 +291,31 @@ void trapTTYReceive(UserContext *uc)
         TTY *tty = NULL;
         Node * node =  ttys->head;
         while (node->next != NULL){
-                if (node->data->id == tty_id){
+                if ( ((TTY*)(node->data))->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
                 }
                 node = node->next;
         }
         //edge case
-        if (node->next->data->id == tty_id) {
-                tty = tty->next->data;
+        if ( ((TTY*)(node->data))->tty_id == tty_id) {
+                //...
+                tty = ((TTY*)(node->next->data));
+                // tty->next->data;
+                //...
         }
 
         if (tty == NULL) {
                 TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
                                 - should not happen \n", tty_id);
-                return ERROR;
+                return;// ERROR;
         }
 
         //allocate new buffer
         Buffer *new = (Buffer *) malloc(sizeof(Buffer));
         new->buf = (char *) malloc(TERMINAL_MAX_LINE);
         // call TtyRecieve
-        new->len = TtyReceive(tty->id, new->buf, TERMINAL_MAX_LINE);
+        new->len = TtyReceive(tty->tty_id, new->buf, TERMINAL_MAX_LINE);
 
         
 
@@ -328,7 +331,7 @@ void trapTTYReceive(UserContext *uc)
         while ( (list_count(tty->to_read) > 0) && (len > 0) ) {
                 pcb *waiter = list_pop(tty->to_read);
                 list_add(ready_procs, waiter);
-                len = len - waiter->read_len;
+                len = len - waiter->read_length;
         }
 
         TracePrintf(0, "trapTTYReceive ### end me baby\n");
@@ -343,21 +346,21 @@ void trapTTYTransmit(UserContext *uc)
         TTY *tty = NULL;
         Node * node =  ttys->head;
         while (node->next != NULL){
-                if (node->data->id == tty_id){
+                if ( ((TTY*)(node->data))->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
                 }
                 node = node->next;
         }
         //edge case
-        if (node->next->data->id == tty_id) {
-                tty = tty->next->data;
+        if ( ((TTY*)(node->next->data))->tty_id == tty_id) {
+                tty = ((TTY*)(node->next->data));
         }
 
         if (tty == NULL) {
                 TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
                                 - should not happen \n", tty_id);
-                return ERROR;
+                return ;//ERROR;
         }
 
         pcb *writer = list_pop(tty->to_write);
@@ -366,15 +369,15 @@ void trapTTYTransmit(UserContext *uc)
         int remains = writer->buffer->len - TERMINAL_MAX_LINE;
         if (remains > 0 ) {
                 writer->buffer->len = remains;
-                writer->buffer-buf = writer->buffer + TERMINAL_MAX_LINE;
+                writer->buffer->buf = writer->buffer + TERMINAL_MAX_LINE;
 
                 list_add(tty->to_write, (void *) writer);
 
                 if (remains > TERMINAL_MAX_LINE) {
-                        TtyTransmit(tty->id, writer->buffer->buf, TERMINAL_MAX_LINE);
+                        TtyTransmit(tty->tty_id, writer->buffer->buf, TERMINAL_MAX_LINE);
                 }
                 else {
-                        TtyTransmit(tty->id, writer->buffer->buf, writer->buffer->len);
+                        TtyTransmit(tty->tty_id, writer->buffer->buf, writer->buffer->len);
                 }
         }
         else {
@@ -390,10 +393,10 @@ void trapTTYTransmit(UserContext *uc)
 
                         int next_len = (int) next->buffer->len;
                         if (next_len > TERMINAL_MAX_LINE){
-                                TtyTransmit(tty->id, next->buffer->buf, TERMINAL_MAX_LINE);
+                                TtyTransmit(tty->tty_id, next->buffer->buf, TERMINAL_MAX_LINE);
                         }
                         else {
-                                TtyTransmit(tty->id, next->buffer->buf, next_len);
+                                TtyTransmit(tty->tty_id, next->buffer->buf, next_len);
                         }
                 }
 

@@ -111,12 +111,13 @@ void init_global(int phys_mem_size)
 
         // init ttys - checkpoint 5
         ttys = init_list();
-        for (int tty_iter = 0; tty_iter < NUM_TERMINALS; tty_iter++){
+        int tty_iter;
+        for (tty_iter = 0; tty_iter < NUM_TERMINALS; tty_iter++){
                 TTY *tempTTY = (TTY *) malloc(sizeof(TTY));
                 tempTTY->buffers = init_list();
                 tempTTY->to_read = init_list();
                 tempTTY->to_write = init_list();
-                tempTTY->id = tty_iter;
+                tempTTY->tty_id = tty_iter;
                 list_add(ttys, (void *) tempTTY);
         }
 }
