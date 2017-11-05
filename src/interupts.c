@@ -132,7 +132,7 @@ void trapKernel(UserContext *uc)
           break;
         }
 
-        retval = PipeInit((int) uc->regs[0]);
+        retval = PipeInit((int*) uc->regs[0]);
         break;
 
 
