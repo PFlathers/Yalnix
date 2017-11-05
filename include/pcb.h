@@ -4,6 +4,7 @@
 #include <hardware.h>
 #include <yalnix.h>
 #include "lock.h"
+#include "tty.h"
 #include "list.h"
 
 
@@ -75,7 +76,9 @@ typedef struct _PCB {
 	struct pte *region0_pt;
 	struct pte *region1_pt;
 
-
+	// buffer and tty realted messyness
+	Buffer *buffer;
+	int read_length;
 	int pipe_lenght;
 	
 } _PCB;
