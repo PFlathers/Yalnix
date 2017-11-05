@@ -40,7 +40,6 @@ int PipeRead(int pipe_id, void *buf, int len)
 
         Node *node = pipes->head;
         Pipe *pipe = NULL;
-
         // find the pipe in the global list
         while(node->next != NULL){
                 if ( ((Pipe*)(node->data))->id == pipe_id){
@@ -97,12 +96,13 @@ int PipeRead(int pipe_id, void *buf, int len)
 
 int PipeWrite(int pipe_id, void *buf, int len)
 {
-        TracePrintf(3, "PipeRead ### start\n");
+        TracePrintf(3, "PipeWrite ### start\n");
        Node *node = pipes->head;
         Pipe *pipe = NULL;
 
+        TracePrintf(0, "5\n");
         // find the pipe in the global list
-        while(node->next != NULL){
+        while(node/*->next*/ != NULL){
                 if ( ((Pipe*)node->data)->id == pipe_id){
                         pipe = (Pipe *)node->data;
                         break;
@@ -110,28 +110,34 @@ int PipeWrite(int pipe_id, void *buf, int len)
                 node = node->next;
         }
 
-        // edge case 
+        TracePrintf(0, "4\n");
+        /*
+        // !edge case 
         if ( ((Pipe*)node->next->data)->id == pipe_id){
                 pipe = (Pipe *) node->next->data;//->id;
         }
-
+        */
+        TracePrintf(0, "3.5\n");
         // if there are no requested pipes,return error
         if (!pipe){
                 return ERROR;
         }
 
+        TracePrintf(0, "3\n");
 
         // check if we can write the full length
         if (len > (MAX_PIPE_LEN - pipe->length)){
                 return ERROR;
         }
 
+        TracePrintf(0, "2\n");
         // actuall writing from buffer to the pipe's buffer
         // using mem move to avoid mess with memcopy, 
         // patrick might find better way of doing it
         memmove((void *)(pipe->buffer + pipe->length), (void *)buf, len);
         pipe->length += len;
 
+        TracePrintf(0, "1kj\n");
 
 
         // handle processes in the queue
@@ -147,7 +153,8 @@ int PipeWrite(int pipe_id, void *buf, int len)
                 }
         }
 
-        TracePrintf(3, "PipeRead ### end\n");
+        TracePrintf(0, "0kj\n");
+        TracePrintf(3, "PipeWrite ### end\n");
 	return len;
 }
 
