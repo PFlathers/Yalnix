@@ -90,6 +90,8 @@ int list_remove(List *list_to_remove, void *data)
 
 void *list_pop(List *list_to_pop)
 {
+        if(list_to_pop->count == 0)
+                return NULL;
 	Node *pop_node = list_to_pop->head;
 	void *ret_data = pop_node->data;
 	list_to_pop->head = list_to_pop->head->next;
