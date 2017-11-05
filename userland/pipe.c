@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
                 Pause();
 
                 Pause();
-                written = PipeWrite(pipe_id, second_write, 4);
+                written = PipeWrite(id, buffer2, 4);
 
                 Pause();
                 Exit(0);
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
                 int read;
                 Pause();
                 Pause();
-                read = PipeRead(pipe_id, to_read, 6);
+                read = PipeRead(id, to_read, 6);
                 TracePrintf(1, "\t pipe test: read %d chars from the pipe: %s\n", read, to_read);
 
                 Pause();

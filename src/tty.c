@@ -1,4 +1,4 @@
-#include "global.h"
+#include "globals.h"
 #include "list.h"
 #include "tty.h"
 
