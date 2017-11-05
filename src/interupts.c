@@ -8,9 +8,9 @@
 
 /* local utilities */
 int check_pointer_range(u_long ptr);
-int check_pointer_write(u_long ptr) ;                                                         
-
-int check_pointer_valid(u_long ptr) ;                                                    
+int check_pointer_write(u_long ptr);                                                         
+int check_string_validity(u_long ptr, int len);
+int check_pointer_valid(u_long ptr);                                                    
 
 
 
@@ -110,6 +110,48 @@ void trapKernel(UserContext *uc)
       case YALNIX_GETPID:
         TracePrintf(3, "trapKernel: YALNIX_GETPID\n");
         retval = kernel_GetPid(uc);
+        break;
+
+      case YALNIX_PIPE_INIT:
+        // check if in range
+        if ( check_pointer_range(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
+        // check if pages are valid
+        if ( check_pointer_valid(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
+        // check if RW
+        if ( is_rw(uc->regs[0]) ){
+          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          retval = ERROR;
+          break;
+        }
+
+        retval = PipeInit((int) uc->regs[0]);
+        break;
+
+
+
+      case YALNIX_PIPE_READ:
+        if( check_string_validity(uc->regs[1], uc->regs[2]) ){
+          retval = ERROR;
+          break;
+        }
+
+        retval = PipeRead((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
+        break;
+
+      case YALNIX_PIPE_WRITE:
+        if( check_string_validity(uc->regs[1], uc->regs[2]) ){
+          retval = ERROR;
+          break;
+        }
+        retval = PipeWrite((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
         break;
 
       case YALNIX_BRK:
@@ -323,4 +365,23 @@ int check_pointer_write(u_long ptr)
 int is_rw(u_long ptr)
 {
   return (check_pointer_write(ptr) || check_pointer_read(ptr));
-}              
+} 
+
+
+
+
+int check_string_validity(u_long ptr, int len) 
+{
+  int i;
+
+  for (i = 0; i < (len / PAGESIZE); i++) {
+    if (check_pointer_range(ptr + (i * PAGESIZE)) ||
+        check_pointer_valid(ptr + (i * PAGESIZE)) ||
+        is_rw(ptr + (i * PAGESIZE))
+        )
+      return 1;
+  }
+
+  return 0;
+}         
+
