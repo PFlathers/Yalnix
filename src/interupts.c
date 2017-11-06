@@ -23,6 +23,9 @@ void trapKernel(UserContext *uc)
   int retval = 0;
   int exit_code;
   void *addr;
+  int len;
+  int tty_id;
+  void *buf;
 
   // weee - switching
   switch(uc->code) { 
@@ -144,7 +147,7 @@ void trapKernel(UserContext *uc)
           break;
         }
 
-        retval = PipeRead((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
+        retval = kernel_PipeRead((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2], uc);
         break;
 
       case YALNIX_PIPE_WRITE:
@@ -152,7 +155,7 @@ void trapKernel(UserContext *uc)
           retval = ERROR;
           break;
         }
-        retval = PipeWrite((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
+        retval = kernel_PipeWrite((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
         break;
 
       case YALNIX_BRK:
@@ -182,32 +185,32 @@ void trapKernel(UserContext *uc)
         retval = kernel_Brk(addr);
         break;
 
-      // case YALNIX_TTY_WRITE:
-           // if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
-           //  TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
-           //  retval = ERROR;
-           //  break;
-           // }
+       case YALNIX_TTY_WRITE:
+            if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
+             TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
+             retval = ERROR;
+             break;
+            }
 
-      //   tty_id = (int) uc->regs[0];
-      //   buf = (void *) uc->regs[1];
-      //   len = (int) uc->regs[2];
-      //   retval = TtyWrite(tty_id, buf, len);
-      //   break;
+         tty_id = (int) uc->regs[0];
+         buf = (void *) uc->regs[1];
+         len = (int) uc->regs[2];
+         retval = kernel_TtyWrite(tty_id, buf, len);
+         break;
 
-      // case YALNIX_TTY_READ:
-           // if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
-           //  TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
-           //  retval = ERROR;
-           //  break;
-           // }
-      //   //check string validity in uc->regs
+       case YALNIX_TTY_READ:
+            if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
+             TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
+             retval = ERROR;
+             break;
+            }
+         //check string validity in uc->regs
 
-      //   tty_id = (int) uc->regs[0];
-      //   buf = (void *) uc->regs[1];
-      //   len = (int) uc->regs[2];
-      //   retval = TtyRead(tty_id, buf, len);
-      //   break;
+         tty_id = (int) uc->regs[0];
+         buf = (void *) uc->regs[1];
+         len = (int) uc->regs[2];
+         retval = kernel_TtyRead(tty_id, buf, len);
+         break;
 
 
       default:
@@ -389,7 +392,7 @@ void trapTTYTransmit(UserContext *uc)
         int tty_id = uc->code;
         TTY *tty = NULL;
         Node * node =  ttys->head;
-        while (node->next != NULL){
+        while (node/*->next*/ != NULL){
                 if ( ((TTY*)(node->data))->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
@@ -397,55 +400,59 @@ void trapTTYTransmit(UserContext *uc)
                 node = node->next;
         }
         //edge case
+        /*
         if ( ((TTY*)(node->next->data))->tty_id == tty_id) {
                 tty = ((TTY*)(node->next->data));
         }
-
+*/
         if (tty == NULL) {
                 TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
                                 - should not happen \n", tty_id);
                 return ;//ERROR;
         }
+        if(tty->to_write || tty->to_write->count == 0)
+        {
+                TracePrintf(3, "Bruno's TracePrint here\n");
+        }else{
+                pcb *writer = list_pop(tty->to_write);
+                // check if we need to write more then once,
+                // otherwise call TtyTransmit
+                int remains = writer->buffer->len - TERMINAL_MAX_LINE;
+                if (remains > 0 ) {
+                        writer->buffer->len = remains;
+                        writer->buffer->buf = writer->buffer + TERMINAL_MAX_LINE;
 
-        pcb *writer = list_pop(tty->to_write);
-        // check if we need to write more then once,
-        // otherwise call TtyTransmit
-        int remains = writer->buffer->len - TERMINAL_MAX_LINE;
-        if (remains > 0 ) {
-                writer->buffer->len = remains;
-                writer->buffer->buf = writer->buffer + TERMINAL_MAX_LINE;
+                        list_add(tty->to_write, (void *) writer);
 
-                list_add(tty->to_write, (void *) writer);
-
-                if (remains > TERMINAL_MAX_LINE) {
-                        TtyTransmit(tty->tty_id, writer->buffer->buf, TERMINAL_MAX_LINE);
-                }
-                else {
-                        TtyTransmit(tty->tty_id, writer->buffer->buf, writer->buffer->len);
-                }
-        }
-        else {
-                // check if there are waiting process, and call
-                // the transmit for them (see where I break it up
-                // in the syscall)
-
-                list_add(ready_procs, writer);
-
-                if (list_count(tty->to_write) > 0) {
-                        pcb *next = list_pop(tty->to_write);
-                        list_add(tty->to_write, (void *) next);
-
-                        int next_len = (int) next->buffer->len;
-                        if (next_len > TERMINAL_MAX_LINE){
-                                TtyTransmit(tty->tty_id, next->buffer->buf, TERMINAL_MAX_LINE);
+                        if (remains > TERMINAL_MAX_LINE) {
+                                TtyTransmit(tty->tty_id, writer->buffer->buf, TERMINAL_MAX_LINE);
                         }
                         else {
-                                TtyTransmit(tty->tty_id, next->buffer->buf, next_len);
+                                TtyTransmit(tty->tty_id, writer->buffer->buf, writer->buffer->len);
                         }
                 }
+                else {
+                        // check if there are waiting process, and call
+                        // the transmit for them (see where I break it up
+                        // in the syscall)
 
+                        list_add(ready_procs, writer);
+
+                        if (list_count(tty->to_write) > 0) {
+                                pcb *next = list_pop(tty->to_write);
+                                list_add(tty->to_write, (void *) next);
+
+                                int next_len = (int) next->buffer->len;
+                                if (next_len > TERMINAL_MAX_LINE){
+                                        TtyTransmit(tty->tty_id, next->buffer->buf, TERMINAL_MAX_LINE);
+                                }
+                                else {
+                                        TtyTransmit(tty->tty_id, next->buffer->buf, next_len);
+                                }
+                        }
+
+                }
         }
-
         TracePrintf(0, "trapTTYTransmit ### end\n");
 
 }

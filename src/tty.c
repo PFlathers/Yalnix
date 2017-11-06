@@ -4,7 +4,7 @@
 #include "kernel.h"
 
 
-int TtyRead(int tty_id, void *buf, int len)
+int kernel_TtyRead(int tty_id, void *buf, int len)
 {
         TracePrintf(3, "TtyRead ### Start\n");
 
@@ -83,7 +83,7 @@ int TtyRead(int tty_id, void *buf, int len)
 	return len;
 }
 
-int TtyWrite(int tty_id, void *buf, int len)
+int kernel_TtyWrite(int tty_id, void *buf, int len)
 {
         TracePrintf(3, "TtyWrite ### Start\n");
 

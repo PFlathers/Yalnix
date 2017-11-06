@@ -34,14 +34,14 @@ int PipeInit(int *pipe_idp)
         return SUCCESS;
 }
 
-int PipeRead(int pipe_id, void *buf, int len)
+int kernel_PipeRead(int pipe_id, void *buf, int len)
 {
         TracePrintf(3, "PipeRead ### start\n");
 
         Node *node = pipes->head;
         Pipe *pipe = NULL;
         // find the pipe in the global list
-        while(node->next != NULL){
+        while(node/*->next*/ != NULL){
                 if ( ((Pipe*)(node->data))->id == pipe_id){
                         pipe = (Pipe *)node->data;
                         break;
@@ -50,9 +50,11 @@ int PipeRead(int pipe_id, void *buf, int len)
         }
 
         // edge case 
+        /*
         if ( ((Pipe*)node->next->data)->id == pipe_id){
                 pipe = ((Pipe *) node->next->data);//->id;
         }
+*/
 
         // if there are no requested pipes,return error
         if (!pipe){
@@ -94,7 +96,7 @@ int PipeRead(int pipe_id, void *buf, int len)
 	return(len);
 }
 
-int PipeWrite(int pipe_id, void *buf, int len)
+int kernel_PipeWrite(int pipe_id, void *buf, int len)
 {
         TracePrintf(3, "PipeWrite ### start\n");
        Node *node = pipes->head;
