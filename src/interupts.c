@@ -85,21 +85,21 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_WAIT:
         TracePrintf(3, "trapKernel: YALNIX_WAIT\n");
-        // check if in range
+         //check if in range
         if ( check_pointer_range(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in WAIT, pointer out of range\n");
           retval = ERROR;
           break;
         }
         // check if pages are valid
         if ( check_pointer_valid(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in WAIT, page not valid \n");
           retval = ERROR;
           break;
         }
         // check if RW
         if ( is_rw(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in WAIT, page not rw\n");
           retval = ERROR;
           break;
         }
@@ -116,19 +116,19 @@ void trapKernel(UserContext *uc)
       case YALNIX_PIPE_INIT:
         // check if in range
         if ( check_pointer_range(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in PipeInit, pointer out of range\n");
           retval = ERROR;
           break;
         }
         // check if pages are valid
         if ( check_pointer_valid(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in PipeInit, pointer address not valid \n");
           retval = ERROR;
           break;
         }
         // check if RW
         if ( is_rw(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in PipeInit, address not rw\n");
           retval = ERROR;
           break;
         }
@@ -157,23 +157,25 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_BRK:
         // check if in range
+        
         if ( check_pointer_range(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in Brk, pointer out of range\n");
           retval = ERROR;
           break;
         }
         // check if pages are valid
         if ( check_pointer_valid(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in Brk, pointer address not valid\n");
           retval = ERROR;
           break;
         }
         // check if RW
         if ( is_rw(uc->regs[0]) ){
-          TracePrintf(3, "trapKernel: error in WAIT, out of range\n");
+          TracePrintf(3, "trapKernel: error in Brk, address not rw \n");
           retval = ERROR;
           break;
         }
+        
         addr = (void *) uc->regs[0];
         retval = kernel_Brk(addr);
         break;
@@ -306,8 +308,6 @@ void trapMemory(UserContext *uc)
         else if (uc->code == YALNIX_MAPERR) {
           TracePrintf(6, "Process had a mapping error \n");
         }
-
-
 
         // should we check if there is no code? 
 

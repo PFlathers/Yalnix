@@ -100,7 +100,6 @@ int PipeWrite(int pipe_id, void *buf, int len)
        Node *node = pipes->head;
         Pipe *pipe = NULL;
 
-        TracePrintf(0, "5\n");
         // find the pipe in the global list
         while(node/*->next*/ != NULL){
                 if ( ((Pipe*)node->data)->id == pipe_id){
@@ -110,50 +109,40 @@ int PipeWrite(int pipe_id, void *buf, int len)
                 node = node->next;
         }
 
-        TracePrintf(0, "4\n");
-        /*
-        // !edge case 
-        if ( ((Pipe*)node->next->data)->id == pipe_id){
-                pipe = (Pipe *) node->next->data;//->id;
-        }
-        */
-        TracePrintf(0, "3.5\n");
         // if there are no requested pipes,return error
         if (!pipe){
                 return ERROR;
         }
-
-        TracePrintf(0, "3\n");
 
         // check if we can write the full length
         if (len > (MAX_PIPE_LEN - pipe->length)){
                 return ERROR;
         }
 
-        TracePrintf(0, "2\n");
-        // actuall writing from buffer to the pipe's buffer
+        // actually writing from buffer to the pipe's buffer
         // using mem move to avoid mess with memcopy, 
         // patrick might find better way of doing it
         memmove((void *)(pipe->buffer + pipe->length), (void *)buf, len);
         pipe->length += len;
 
-        TracePrintf(0, "1kj\n");
-
-
+        if(pipe->pipe_queue->count == 0 ){
+                TracePrintf(0, "PipeWrite ### pipe_queue is empty\n");
+        }
         // handle processes in the queue
-        pcb *queued_proc = (pcb *) list_pop(pipe->pipe_queue);
-        if (queued_proc){
-                int required_length = queued_proc->pipe_lenght;
-                // if not enough chars, return to the waiting queue
-                if (required_length > pipe->length){
-                        list_add(pipe->pipe_queue, (void *) queued_proc);
-                }
-                else{
-                        list_add(ready_procs, (void *) queued_proc);
+        else if(pipe->pipe_queue->count != 0){
+                TracePrintf(3, "PipeWrite ### pipequeue is not empty. Handling it\n");
+                pcb *queued_proc = (pcb *) list_pop(pipe->pipe_queue);
+                if (queued_proc){
+                        int required_length = queued_proc->pipe_lenght;
+                        // if not enough chars, return to the waiting queue
+                        if (required_length > pipe->length){
+                                list_add(pipe->pipe_queue, (void *) queued_proc);
+                        }
+                        else{
+                                list_add(ready_procs, (void *) queued_proc);
+                        }
                 }
         }
-
-        TracePrintf(0, "0kj\n");
         TracePrintf(3, "PipeWrite ### end\n");
 	return len;
 }
