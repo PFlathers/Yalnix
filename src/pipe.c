@@ -1,3 +1,4 @@
+#include <hardware.h>
 #include "globals.h"
 #include "pipe.h"
 #include "kernel.h"
@@ -34,7 +35,7 @@ int PipeInit(int *pipe_idp)
         return SUCCESS;
 }
 
-int kernel_PipeRead(int pipe_id, void *buf, int len)
+int kernel_PipeRead(int pipe_id, void *buf, int len, UserContext *uc)
 {
         TracePrintf(3, "PipeRead ### start\n");
 
@@ -71,7 +72,7 @@ int kernel_PipeRead(int pipe_id, void *buf, int len)
                 pipe->exp_length = len;
                 curr_proc->pipe_lenght = len;
                 list_add(pipes, (void *) pipe);
-                goto_next_process(curr_proc->user_context, 0);
+                goto_next_process(uc/*curr_proc->user_context*/, 0);
         }
 
 
