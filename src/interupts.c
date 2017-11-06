@@ -156,6 +156,7 @@ void trapKernel(UserContext *uc)
 
       case YALNIX_BRK:
         // check if in range
+        
         if ( check_pointer_range(uc->regs[0]) ){
           TracePrintf(3, "trapKernel: error in Brk, pointer out of range\n");
           retval = ERROR;
@@ -173,6 +174,7 @@ void trapKernel(UserContext *uc)
           retval = ERROR;
           break;
         }
+        
         addr = (void *) uc->regs[0];
         retval = kernel_Brk(addr);
         break;
@@ -276,8 +278,6 @@ void trapMemory(UserContext *uc)
           TracePrintf(6, "Process had a mapping error \n");
         }
 
-
-
         // should we check if there is no code? 
 
       	kernel_Exit(status, uc);
@@ -294,10 +294,15 @@ void trapMath(UserContext *uc)
 
 void trapTTYReceive(UserContext *uc)
 {
+        int tty_id = (int) uc->regs[0];
+        char *buffer = (char*) uc->regs[1];
+
+
 }
 
 void trapTTYTransmit(UserContext *uc)
 {
+        
 }
 
 void trapname1(UserContext *uc){}
