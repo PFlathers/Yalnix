@@ -88,7 +88,7 @@ struct pte r1_ptlist[VREG_1_PAGE_COUNT];
 // List *locks;
 // List *cvars;
 List *pipes;
-// List *ttys;
+List *ttys;
 
 
 // processes
