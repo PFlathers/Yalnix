@@ -22,19 +22,25 @@ ALL = $(KERNEL_ALL) $(USER_APPS)
 KERNEL_ALL = yalnix
 
 #List all kernel source files here.  
-KERNEL_SRCS = list.c kernel.c pcb.c interupts.c
+KERNEL_SRCS = $(shell find src -type f -name '*.$(c)')
+#src/list.c src/kernel.c src/pcb.c src/interupts.c src/loadprog.c src/syscalls.c
 #List the objects to be formed form the kernel source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-KERNEL_OBJS = list.o kernel.o pcb.o interupts.o
+KERNEL_OBJS = src/list.o src/kernel.o src/pcb.o src/interupts.o src/loadprog.o src/syscalls.o src/pipe.o src/tty.o
+#$(patsubst %.o,%.c,$(KERNEL_SRCS))
 #List all of the header files necessary for your kernel
-KERNEL_INCS = list.h globals.h kernel.h pcb.h interupts.h
+KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
+#include/list.h include/globals.h ,include/kernel.h include/pcb.h include/interupts.h include/loadprog.h include/syscalls.h
 
 
 #List all user programs here.
-USER_APPS = 
+USER_APPS = userland/fork userland/init userland/wait test/fork_test test/wait_test test/exec_test userland/pipe
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
-USER_SRCS = 
+USER_SRCS = userland/fork.c userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c userland/pipe.c
+
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-USER_OBJS = 
+USER_OBJS = test/fork_test.o userland/fork.o userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o userland/pipe.o
+
+
 #List all of the header files necessary for your user programs
 USER_INCS = 
 
@@ -75,7 +81,7 @@ LINK_KERNEL = $(LINK.c)
 
 USER_LIBS = $(LIBDIR)/libuser.a
 ASFLAGS = -D__ASM__
-CPPFLAGS= -m32 -fno-builtin -I. -I$(INCDIR) -g -DLINUX 
+CPPFLAGS= -m32 -fno-builtin -I. -I$(INCDIR) -I include/ -g -DLINUX 
 
 
 ##########################
@@ -93,8 +99,10 @@ CPPFLAGS= -m32 -fno-builtin -I. -I$(INCDIR) -g -DLINUX
 all: $(ALL)	
 
 clean:
-	rm -f *.o *~ TTYLOG* TRACE $(YALNIX_OUTPUT) $(USER_APPS)  core.* DISK
-
+	rm -f bin/*~ bin/TTYLOG* bin/TRACE bin/$(YALNIX_OUTPUT) bin/core.* bin/DISK
+cleaner:
+	rm -f bin/* src/*.o userland/*.o 
+	
 count:
 	wc $(KERNEL_SRCS) $(USER_SRCS)
 
@@ -108,11 +116,13 @@ no-core:
 	rm -f core.*
 
 $(KERNEL_ALL): $(KERNEL_OBJS) $(KERNEL_LIBS) $(KERNEL_INCS)
-	$(LINK_KERNEL) -o $@ $(KERNEL_OBJS) $(KERNEL_LDFLAGS)
+	$(LINK_KERNEL) -o bin/$@ $(KERNEL_OBJS) $(KERNEL_LDFLAGS)
+	rm -f src/*.o
 
 $(USER_APPS): $(USER_OBJS) $(USER_INCS)
 	$(ETCDIR)/yuserbuild.sh $@ $(DDIR58) $@.o
-
+	mv $(@) ./bin
+	rm -f $@.o
 
 
 

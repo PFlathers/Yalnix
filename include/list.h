@@ -12,6 +12,7 @@ typedef struct _Node Node;
 typedef struct _List{
 	Node *head;
 	Node *tail;
+        int count;
 } _List;
 typedef struct _List List;
 
@@ -21,5 +22,6 @@ int list_remove(List *list_to_remove, void *data);
 void list_add(List *list_to_add, void *data);
 List *init_list();
 void *list_pop(List *list_to_pop);
+int list_count(List *list_to_count);
 
 #endif

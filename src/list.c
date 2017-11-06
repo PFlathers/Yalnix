@@ -10,6 +10,7 @@ List *init_list()
 
 	new_list->head = NULL;
 	new_list->tail = NULL;
+        new_list->count = 0;
 
 	return new_list;
 }
@@ -34,7 +35,9 @@ void list_add(List *list_to_add, void *data)
 		new_node->prev = list_to_add->tail;
 		list_to_add->tail = new_node;
 	}
+        list_to_add->count++;
 }
+
 
 // 0 if we found and removed the data. -1 if not exisit
 int list_remove(List *list_to_remove, void *data)
@@ -79,6 +82,7 @@ int list_remove(List *list_to_remove, void *data)
 			list_to_remove->tail = NULL;
 		}
 	}
+        list_to_remove->count--;
 	free(curr->data);
 	free(curr);
 	return 0;
@@ -89,7 +93,23 @@ void *list_pop(List *list_to_pop)
 	Node *pop_node = list_to_pop->head;
 	void *ret_data = pop_node->data;
 	list_to_pop->head = list_to_pop->head->next;
-	list_to_pop->head->prev = NULL;
+        if(list_to_pop->head != NULL)
+                list_to_pop->head->prev = NULL;
+        list_to_pop->count--;
 	free(pop_node);
 	return ret_data;
+}
+
+int list_count(List *list_to_count)
+{
+        return list_to_count->count;
+        /*
+	Node *place_holder = list_to_count->head;
+	int count = 0;
+	while(place_holder != NULL){
+		count++;
+		place_holder = place_holder->next;
+	}
+	return count;
+        */
 }

@@ -2,11 +2,11 @@ This is a general to-do list for the yalnix kernel.
 Ideally, we'd put stuff in here in order not to forget it
 
 Questions for Sean:
-  ☐ how to operate that damn makefile
+  ✔ how to operate that damn makefile @done (17-10-21 16:49)
 
 General:
  ☐ global variable of available process id (probably ok just to have the nextone as int)
- ☐ logging system (a way to print things out from anywhere)
+ ✔ logging system (a way to print things out from anywhere) @done (17-10-21 16:49)
 
 Checkpoint 1:
  ✔ set up virtual machine @bruno @done (17-10-07 21:30)
@@ -14,7 +14,7 @@ Checkpoint 1:
  ✔ globals.h @done (17-10-08 10:17)
  ✔ kernel.c template @done (17-10-08 10:17)
  ☐ documentation folder
- ☐ split .h files in the include
+ ✔ split .h files in the include @done (17-10-27 14:49)
    ☐ README in there
  ✔ list.c               @done (17-10-08 21:29)
  ✔ get vm running       @patrick  @done (17-10-08 21:29)
@@ -42,21 +42,96 @@ Checkpoint 1:
 
 Checkpoint 2: 
 KernelStart runs, 
- ☐✔ initializing the kernel 
- ☐✔ the machine 
- ☐✔ the interrupt vector, a
- ☐✔ and the page tables. 
- ☐✔ An idle process should run.
+ ✔ initializing the kernel @done (17-10-26 12:32)
+ ✔ the machine @done (17-10-26 12:32)
+ ✔ the interrupt vector, a @done (17-10-26 12:32)
+ ✔ and the page tables. @done (17-10-26 12:32)
+ ✔ An idle process should run. @done (17-10-26 12:32)
 
  Specifics, page 50, bullets:
-    ☐✔ Initialize the interrupt vector table entries for each type of interrupt, exception, or trap, by making them point to the correct handler functions in your kernel.
+    ✔ Initialize the interrupt vector table entries for each type of interrupt, exception, or trap, by making them point to the correct handler functions in your kernel. @done (17-10-21 16:48)
     ✔ Initialize the REG VECTOR BASE privileged machine register to point to your interrupt vec- tor table @done (17-10-14 13:09)
     ✔ Build a structure to keep track of what page frames in physical memory are free. For this purpose, you might be able to use a linked list of physical frames, implemented in the frames themselves. Or you can have a separate structure, which is probably easier, though slightly less efficient. This list of free pages should be based on the pmem size argument passed to your KernelStart, but should of course not include any memory that is already in use by your kernel. @done (17-10-14 15:26)
         ☐✔ need to check what do we want to store
     ✔ Build the initial page tables for Region 0 and Region 1, @done (17-10-14 15:22)
     ✔ and initialize the registers REG PTBR0, REG PTLR0, REG PTBR1, and REG PTLR1 to define these initial page tables. @done (17-10-14 15:26)
       ✔ calculate physical kernel frames @done (17-10-14 13:10)
-    ☐✔ Enable virtual memory.
-    ☐✔ Create @startedn “idle” process to be run by your kernel when there are no other runnable (ready) processes in the system. The idle process should be created based on the UserContext passed to your KernelStart routine. As mentioned in Chapter 3, the idle process should be a loop that executes the Pause machine instruction on each loop iteration.
-    ☐✔ Create the first process and load the initial program into it. In this step, guide yourself by the file template.c that we provide, which shows a skeleton of the procedure necessary to load an executable program from a Unix file into memory as a Yalnix process. This initial process will serve the role of the “init” process in Unix as the parent (or grandparent, etc.) of all processes running on the system.
+    ✔ Enable virtual memory. @done (17-10-21 16:48)
+    ✔ Create @startedn “idle” process to be run by your kernel when there are no other runnable (ready) processes in the system. The idle process should be created based on the UserContext passed to your KernelStart routine. As mentioned in Chapter 3, the idle process should be a loop that executes the Pause machine instruction on each loop iteration. @done (17-10-21 16:48)
+    ✔ Create the first process and load the initial program into it. In this step, guide yourself by the file template.c that we provide, which shows a skeleton of the procedure necessary to load an executable program from a Unix file into memory as a Yalnix process. This initial process will serve the role of the “init” process in Unix as the parent (or grandparent, etc.) of all processes running on the system. @done (17-10-21 16:48)
 
+
+
+
+Checkpoint 3 (general requirements):
+
+
+Checkpoint 3 (process things not to forget):
+  SetKernelBrk :
+    ✔ see if I have to read register or I can have a global @general_questions @done (17-10-26 13:07)
+    ☐ check that address is withing bounds .\src\kernel.c:246:8 @bruno, @implementation
+    ☐ add safety check at .\src\kernel.c:281:8 @bruno, @implementation
+    ☐ remove genera
+  Loadprog:
+    ☐ loadprog 271:8
+
+
+Checkpoint 4:
+  Impplement:
+  ✔ fork @done (17-11-03 09:29)
+  ✔ exec @done (17-11-03 09:29)
+  ✔ wait @done (17-10-27 07:45)
+  ✔ kernel interrupt handler for the above @done (17-11-03 09:29)
+  ☐ ...
+  Test:
+  ✔ fork @done (17-11-03 09:29)
+  ✔ exec @done (17-11-03 09:29)
+  ☐ wait
+  ✔ kernel interrupt handler for the above @done (17-11-03 09:29)
+  ☐ ...
+  Fix:
+  ☐ fork: efficient copy of the parent's memorys
+
+
+
+
+Checkpoint 5: 
+  Implement:
+ ☐ ttyread:
+   ☐ syscall
+   ☐ kernel interrupt management
+   ☐ interrupt handler
+ ☐ ttywrite:
+   ☐ syscall
+   ☐ kernel interrupt management
+   ☐ interrupt handler
+ ☐ check: 
+   ✔ trap illegal @done (17-11-03 09:51)
+   ☐ trapMemory - potentially add another thing?
+   ☐ trapMath
+   ✔ pipe? @done (17-11-03 21:05)
+ ☐ clean: 
+   ☐ interrupts.c
+
+  Test: 
+ ☐ ttyread
+ ☐ ttywrite
+ ☐ check: 
+   ☐ trap illegal
+   ☐ trapMemory
+   ☐ trapMath
+   ☐ pipe?
+  Fix:
+    ☐ memory leaks in pipeInit - Make sure we free buffer and struct on fail
+    ✔ add resource id's to kernel.c/h @done (17-11-03 21:05)
+    ✔ add list of pipes to kernel.c/h @done (17-11-03 21:03)
+    ✔ define MAXPIPELEN @done (17-11-03 21:00)
+    ✔ check segfault in piperead @done (17-11-03 21:00)
+    ✔ init pipe_lenght to 0 in create_process @done (17-11-03 21:01) 
+    // ☐ add/init list of buffers in kernel.c/h
+    ☐ clean up interrupt utilities
+    ✔ add list of ttys in kernel.c/h @done (17-11-04 18:09)
+    ✔ add init ttys to kernel.c @done (17-11-04 18:10)
+    ✔ add init buffer to create_process in pcb.c @done (17-11-04 18:01)
+    ✔ should I init read_len and shit I added in pcb.c or somewhere @done (17-11-04 18:10)  -> I'll leave it uninitialized for now
+    ☐ check if I use TtyTransmit correctly (manual, and hardware/yalnix.h)
