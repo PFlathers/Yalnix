@@ -25,7 +25,7 @@ KERNEL_ALL = yalnix
 KERNEL_SRCS = $(shell find src -type f -name '*.$(c)')
 #src/list.c src/kernel.c src/pcb.c src/interupts.c src/loadprog.c src/syscalls.c
 #List the objects to be formed form the kernel source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-KERNEL_OBJS = src/list.o src/kernel.o src/pcb.o src/interupts.o src/loadprog.o src/syscalls.o
+KERNEL_OBJS = src/list.o src/kernel.o src/pcb.o src/interupts.o src/loadprog.o src/syscalls.o src/pipe.o src/tty.o
 #$(patsubst %.o,%.c,$(KERNEL_SRCS))
 #List all of the header files necessary for your kernel
 KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
@@ -33,12 +33,12 @@ KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
 
 
 #List all user programs here.
-USER_APPS = userland/fork userland/init userland/wait test/fork_test test/wait_test test/exec_test
+USER_APPS = userland/fork userland/init userland/wait test/fork_test test/wait_test test/exec_test userland/pipe userland/tty
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
-USER_SRCS = userland/fork.c userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c
+USER_SRCS = userland/fork.c userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c userland/pipe.c userland/tty.c
 
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-USER_OBJS = test/fork_test.o userland/fork.o userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o
+USER_OBJS = test/fork_test.o userland/fork.o userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o userland/pipe.o userland/tty.o
 
 
 #List all of the header files necessary for your user programs

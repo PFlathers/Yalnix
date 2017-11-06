@@ -65,8 +65,18 @@ pcb *new_process(UserContext *uc)
 
   	new_pcb->brk_address = 0;
   	new_pcb->heap_start_pg = 0;
+  	new_pcb->pipe_lenght = 0;
 
-TracePrintf(3, "new_process ### end\n");
+
+  	// messing with buffers and pipe things
+  	new_pcb->buffer = (Buffer *) malloc(sizeof(Buffer));
+  	ALLOC_CHECK(new_pcb->buffer, "new_process - alloc buffer");
+  	
+  	new_pcb->buffer->len = 0;
+  	new_pcb->buffer->buf = NULL;
+
+
+	TracePrintf(3, "new_process ### end\n");
 
 	return new_pcb;
 }

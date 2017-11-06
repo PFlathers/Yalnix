@@ -68,7 +68,7 @@ List *empty_frame_list;
 
 // process ttracking - see kernel.c ln 60
 unsigned int available_process_id;
-
+unsigned int glob_resource_list;
 
 
 // process tracking lists -
@@ -87,8 +87,8 @@ struct pte r1_ptlist[VREG_1_PAGE_COUNT];
 
 // List *locks;
 // List *cvars;
-// List *pipes;
-// List *ttys;
+List *pipes;
+List *ttys;
 
 
 // processes

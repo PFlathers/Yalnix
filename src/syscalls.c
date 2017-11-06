@@ -58,6 +58,7 @@ int kernel_Fork(UserContext *user_context)
         // child's heap base page and brk are the same as parrents
         child->heap_start_pg = parent->heap_start_pg;
         child->brk_address = parent->brk_address;
+        TracePrintf(0, "BRK ADDRESSES IN FORK \nparent:%d\nchild:%d\n", parent->brk_address, child->brk_address);
 
         TracePrintf(6, "kernel_Fork: succesfully bootstraped new proces \n");
 
@@ -593,10 +594,10 @@ int kernel_Brk(void *addr)
 
 	// check the addresses
 	unsigned int u_addr = (unsigned int) addr; 
-        TracePrintf(3, "kernel_Brk: current brk = %u, requesting: %u ", curr_proc->brk_address, u_addr);
+        TracePrintf(3, "kernel_Brk: current brk = %u, requesting: %u \n", curr_proc->brk_address, u_addr);
 
         unsigned int stack_bottom_page = (unsigned int) (stack_bottom << PAGESHIFT);
-        unsigned int heap_top_page = (unsigned int) (heap_top << PAGESHIFT);
+        unsigned int heap_top_page = (unsigned int) (heap_bottom << PAGESHIFT);
 	if (u_addr > stack_bottom_page || 
 		u_addr < heap_top_page ){
 		TracePrintf(1, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);

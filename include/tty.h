@@ -18,6 +18,7 @@ typedef struct _TTY {
 	int tty_id; // 1-4, given in assignment
 
 	List *to_write;
+        List *to_read;
 	List *buffers;
 
 	//missing probz a lot
@@ -25,8 +26,8 @@ typedef struct _TTY {
 
 typedef struct _TTY TTY;
 
-int TtyRead(int tty_id, void *buf, int len);
+int kernel_TtyRead(int tty_id, void *buf, int len);
 
-int TtyWrite(int tty_id, void *buf, int len);
+int kernel_TtyWrite(int tty_id, void *buf, int len);
 
 #endif
