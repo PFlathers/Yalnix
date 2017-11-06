@@ -142,7 +142,9 @@ int LoadProgram(char *name, char *args[], pcb *proc)
 //==>> proc->context.sp = cp2;
 	proc->user_context->sp = cp2;
 
-
+//        proc->brk_address = //UP_TO_PAGE(((data_pg1 + data_npg) - 1 + MAX_PT_LEN) <<PAGESHIFT);
+//        TracePrintf(0, "VMEM1Base:%d\nli.t_npg:%d\ndata_npg:%d\ndata_pg1:%d\ntext_pg1:%d\n", VMEM_1_BASE, li.t_npg << PAGESHIFT, data_npg << PAGESHIFT, data_pg1 << PAGESHIFT, text_pg1 << PAGESHIFT);
+         proc->brk_address = ((li.t_npg + data_npg + data_pg1) << PAGESHIFT);
 
   /*
    * Now save the arguments in a separate buffer in region 0, since

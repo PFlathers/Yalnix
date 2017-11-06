@@ -13,15 +13,15 @@ int TtyRead(int tty_id, void *buf, int len)
         Node * node =  ttys->head;
 
         while (node->next != NULL){
-                if (node->data->id == tty_id){
+                if ( ((TTY*)node->data)->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
                 }
                 node = node->next;
         }
         //edge case
-        if (node->next->data->id == tty_id) {
-                tty = tty->next->data;
+        if ( ((TTY*)node->next->data)->tty_id == tty_id) {
+                tty = (TTY*)node->next->data;
         }
         if (tty == NULL) {
                 TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
@@ -34,7 +34,7 @@ int TtyRead(int tty_id, void *buf, int len)
         // wait untill inetrrupt gets us
         if (!popped_buf) {
                 TracePrintf(6, "ttwRead: \t no buffer, wait for interrupt\n");
-                curr_proc->read_len = len;
+                curr_proc->read_length = len;
                 list_add(tty->to_write, curr_proc);
                 goto_next_process(curr_proc->user_context, 0);
 
@@ -55,7 +55,7 @@ int TtyRead(int tty_id, void *buf, int len)
         TracePrintf(6, "ttwRead: \t about to read buffer\n");
         memcpy(buf, popped_buf->buf, len);
         TracePrintf(6, "ttwRead: \t read buffer, reset pcb read counter\n");
-        curr_proc->read_len = 0;
+        curr_proc->read_length = 0;
 
         /* here is the thing that I'm unsure about, 
         we should somehow store the rest of the buffer if we
@@ -91,15 +91,15 @@ int TtyWrite(int tty_id, void *buf, int len)
         TTY *tty = NULL;
         Node * node =  ttys->head;
         while (node->next != NULL){
-                if (node->data->id == tty_id){
+                if ( ((TTY*)node->data)->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
                 }
                 node = node->next;
         }
         //edge case
-        if (node->next->data->id == tty_id) {
-                tty = tty->next->data;
+        if ( ((TTY*)node->next->data)->tty_id == tty_id) {
+                tty = (TTY*)node->next->data;
         }
 
         if (tty == NULL) {
@@ -150,7 +150,7 @@ int TtyWrite(int tty_id, void *buf, int len)
         goto_next_process(curr_proc->user_context, 0);
 
         // here, the waiting process should return after tty trap
-        TracePrintf(6, "TtyWrite: \t proc %d returned after waiting \n" curr_proc->process_id);
+        TracePrintf(6, "TtyWrite: \t proc %d returned after waiting \n", curr_proc->process_id);
         TracePrintf(3, "TtyWrite ### End, returning %d\n", len);
         return len;
 }

@@ -159,11 +159,13 @@ void trapKernel(UserContext *uc)
         // check if in range
         
         if ( check_pointer_range(uc->regs[0]) ){
+                TracePrintf(0, "trapKernel: brk to set is: %d\n", (int)uc->regs[0]);
           TracePrintf(3, "trapKernel: error in Brk, pointer out of range\n");
           retval = ERROR;
           break;
         }
         // check if pages are valid
+       /* 
         if ( check_pointer_valid(uc->regs[0]) ){
           TracePrintf(3, "trapKernel: error in Brk, pointer address not valid\n");
           retval = ERROR;
@@ -175,7 +177,7 @@ void trapKernel(UserContext *uc)
           retval = ERROR;
           break;
         }
-        
+       */ 
         addr = (void *) uc->regs[0];
         retval = kernel_Brk(addr);
         break;
