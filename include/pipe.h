@@ -1,7 +1,6 @@
 #ifndef _PIPE_H_
 #define _PIPE_H_
 
-#include <hardware.h>
 #define MAX_PIPE_LEN 1024
 
 typedef struct _PIPE {
@@ -16,7 +15,7 @@ typedef struct _PIPE Pipe;
 
 int PipeInit(int *pipe_idp);
 
-int kernel_PipeRead(int pipe_id, void *buf, int len, UserContext *uc);
+int kernel_PipeRead(int pipe_id, void *buf, int len);
 
 int kernel_PipeWrite(int pipe_id, void *buf, int len);
 
