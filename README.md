@@ -11,20 +11,21 @@ Members: Patrick J. Flathers (pjflathers) and Bruno Korbar (bjuncek)
 
 ### Design and documentation
 Please find current state of the project in [General.todo](General.todo) file. 
- - Checkpoint one completed on Oct 8th, 2017. *3/5*
- - Checkpoint two *5/5*
- - Checkpoint three --> in progress
+
+0. Checkpoint one completed on Oct 8th, 2017. *3/5*
+1. Checkpoint two *5/5*
+2. Checkpoint three --> in progress
 
 ### Usage manual and description
 #### To Compile:
 Run `make` in the yalnix virtual machine. Makefile is in the rood of the repository, and it is expected to build all
 related programs in `.\bin` directory. 
 Additional makefile commands are (as described in the manual):
-- `make clean`
-- `make no-core`
-- `make count`
-- `make list`
-- `make kill`
+0. `make clean`
+1. `make no-core`
+2. `make count`
+3. `make list`
+4. `make kill`
 
 #### To Run:
 `yalnix -t tracefile -lk 4 -s <insert user program here>`

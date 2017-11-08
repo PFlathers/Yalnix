@@ -70,6 +70,7 @@ List *empty_frame_list;
 unsigned int available_process_id;
 unsigned int glob_resource_list;
 
+unsigned int available_lock_id;
 
 // process tracking lists -
 List *ready_procs;
@@ -85,7 +86,7 @@ struct pte r1_ptlist[VREG_1_PAGE_COUNT];
 
 
 
-// List *locks;
+ List *locks;
 // List *cvars;
 List *pipes;
 List *ttys;

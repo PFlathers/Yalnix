@@ -97,6 +97,7 @@ void init_global(int phys_mem_size)
 
 	available_process_id = 0;	// at start we run at 0
         glob_resource_list = 0;         // for pipes and stuff
+        available_lock_id = 0;
 
 
 	// process tracking lists (per sean's suggestion)
