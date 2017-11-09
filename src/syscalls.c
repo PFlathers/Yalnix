@@ -308,25 +308,61 @@ void kernel_Exit(int status, UserContext *uc)
 {
 
         TracePrintf(3, "kernel_exit ###start\n");
+        Node *temp;
+        pcb *p;
 
         if(curr_proc->process_id == 0)
                 Halt();
        
         list_remove(ready_procs, (void*) curr_proc);
         list_add(zombie_procs, (void*) curr_proc);
+        curr_proc->exit_status= status;
+       
+        //parent is still alive 
+        if(curr_proc->parent != NULL){
+                //tell parent you died
+                TracePrintf(0, "parent:%u\n", curr_proc->parent->process_id);
+                if(curr_proc->parent->zombiez == NULL)
+                       curr_proc->parent->zombiez = init_list();
+                list_add(curr_proc->parent->zombiez, (void*) curr_proc); 
+                list_remove(curr_proc->parent->children, (void*) curr_proc);
+                TracePrintf(0, "parent's zombies: %u\n", ((pcb*)curr_proc->parent->zombiez->head->data)->process_id);
 
+        //you are an orphan
+        } else {
 
-        TracePrintf(0, "parent:%u\n", curr_proc->parent->process_id);
-        if(curr_proc->parent->zombiez == NULL)
-               curr_proc->parent->zombiez = init_list();
-        list_add(curr_proc->parent->zombiez, (void*) curr_proc); 
-        list_remove(curr_proc->parent->children, (void*) curr_proc);
-        TracePrintf(0, "parent's zombies: %u\n", ((pcb*)curr_proc->parent->zombiez->head->data)->process_id);
+        }
 
+        //inform your children of your demise. 
+        if(curr_proc->children != NULL && list_count(curr_proc->children) > 0){
+                //Mark children as orphans
+               if( list_count(curr_proc->children) > 0){
+                        temp = curr_proc->children->head;
+                        while(temp != NULL){
+                                ((pcb*) temp->data)->parent = NULL;
+                                temp = temp->next;
+                        }
+               }
+               free(curr_proc->children);
+        }
 
-        
-
-
+        //free your dead children
+        if(curr_proc->zombiez != NULL && list_count(curr_proc->zombiez) > 0){
+                temp = curr_proc->zombiez->head;
+                while(temp != NULL){
+                        p = (pcb*) temp->data;
+                        list_remove(all_procs, (void*)p);
+//!!!!process thinks that its parent is a child/zombie and therefore is trying to kill
+// free it. This is a fork problem.
+			if (p->process_id == curr_proc->process_id)
+			       TracePrintf(0, "I think I'm a zombie :p\n");
+			else if (p->process_id == curr_proc->parent->process_id)
+				TracePrintf(0, "I think my parent is my zombie :p\n");
+			else
+				free_pagetables(p);  
+                        temp = temp->next;
+                }
+        }
         cycle_process(uc);
 
 
