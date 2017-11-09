@@ -1,6 +1,7 @@
 #include "globals.h"
 #include "syscalls.h"
 #include "lock.h"
+#include "list.h"
 #include "kernel.h"
 
 
@@ -8,29 +9,30 @@
 
 //Intializes Lock.
 //Warning: sets lock to free and proc_id to 0, no one has claimed it.
-int LockInit(Lock *lock_to_init)
+int kernel_LockInit(int * lock_idp)
 {
-        lock_to_init = (Lock*) malloc(sizeof(Lock));
+        Lock *lock_to_init = (Lock*) malloc(sizeof(Lock));
         lock_to_init->id = available_lock_id;
         available_lock_id++;
 
         lock_to_init->claimed = 0;
         lock_to_init->proc_id = 0;
-        init_list(lock_to_init->waiters);
+        lock_to_init->waiters = init_list();
 
         list_add(locks, lock_to_init); 
+        *lock_idp = lock_to_init->id;
 
-	return 0;
+	return SUCCESS;
 }
 
-int Acquire(int lock_id)
+int kernel_Acquire(int lock_id)
 {
         TracePrintf(6, "Acquiring lock\n");
         Node *temp = locks->head;
         Lock *my_lock = NULL;
         //Get the lock we are looking for
         while(temp != NULL){
-                if ( (Lock*)(temp->data)->id == lock_id){
+                if ( ((Lock*)(temp->data))->id == lock_id){
                         my_lock= (Lock*) temp->data;
                         break;
                 }
@@ -46,7 +48,7 @@ int Acquire(int lock_id)
         //there.
         } else if (my_lock->claimed == 1){
                 TracePrintf(6, "lock is already claimed\n");
-                temp = waiters->head;
+                temp = my_lock->waiters->head;
                 while (temp != NULL){
                         if ( (pcb*)(temp->data) == curr_proc ){
                                 return SUCCESS;
@@ -54,7 +56,7 @@ int Acquire(int lock_id)
                         temp = temp->next;
                 }
                 list_add(my_lock->waiters, curr_proc);
-                return 
+                return  SUCCESS;
         } else{
                 if(my_lock->waiters->count == 0){
                         TracePrintf(6, "Lock aquired\n");
@@ -64,24 +66,24 @@ int Acquire(int lock_id)
                         return SUCCESS;
                 } else if ((pcb*)(my_lock->waiters->head->data) == curr_proc){
                         TracePrintf(6, "Lock aquired2\n");
-                        pcb *new_owner = (pcb*) pop_list(my_lock);
-                        my_lock->process_id = new_owner->process_id;
+                        pcb *new_owner = (pcb*) list_pop(my_lock->waiters);
+                        my_lock->proc_id = new_owner->process_id;
                         my_lock->claimed = 1;
-                        return SUCESS;
+                        return SUCCESS;
                 }
         }
 
 	return ERROR;
 }
 
-int Release(int lock_id)
+int kernel_Release(int lock_id)
 {
         TracePrintf(6, "Releasing lock\n");
         Node *temp = locks->head;
         Lock *my_lock = NULL;
         //Get the lock we are looking for
         while(temp != NULL){
-                if ( (Lock*)(temp->data)->id == lock_id){
+                if ( ((Lock*)(temp->data))->id == lock_id){
                         my_lock= (Lock*) temp->data;
                         break;
                 }
@@ -123,7 +125,7 @@ int Release(int lock_id)
 	return ERROR;
 }
 
-int LockDestroy(int lock_id)
+int kernel_LockDestroy(int lock_id)
 {
 	return 0;
 }

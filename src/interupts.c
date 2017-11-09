@@ -147,7 +147,7 @@ void trapKernel(UserContext *uc)
           break;
         }
 
-        retval = kernel_PipeRead((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2], uc);
+        retval = kernel_PipeRead((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
         break;
 
       case YALNIX_PIPE_WRITE:
@@ -212,14 +212,13 @@ void trapKernel(UserContext *uc)
          retval = kernel_TtyRead(tty_id, buf, len);
          break;
         case YALNIX_LOCK_INIT:
-                Lock *l;
-                retval = LockInit(l);
+                retval = kernel_LockInit((int*) uc->regs[0]);
                 break;
         case YALNIX_LOCK_ACQUIRE:
-                retval = Acquire((int) uc->regs[0]);
+                retval = kernel_Acquire((int) uc->regs[0]);
                 break;
         case YALNIX_LOCK_RELEASE:
-                retval = Release((int) uc->regs[0]);
+                retval = kernel_Release((int) uc->regs[0]);
                 break;
       default:
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);

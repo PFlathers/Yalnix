@@ -18,7 +18,7 @@ int CvarInit(int *cvar_idp)
         init_list(cvar_to_init->wait);
         list_add(cvars, cvar_to_init);
 
-        *cvar_idp = cvar_idp;
+        *cvar_idp = cvar_to_init->id;
 	return 0;
 }
 

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "globals.h"
-//#include "list.h"
+#include "list.h"
 
 // create list
 List *init_list()
@@ -57,7 +57,7 @@ void list_push(List *list_to_push, void *data)
                 list_to_push->head->prev = new_node;
                 list_to_push->head = new_node;
 	}
-        list_to_add->count++;
+        list_to_push->count++;
 } 
 
 // 0 if we found and removed the data. -1 if not exisit
