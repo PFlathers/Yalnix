@@ -56,11 +56,19 @@ int Acquire(int lock_id)
                 list_add(my_lock->waiters, curr_proc);
                 return 
         } else{
-                TracePrintf(6, "Lock aquired\n");
-                my_lock->proc_id = curr_proc->process_id;
-                my_lock->claimed = 1;
-                list_remove(my_lock->waiters, curr_proc);
-                return SUCCESS;
+                if(my_lock->waiters->count == 0){
+                        TracePrintf(6, "Lock aquired\n");
+                        my_lock->proc_id = curr_proc->process_id;
+                        my_lock->claimed = 1;
+                        //list_remove(my_lock->waiters, curr_proc);
+                        return SUCCESS;
+                } else if ((pcb*)(my_lock->waiters->head->data) == curr_proc){
+                        TracePrintf(6, "Lock aquired2\n");
+                        pcb *new_owner = (pcb*) pop_list(my_lock);
+                        my_lock->process_id = new_owner->process_id;
+                        my_lock->claimed = 1;
+                        return SUCESS;
+                }
         }
 
 	return ERROR;
@@ -89,6 +97,7 @@ int Release(int lock_id)
                 TracePrintf(6, "you do not have the lock\n");
                 return ERROR;
         } else {
+                /* Experimental code. BUG: could cause starvation.
                 Node *temp_from_ready = ready_procs->head;
                 Node *temp_from_waiters = my_lock->waiters->head;
                 
@@ -107,6 +116,7 @@ int Release(int lock_id)
                         }
 
                 }
+                */
                 my_lock->claimed = 0;
                 return SUCCESS;
         }
