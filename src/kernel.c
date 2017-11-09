@@ -105,6 +105,8 @@ void init_global(int phys_mem_size)
 	blocked_procs = (List *)init_list();
 	all_procs = (List *)init_list(); 
 	zombie_procs = (List *)init_list(); 
+        locks = (List *)init_list();
+        cvars = (List *) init_list();
 
 
         // book kepingz

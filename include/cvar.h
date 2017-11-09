@@ -8,7 +8,8 @@ typedef struct _CVAR
 {
         int id; //id of the cvar
         int claimed; // 0 if not claimed. 1 if claimed
-        struct node *waiters; // who is waiting on signal.
+        unsigned int proc_id;
+        struct List *waiters; // who is waiting on signal.
 } _CVAR;
 typedef struct _CVAR cvar;
 

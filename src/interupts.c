@@ -211,8 +211,16 @@ void trapKernel(UserContext *uc)
          len = (int) uc->regs[2];
          retval = kernel_TtyRead(tty_id, buf, len);
          break;
-
-
+        case YALNIX_LOCK_INIT:
+                Lock *l;
+                retval = LockInit(l);
+                break;
+        case YALNIX_LOCK_ACQUIRE:
+                retval = Acquire((int) uc->regs[0]);
+                break;
+        case YALNIX_LOCK_RELEASE:
+                retval = Release((int) uc->regs[0]);
+                break;
       default:
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
