@@ -2,6 +2,7 @@
 #define _CVAR_H_
 
 #include "list.h"
+#include "lock.h"
 
 
 typedef struct _CVAR
@@ -9,7 +10,8 @@ typedef struct _CVAR
         int id; //id of the cvar
         int claimed; // 0 if not claimed. 1 if claimed
         unsigned int proc_id;
-        struct List *waiters; // who is waiting on signal.
+        List *waiters; // who is waiting on signal.
+        Lock *lock;
 } _CVAR;
 typedef struct _CVAR cvar;
 

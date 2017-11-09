@@ -386,8 +386,11 @@ void kernel_Exit(int status, UserContext *uc)
                 if (temp_proc->parent->zombiez == NULL){
                         temp_proc->parent->zombiez = init_list();
                 }
-                TracePrintf(0, "6.4Sucess");
-                list_add(temp_proc->parent->zombiez,(void*) temp_proc);
+                TracePrintf(0, "6.4Sucess %lu", temp_proc->parent);
+                if(temp_proc->parent->zombiez == NULL){
+                        temp_proc->parent->zombiez = init_list();
+                }
+                //list_add(temp_proc->parent->zombiez,(void*) temp_proc);
         }
         TracePrintf(0, "7--");
 

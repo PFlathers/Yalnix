@@ -32,7 +32,19 @@ int CvarDestory(int cvar_id)
 //allow only the next waiter to get it
 int CvarSignal(int cvar_id)
 {
-	return 0;
+        Node *temp = cvars->head;
+        while (temp != NULL){
+                if ( ((Cvar*)temp->data)->id == cvar_id)
+                        break;
+                temp = temp->next;
+        }
+        if(temp == NULL){
+                TracePrintf(0, "Cvar does not exist\n");
+                return ERROR;
+        } 
+        Cvar *myCvar = (Cvar*) temp->data;
+
+	return SUCCESS;
 }
 
 //let all the waiter know.
