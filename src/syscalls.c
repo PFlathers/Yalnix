@@ -306,6 +306,31 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 // of the pcb.
 void kernel_Exit(int status, UserContext *uc)
 {
+
+        TracePrintf(3, "kernel_exit ###start\n");
+
+        if(curr_proc->process_id == 0)
+                Halt();
+       
+        list_remove(ready_procs, (void*) curr_proc);
+        list_add(zombie_procs, (void*) curr_proc);
+
+
+        TracePrintf(0, "parent:%u\n", curr_proc->parent->process_id);
+        if(curr_proc->parent->zombiez == NULL)
+               curr_proc->parent->zombiez = init_list();
+        list_add(curr_proc->parent->zombiez, (void*) curr_proc); 
+        list_remove(curr_proc->parent->children, (void*) curr_proc);
+        TracePrintf(0, "parent's zombies: %u\n", ((pcb*)curr_proc->parent->zombiez->head->data)->process_id);
+
+
+        
+
+
+        cycle_process(uc);
+
+
+        /*
 	TracePrintf(3, "kernel_exit ### start\n");
 	pcb *temp_proc = curr_proc; // Save a reference for freeing later
 	
@@ -313,6 +338,7 @@ void kernel_Exit(int status, UserContext *uc)
         list_remove(all_procs, (void*) temp_proc);
         list_remove(ready_procs,(void*) temp_proc);
         TracePrintf(3, "kernel_exit ### exiting\n");
+
         //cycle_process(uc);
 
         
@@ -403,8 +429,7 @@ void kernel_Exit(int status, UserContext *uc)
 	if(OG_Process){
 		Halt();
 	}
-        cycle_process(uc);
-        
+       */ 
 }
 void cycle_process(UserContext *uc)
 {
