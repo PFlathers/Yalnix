@@ -684,17 +684,14 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 
 	// Save hext process' UC in the currently used uc var so that we don't have to 
 	// reallocate (tip from prof Palmer in CS50 :))
-	TracePrintf(2, "ContextSwitch ### Start2 \n");
 	memcpy((void *) user_context, (void *) next->user_context, sizeof(UserContext));
 
 	// current procces becomes next
-	TracePrintf(2, "ContextSwitch ### Start3 \n");
 	curr_proc = next;
 
 	// magic function from 5.2
 	int r = KernelContextSwitch(MyKCS, (void *) current, (void *) next);
 
-	TracePrintf(2, "ContextSwitch ### Start4 \n");
 	// make user context current one (not needed atm)
 	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));
 

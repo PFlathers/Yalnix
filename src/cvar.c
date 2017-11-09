@@ -3,6 +3,7 @@
 #include "kernel.h"
 #include "cvar.h"
 #include "list.h"
+#include "lock.h"
 
 /* Here we just have prototypes for Cvar functions
  */
@@ -15,7 +16,7 @@ int CvarInit(int *cvar_idp)
         available_lock_id++;
         cvar_to_init->proc_id = 0;
         cvar_to_init->claimed = 0;
-        init_list(cvar_to_init->wait);
+        cvar_to_init->wait = init_list();
         list_add(cvars, cvar_to_init);
 
         *cvar_idp = cvar_to_init->id;
@@ -43,6 +44,7 @@ int CvarSignal(int cvar_id)
                 return ERROR;
         } 
         Cvar *myCvar = (Cvar*) temp->data;
+
 
 	return SUCCESS;
 }

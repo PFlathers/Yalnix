@@ -390,7 +390,7 @@ void kernel_Exit(int status, UserContext *uc)
                 if(temp_proc->parent->zombiez == NULL){
                         temp_proc->parent->zombiez = init_list();
                 }
-                //list_add(temp_proc->parent->zombiez,(void*) temp_proc);
+                list_add(temp_proc->parent->zombiez,(void*) temp_proc);
         }
         TracePrintf(0, "7--");
 
