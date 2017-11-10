@@ -116,7 +116,7 @@ int kernel_Fork(UserContext *user_context)
         unsigned int src, dst;
         dst = dest_pg << PAGESHIFT;
 
-
+/* Per Sean's suggestions
         for (i=0; i<KERNEL_PAGE_COUNT; i++){
                 src = KERNEL_STACK_BASE + (i*PAGESIZE);
 
@@ -125,7 +125,7 @@ int kernel_Fork(UserContext *user_context)
 
 
                 memcpy((void*) dst, (void *) src, PAGESIZE);
-        }
+        }*/
 
         TracePrintf(6, "\tCopied kernel frames\n");
 

@@ -581,7 +581,12 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 	pcb *next = (pcb *) next_pcb; 
 
 	// save current kc
-	memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+        //
+        // if statement per seans suggestions
+        if (current->has_kc == 0){
+                memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+                current->has_kc = 1;
+        }
 
 	// bootstrap the kernel if we are starting
 	if (next->has_kc == 0){
@@ -592,9 +597,9 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
 	// save current k stack
 	if (current != NULL) {
-      memcpy((void *) current->region0_pt,
-              (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
-              KERNEL_PAGE_COUNT * (sizeof(struct pte)));
+              memcpy((void *) current->region0_pt,
+                      (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
+                      KERNEL_PAGE_COUNT * (sizeof(struct pte)));
     }
 
 
