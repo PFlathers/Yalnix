@@ -496,22 +496,38 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// if has dead children, find them and remove them from the 
 	// parent->zombie list and global zombies list
 	if (parent->zombiez != NULL && list_count(parent->zombiez) > 0) {
-		TracePrintf(6, "kernel_Wait: found zombie children\n");
-		// pop from parent list
-		pcb *child_pcb = list_pop(parent->zombiez);
-		child_pid_retval = child_pcb->process_id;
+        	TracePrintf(6, "kernel_Wait: found zombie children\n");
+        	// pop from parent list
+        	pcb *child_pcb = (pcb*) list_pop(parent->zombiez);
+        	child_pid_retval = child_pcb->process_id;
 
-		TracePrintf(6, "kernel_Wait: I should remove procces: %d from zombie list \n", child_pcb->process_id);
-		// if my understanding is correct, status should be 
-		// the pointer to the process
-		*status_ptr = *((int *) child_pcb);
-		// remove from global list (found in kernel.h)
-		list_remove(zombie_procs, child_pcb);
+    		TracePrintf(6, "kernel_Wait: I should remove procces: %d from zombie list \n", child_pcb->process_id);
+            Node *temp = zombiez->head;
+            pcb *found_item = NULL;
+            //Get the lock we are looking for
+            while(temp != NULL){
+                if ( ((pcb*)(temp->data))->process_id == child_pid_retval){
+                    found_item = (pcb*) temp->data;
+                    break;
+                }
+
+                temp = temp->next;
+            }
+
+            if (found_item == NULL) {
+                    TracePrintf(3, "wait: process not found in zombiez\n");
+                    return(ERROR);
+            }
+            // if my understanding is correct, status should be 
+    		// the pointer to the process
+    		*status_ptr = *((int *) child_pcb);
+    		// remove from global list (found in kernel.h)
+    		list_remove(zombie_procs, child_pcb);
 
 
-		// return the pid of the child that returned (mind == blown)
-		TracePrintf(3, "kernel_Wait ### end \n");
-		return child_pid_retval; 
+    		// return the pid of the child that returned (mind == blown)
+    		TracePrintf(3, "kernel_Wait ### end \n");
+    		return child_pid_retval; 
 	}
 	
 	TracePrintf(6, "kernel_Wait: parent's pid %d", parent->process_id);
