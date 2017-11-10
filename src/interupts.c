@@ -32,7 +32,7 @@ void trapKernel(UserContext *uc)
       case YALNIX_EXEC:
         TracePrintf(3, "trapKernel: YALNIX_EXEC\n");
 
-        if ( check_pointer_range(uc->regs[0]) \
+        if ( check_pointer_range(uc->regs[0]) 
           || check_pointer_range(uc->regs[1]) ){
 
           TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
@@ -40,7 +40,7 @@ void trapKernel(UserContext *uc)
           break;
         }
 
-        if ( check_pointer_valid(uc->regs[0]) \
+        if ( check_pointer_valid(uc->regs[0])
           || check_pointer_valid(uc->regs[1]) ){
 
           TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
