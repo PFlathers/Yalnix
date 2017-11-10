@@ -466,6 +466,8 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 {
 	TracePrintf(3, "kernel_Wait ### start \n");
 	int child_pid_retval;
+    pcb *found_item = NULL;
+    Node *temp;
 	
 	// check if process has children
 	// if not, return error as the user was dumb enough to call wait wihtout them
@@ -502,8 +504,8 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
         	child_pid_retval = child_pcb->process_id;
 
     		TracePrintf(6, "kernel_Wait: I should remove procces: %d from zombie list \n", child_pcb->process_id);
-            Node *temp = zombiez->head;
-            pcb *found_item = NULL;
+            temp = zombiez->head;
+            found_item = NULL;
             //Get the lock we are looking for
             while(temp != NULL){
                 if ( ((pcb*)(temp->data))->process_id == child_pid_retval){
@@ -554,6 +556,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	}
 
 	// pc should be pointing here after the wait
+    TracePrintf(3, "kernel_Wait: found a child after blocking\n");
 	// at thois point, the only scenario is that we are returning from being
 	// blocked so her we removing exited child and removing it 
 	if (list_count(parent->zombiez) < 1) {
@@ -564,6 +567,23 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// remove exited child from the pcb list
 	pcb *child_pcb = (pcb *) list_pop(parent->zombiez);
 	child_pid_retval = child_pcb->process_id;
+
+    temp = zombiez->head;
+    
+    //Get the lock we are looking for
+    while(temp != NULL){
+        if ( ((pcb*)(temp->data))->process_id == child_pid_retval){
+            found_item = (pcb*) temp->data;
+            break;
+        }
+
+        temp = temp->next;
+    }
+
+    if (found_item == NULL) {
+            TracePrintf(3, "wait: process not found in zombiez\n");
+            return(ERROR);
+    }  
 	
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
@@ -574,6 +594,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	TracePrintf(3, "kernel_Wait ### end \n");
 	return child_pid_retval; 
 }
+
 
 int kernel_GetPid()
 {
