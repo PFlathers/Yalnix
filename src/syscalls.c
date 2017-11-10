@@ -504,7 +504,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
         	child_pid_retval = child_pcb->process_id;
 
     		TracePrintf(6, "kernel_Wait: I should remove procces: %d from zombie list \n", child_pcb->process_id);
-            temp = zombiez->head;
+            temp = zombie_procs->head;
             found_item = NULL;
             //Get the lock we are looking for
             while(temp != NULL){
@@ -568,7 +568,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	pcb *child_pcb = (pcb *) list_pop(parent->zombiez);
 	child_pid_retval = child_pcb->process_id;
 
-    temp = zombiez->head;
+    temp = zombie_procs->head;
     
     //Get the lock we are looking for
     while(temp != NULL){
