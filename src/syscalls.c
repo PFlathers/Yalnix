@@ -345,6 +345,7 @@ void kernel_Exit(int status, UserContext *uc)
 
         //inform your children of your demise. 
         if(exiting_p->children != NULL && list_count(exiting_p->children) > 0){
+		TracePrintf(6, "Informing children I am dead\n");
                 //Mark children as orphans
                if( list_count(exiting_p->children) > 0){
                         temp = exiting_p->children->head;
@@ -364,6 +365,7 @@ void kernel_Exit(int status, UserContext *uc)
                         list_remove(all_procs, (void*)p);
 //!!!!process thinks that its parent is a child/zombie and therefore is trying to kill
 // free it. This is a fork problem.
+//Fixed for now.
 			if (p->process_id == exiting_p->process_id)
 			       TracePrintf(0, "I think I'm a zombie :p\n");
 			else if (p->process_id == exiting_p->parent->process_id)
@@ -375,18 +377,18 @@ void kernel_Exit(int status, UserContext *uc)
                         temp = temp->next;
                 }
         }
-        cycle_process(uc);
 	
 	if(orphan_flag){
 		TracePrintf(6, "I'm an orphan and I'm killing myself\n");
-		remove(all_procs, exiting_p);
-		remove(ready_procs, exiting_p);
-		remove(blocked_procs, exiting_p);
-		remove(zombie_procs, exiting_p);
+		list_remove(all_procs, exiting_p);
+		list_remove(ready_procs, exiting_p);
+		list_remove(blocked_procs, exiting_p);
+		list_remove(zombie_procs, exiting_p);
 		free_pagetables(exiting_p);
 		free(p);
 	}
 	TracePrintf(0, "KERNEL EXIT ### END\n");
+        cycle_process(uc);
 
 }
 void cycle_process(UserContext *uc)
