@@ -311,6 +311,7 @@ void kernel_Exit(int status, UserContext *uc)
         Node *temp;
         pcb *p;
         pcb *exiting_p = curr_proc;
+	int orphan_flag = 0;
 
 
         if(exiting_p->process_id == 0)
@@ -329,13 +330,17 @@ void kernel_Exit(int status, UserContext *uc)
 
 		// add to parent's zombie list
                 list_add(exiting_p->parent->zombiez, (void*) exiting_p); 
+		TracePrintf(0, "I just added %u to my parents zombie list\n",
+				exiting_p->process_id);
 		// no longer a child cause you died. 
                 list_remove(exiting_p->parent->children, (void*) exiting_p);
                 TracePrintf(0, "parent's zombies: %u\n", ((pcb*)exiting_p->parent->zombiez->head->data)->process_id);
+		TracePrintf(0, "my parent has %u zombies\n",
+				exiting_p->parent->zombiez->count);
 
-        //you are an orphan
+        //you are an orphan :(
         } else {
-
+		orphan_flag = 1;
         }
 
         //inform your children of your demise. 
@@ -362,14 +367,24 @@ void kernel_Exit(int status, UserContext *uc)
 			if (p->process_id == exiting_p->process_id)
 			       TracePrintf(0, "I think I'm a zombie :p\n");
 			else if (p->process_id == exiting_p->parent->process_id)
-				TracePrintf(0, "I think my parent is my zombie :p\n");
-			else
+				TracePrintf(0, "I think my parent, %u, is my zombie :p\n", p->process_id);
+			else{
 				free_pagetables(p);  
+				free(p);
+			}
                         temp = temp->next;
                 }
         }
         cycle_process(uc);
-
+	
+	if(orphan_flag){
+		remove(all_procs, exiting_p);
+		remove(ready_procs, exiting_p);
+		remove(blocked_procs, exiting_p);
+		remove(zombie_procs, exiting_p);
+		free_pagetables(exiting_p);
+		free(p);
+	}
 
         /*
 	TracePrintf(3, "kernel_exit ### start\n");
