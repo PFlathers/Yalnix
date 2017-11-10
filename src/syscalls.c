@@ -378,6 +378,7 @@ void kernel_Exit(int status, UserContext *uc)
         cycle_process(uc);
 	
 	if(orphan_flag){
+		TracePrintf(6, "I'm an orphan and I'm killing myself\n");
 		remove(all_procs, exiting_p);
 		remove(ready_procs, exiting_p);
 		remove(blocked_procs, exiting_p);
@@ -385,107 +386,8 @@ void kernel_Exit(int status, UserContext *uc)
 		free_pagetables(exiting_p);
 		free(p);
 	}
+	TracePrintf(0, "KERNEL EXIT ### END\n");
 
-        /*
-	TracePrintf(3, "kernel_exit ### start\n");
-	pcb *temp_proc = curr_proc; // Save a reference for freeing later
-	
-	int OG_Process = 0;
-        list_remove(all_procs, (void*) temp_proc);
-        list_remove(ready_procs,(void*) temp_proc);
-        TracePrintf(3, "kernel_exit ### exiting\n");
-
-        //cycle_process(uc);
-
-        
-	if(temp_proc->process_id == 0){
-		OG_Process = 1;
-	}
-
-
-        //But what if it has zombie children?
-        // Thank you Zombie Children from informing us you died. It was very
-        // helpful. We now grant you sweet release.
-        
-       
-       if(temp_proc->zombiez != NULL && list_count(temp_proc->zombiez) > 0){
-                pcb *zombie_child;
-                TracePrintf(0, "1Sucess");
-                while(list_count(temp_proc->zombiez) > 0){
-                        TracePrintf(0, "killing zombie children");
-                       zombie_child = (pcb*) list_pop(temp_proc->zombiez); 
-                       list_remove(zombie_procs, (void*) zombie_child);
-                       list_remove(all_procs, (void*) zombie_child);
-                       //free_pagetables(zombie_child);
-                       free(zombie_child);
-
-                        TracePrintf(0, "2Sucess");
-                }
-                free(temp_proc->zombiez);
-       } 
-      
-        
-        TracePrintf(0, "3Sucess");
-
-        //if it has children, mark them as orphans
-        if(temp_proc->children != NULL && list_count(temp_proc->children) > 0){
-                pcb *child_pcb;
-                Node *child_node = curr_proc->children->head;
-                while(child_node != NULL){
-                        child_pcb = (pcb*) child_node->data;
-                        child_pcb->parent = NULL;
-                        child_node = child_node->next;
-                }
-                free(temp_proc->children);
-        }
-
-        TracePrintf(0, "4Sucess");
-	// If its an orphan, we dont care
-	if(temp_proc->parent == NULL){
-
-                TracePrintf(0, "5Sucess");
-                list_remove(all_procs,(void*) temp_proc);
-                list_remove(zombie_procs,(void*) temp_proc);
-                list_remove(blocked_procs,(void *) temp_proc);
-                list_remove(ready_procs,(void*) temp_proc);
-
-                free_pagetables(temp_proc);
-		free(temp_proc);
-                TracePrintf(3, "2kernel_exit ### end\n");
-                cycle_process(uc);
-                return;
-                
-        // it becomes a zombie
-        } else{
-                
-                TracePrintf(0, "6Sucess");
-                list_add(zombie_procs,(void*) temp_proc);
-                TracePrintf(0, "6.1Sucess");
-                list_remove(temp_proc->parent->children,(void*) temp_proc);
-                TracePrintf(0, "6.2Sucess");
-                list_remove(ready_procs, (void*) temp_proc);
-                TracePrintf(0, "6.3Sucess");
-                if (temp_proc->parent->zombiez == NULL){
-                        temp_proc->parent->zombiez = init_list();
-                }
-                TracePrintf(0, "6.4Sucess %lu", temp_proc->parent);
-                if(temp_proc->parent->zombiez == NULL){
-                        temp_proc->parent->zombiez = init_list();
-                }
-                list_add(temp_proc->parent->zombiez,(void*) temp_proc);
-        }
-        TracePrintf(0, "7--");
-
-
-        temp_proc->exit_status = status;
-
-	
-	TracePrintf(3, "kernel_exit ### end\n");
-	// If our root process stops, then we halt the system.
-	if(OG_Process){
-		Halt();
-	}
-       */ 
 }
 void cycle_process(UserContext *uc)
 {
