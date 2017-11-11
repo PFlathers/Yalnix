@@ -43,14 +43,14 @@ void trapKernel(UserContext *uc)
         if ( check_pointer_valid(uc->regs[0])
           || check_pointer_valid(uc->regs[1]) ){
 
-          TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
+          TracePrintf(3, "trapKernel: error in EXEC, invalid\n");
           retval = ERROR;
           break;
         }
         if ( is_rw(uc->regs[0]) \
           || is_rw(uc->regs[1]) ){
 
-          TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
+          TracePrintf(3, "trapKernel: error in EXEC, not rw\n");
           retval = ERROR;
           break;
         }
@@ -212,6 +212,24 @@ void trapKernel(UserContext *uc)
          retval = kernel_TtyRead(tty_id, buf, len);
          break;
         case YALNIX_LOCK_INIT:
+                   //check if in range
+                if ( check_pointer_range(uc->regs[0]) ){
+                  TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, pointer out of range\n");
+                  retval = ERROR;
+                  break;
+                }
+                // check if pages are valid
+                if ( check_pointer_valid(uc->regs[0]) ){
+                  TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, page not valid \n");
+                  retval = ERROR;
+                  break;
+                }
+                // check if RW
+                if ( is_rw(uc->regs[0]) ){
+                  TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, page not rw\n");
+                  retval = ERROR;
+                  break;
+                }
                 retval = kernel_LockInit((int*) uc->regs[0]);
                 break;
         case YALNIX_LOCK_ACQUIRE:
