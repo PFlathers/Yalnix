@@ -61,7 +61,7 @@ int CvarBroadcast(int cvar_id)
                 list_add(ready_procs, (void*) p);
                 temp = my_cvar->wait->head;
         }
-
+//
 	return SUCCESS;
 }
 
