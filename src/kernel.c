@@ -580,10 +580,13 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 	pcb *current = (pcb *) current_pcb;
 	pcb *next = (pcb *) next_pcb; 
 
+        if (current != NULL){
+                memcpy((void *) current->kernel_context, (void *) kernel_context_in, sizeof(KernelContext));
+        }
 	// save current kc
         //
         // if statement per seans suggestions
-        if (current->has_kc == 0){
+        if (current != NULL && current->has_kc == 0){
                 memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
                 current->has_kc = 1;
         }
@@ -686,17 +689,17 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 	if (current != NULL){
 		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
 	}
-
+        TracePrintf(6, "\t : passed null check \n");
 	// Save hext process' UC in the currently used uc var so that we don't have to 
 	// reallocate (tip from prof Palmer in CS50 :))
 	memcpy((void *) user_context, (void *) next->user_context, sizeof(UserContext));
-
+        TracePrintf(6, "\t : passed next->uc copy \n");
 	// current procces becomes next
 	curr_proc = next;
 
 	// magic function from 5.2
 	int r = KernelContextSwitch(MyKCS, (void *) current, (void *) next);
-
+        TracePrintf(6, "\t : surrvived MyKCS \n");
 	// make user context current one (not needed atm)
 	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));
 
