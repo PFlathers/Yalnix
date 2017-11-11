@@ -44,6 +44,7 @@ int kernel_Acquire(int lock_id)
                         TracePrintf(6, "\t I am the claimer\n");
                         return SUCCESS;
                 }
+                //
                 // check if I'm on the waiters list
                 Node *temp = my_lock->waiters->head;
                 while (temp != NULL){
