@@ -311,9 +311,11 @@ void kernel_Exit(int status, UserContext *uc)
         pcb *p;
         pcb *child;
         pcb *exiting_p = curr_proc;
-	    int orphan_flag = 0;
 
-        if (curr_proc->process_id == 0 && list_count(ready_procs) <= 0){
+        int orphan_flag = (curr_proc->parent == NULL);
+        //int orphan_flag = (curr_proc->parent == NULL ? 1 : 0);
+
+        if (curr_proc->process_id == 0){
             Halt();
         }
 
@@ -345,10 +347,20 @@ void kernel_Exit(int status, UserContext *uc)
                 }
                 else {
                     list_remove(zombie_procs, dead_status);
+                    free_pagetables(dead_status);
                 }
             }
         }
         TracePrintf(6, "\t: passed has zombiez\n");
+        
+        //Create a zombie process
+        //
+        /*
+        z_pcb *zp = (z_pcb*) malloc(sizeof(z_pcb));
+        zp->exit_status = status;
+        zp->parent = curr_proc->parent;
+        zp->process_id = curr_proc->process_id;
+*/
 
         if (curr_proc->parent != NULL){
             p = curr_proc->parent;
@@ -361,7 +373,7 @@ void kernel_Exit(int status, UserContext *uc)
                 p->zombiez = init_list();
                 bzero(p->zombiez, sizeof(List));
             }
-            list_add(p->zombiez, curr_proc);
+            list_add(p->zombiez, (void*) curr_proc);
         }
 
         TracePrintf(6, "\t: passed has parent\n");
@@ -370,13 +382,16 @@ void kernel_Exit(int status, UserContext *uc)
         }
 
         TracePrintf(6, "\t: well, shit\n");
+
+
+
         list_add(zombie_procs, (void *) curr_proc);
 
-
-        // trash pt
-        free_pagetables(curr_proc);
-
-        TracePrintf(6, "\t: freed pagetables\n");
+        if(orphan_flag){
+                // trash pt
+                free_pagetables(curr_proc);
+                TracePrintf(6, "\t: freed pagetables\n");
+        }
         pcb *next = list_pop(ready_procs);
         if (!next){
             TracePrintf(6, "\t: we are screwed\n");
@@ -506,7 +521,8 @@ void free_pagetables(pcb* myproc)
 {
         int i;
         int trash_pfn;
- 
+
+         
         //Recycle the kernel page tables
         for (i = 0; i < KERNEL_PAGE_COUNT; i ++){
                 if( (*(myproc->region0_pt + i)).valid == 0x1){
@@ -528,6 +544,7 @@ void free_pagetables(pcb* myproc)
                         (*(myproc->region1_pt + i)).valid= (u_long) 0x0;
                 }
         }
+        
         free(myproc->user_context);
         free(myproc->kernel_context);
 
@@ -678,6 +695,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
 	list_remove(zombie_procs, child_pcb);
+        free_pagetables(child_pcb);
 	
 
 	// return the pid of the child that returned (mind == blown)

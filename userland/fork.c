@@ -13,16 +13,22 @@ int main()
         char *args[] = {a,b};
         TracePrintf("%d\n", i);
 	if(i == 0){
+/*
 		while(1){
                 TracePrintf(0, "I is child");
                 Exec("init", args);
                 Pause();
                 }
+*/
+		return 0;
 	}
         else{
+/*
                 while(1){
                         Pause();
                 }
+*/
+                Wait(&i);
         }
 
 

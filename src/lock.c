@@ -28,17 +28,8 @@ int kernel_LockInit(int * lock_idp)
 int kernel_Acquire(int lock_id)
 {
         TracePrintf(6, "Acquiring lock\n");
-        Node *temp = locks->head;
-        Lock *my_lock = NULL;
-        //Get the lock we are looking for
-        while(temp != NULL){
-                if ( ((Lock*)(temp->data))->id == lock_id){
-                        my_lock= (Lock*) temp->data;
-                        break;
-                }
-                temp = temp->next;
-        }
 
+        Lock *my_lock = findLock(lock_id);
         //we didnt find the lock
         if( my_lock == NULL){
                 TracePrintf(6, "lock does not exisit\n");
@@ -54,7 +45,7 @@ int kernel_Acquire(int lock_id)
                         return SUCCESS;
                 }
                 // check if I'm on the waiters list
-                temp = my_lock->waiters->head;
+                Node *temp = my_lock->waiters->head;
                 while (temp != NULL){
                         if ( (pcb*)(temp->data) == curr_proc ){
                                 return SUCCESS;
@@ -161,4 +152,20 @@ int kernel_Release(int lock_id)
 int kernel_LockDestroy(int lock_id)
 {
 	return 0;
+}
+
+
+Lock *findLock(int lock_id)
+{
+        Node *temp = locks->head;
+        Lock *my_lock = NULL;
+        //Get the lock we are looking for
+        while(temp != NULL){
+                if ( ((Lock*)(temp->data))->id == lock_id){
+                        my_lock= (Lock*) temp->data;
+                        break;
+                }
+                temp = temp->next;
+        }
+        return my_lock;
 }

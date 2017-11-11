@@ -26,4 +26,6 @@ int CvarSignal(int cvar_id);
 int CvarBroadcast(int cvar_id);
 
 int CvarWait(int cvar_id, int lock_id);
+
+Cvar *findCvar(int cvar_id);
 #endif

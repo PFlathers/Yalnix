@@ -19,4 +19,5 @@ int kernel_Acquire(int lock_id);
 int kernel_Release(int lock_id);
 int kernel_LockDestroy(int lock_id);
 
+Lock *findLock(int lock_id);
 #endif
