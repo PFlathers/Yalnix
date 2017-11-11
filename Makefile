@@ -33,12 +33,12 @@ KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
 
 
 #List all user programs here.
-USER_APPS = userland/fork userland/init userland/wait test/fork_test test/wait_test test/exec_test userland/pipe userland/tty userland/lock userland/simple
+USER_APPS = userland/fork userland/init userland/wait test/fork_test test/wait_test test/exec_test userland/pipe userland/tty userland/lock userland/simple userland/brk
 #List all user program source files here.  SHould be the same as the previous list, with ".c" added to each file
-USER_SRCS = userland/fork.c userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c userland/pipe.c userland/tty.c userland/lock.c userland/simple.c
+USER_SRCS = userland/fork.c userland/init.c userland/wait.c test/fork_test.c test/wait_test.c test/exec_test.c userland/pipe.c userland/tty.c userland/lock.c userland/simple.c userland/brk.c
 
 #List the objects to be formed form the user  source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-USER_OBJS = test/fork_test.o userland/fork.o userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o userland/pipe.o userland/tty.o userland/lock.o userland/simple.o
+USER_OBJS = test/fork_test.o userland/fork.o userland/init.o userland/wait.o test/fork_test.o test/wait_test.o test/exec_test.o userland/pipe.o userland/tty.o userland/lock.o userland/simple.o userland/brk.o
 
 
 #List all of the header files necessary for your user programs
