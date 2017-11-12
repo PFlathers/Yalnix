@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <hardware.h>
+#include <yalnix.h>
 #include <string.h>
 #include "pcb.h"
 #include "kernel.h"
@@ -168,7 +169,7 @@ void trapKernel(UserContext *uc)
           break;
         }
         // check if pages are valid
-       /* 
+       
         if ( check_pointer_valid(uc->regs[0]) ){
           TracePrintf(3, "trapKernel: error in Brk, pointer address not valid\n");
           retval = ERROR;
@@ -180,7 +181,6 @@ void trapKernel(UserContext *uc)
           retval = ERROR;
           break;
         }
-       */ 
         addr = (void *) uc->regs[0];
         retval = kernel_Brk(addr);
         break;
@@ -329,20 +329,69 @@ void trapIllegal(UserContext *uc)
 
 void trapMemory(UserContext *uc)
 {
-        TracePrintf(0, "Illegal Memory, now exiting\n");
+        TracePrintf(0, "Illegal Memory code %d\n", uc->code);
       	int status = -1;
 
         if (uc->code == YALNIX_ACCERR) {
-          TracePrintf(6, "Process had access error at %p \n", uc->code);
+          TracePrintf(6, "\t Process had access error at %p \n", uc->code);
         }
         else if (uc->code == YALNIX_MAPERR) {
-          TracePrintf(6, "Process had a mapping error \n");
+          TracePrintf(6, "\t Process had a mapping error \n");
+          if ((unsigned int)uc->addr < curr_proc->brk_address || 
+                (unsigned int)uc->addr > (unsigned int) uc->sp) {
+                  TracePrintf(6, "\t exiting, real mapping err so sorry \n");
+                  int brk_over = ((unsigned int)uc->addr < curr_proc->brk_address);
+                  TracePrintf(6, "\t error: uc->addr %d,  brk_address %d \n", (unsigned int)uc->addr, curr_proc->brk_address);
+                  kernel_Exit(status, uc);
+                  uc->regs[0] = status;
+          }
         }
 
-        // should we check if there is no code? 
+      unsigned int addr_page = DOWN_TO_PAGE(uc->addr) >> PAGESHIFT;
+      unsigned int stack_top_page = VMEM_1_LIMIT >> PAGESHIFT;
+      unsigned int usr_brk_page = UP_TO_PAGE(curr_proc->brk_address) >> PAGESHIFT;
+      unsigned int usr_heap_bottom = curr_proc->heap_start_pg;
+      
+      int i; 
 
-      	kernel_Exit(status, uc);
-        uc->regs[0] = status;
+      // check if the requested adreess would mess up the heap,
+      // i.e there should be at least one page to make it work
+      // two not to mess it up
+      if (addr_page - usr_brk_page <= 2) {
+            TracePrintf(6, "Illegal Memory: process out of memory \n");
+            kernel_Exit(status, uc);
+            uc->regs[0] = status;
+      }   
+
+      unsigned int vm_pg_start = addr_page - 128;
+      unsigned int vm_pg_end = stack_top_page - 128;
+      struct pte *temp;
+      for (i = vm_pg_start; i<= vm_pg_end; i++){
+          temp = curr_proc->region1_pt + i;
+
+          // no page allocated for region 1 pt
+          if (temp->valid == 0x0) {
+              if (list_count(empty_frame_list) < 1) {
+                  TracePrintf(6, "Illegal Memory: not enough frames to grow stack \n");
+                  kernel_Exit(status, uc);
+                  uc->regs[0] = status;
+              }
+
+              // set page to valid
+              temp->valid = 0x1;
+              temp->prot = (PROT_READ | PROT_WRITE);
+
+              // map  aframe to it
+              int pfn = list_pop(empty_frame_list);
+              temp->pfn = (u_long) ( (pfn * PAGESIZE) >> PAGESHIFT);
+
+          }
+      }
+      // flush me baby flush me baby
+      WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+      TracePrintf(0, "Illegal Memory: Holly shit we survived%d\n");
+
+      	
 }
 
 void trapMath(UserContext *uc)
