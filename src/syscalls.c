@@ -115,7 +115,7 @@ int kernel_Fork(UserContext *user_context)
         unsigned int src, dst;
         dst = dest_pg << PAGESHIFT;
 
-/* Per Sean's suggestions
+/* Per Sean's suggestions */
         for (i=0; i<KERNEL_PAGE_COUNT; i++){
                 src = KERNEL_STACK_BASE + (i*PAGESIZE);
 
@@ -124,7 +124,8 @@ int kernel_Fork(UserContext *user_context)
 
 
                 memcpy((void*) dst, (void *) src, PAGESIZE);
-        }*/
+        }
+
 
         TracePrintf(6, "\tCopied kernel frames\n");
 
@@ -139,6 +140,7 @@ int kernel_Fork(UserContext *user_context)
                         memcpy((void*) dst, (void *) src, PAGESIZE);
                 }
         }
+
         TracePrintf(6, "\t Copied user frames \n");
 
         r0_ptlist[dest_pg].valid = bcp_valid;
@@ -186,7 +188,7 @@ int kernel_Fork(UserContext *user_context)
         else if (curr_proc == child){
                 TracePrintf(6, "\t kernel_Fork; returning to child  \n");
                 TracePrintf(3, "kernel_Fork ### end\n");
-                return(0);         
+                return 0;         
         }
         else{
                 return ERROR;
@@ -360,7 +362,7 @@ void kernel_Exit(int status, UserContext *uc)
         zp->exit_status = status;
         zp->parent = curr_proc->parent;
         zp->process_id = curr_proc->process_id;
-*/
+        */
 
         if (curr_proc->parent != NULL){
             p = curr_proc->parent;
