@@ -252,6 +252,7 @@ void trapKernel(UserContext *uc)
 void trapClock(UserContext *uc)
 {
   TracePrintf(1, "trapClock ### start \n");
+        memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
 
         Node *temp = all_procs->head;
         pcb *p;
