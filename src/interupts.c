@@ -67,7 +67,7 @@ void trapKernel(UserContext *uc)
       case YALNIX_DELAY:
         TracePrintf(3, "trapKernel: YALNIX_DELAY \n");
          clock_ticks = (int) uc->regs[0];
-        int retval = kernel_Delay(uc, clock_ticks);
+        retval = kernel_Delay(uc, clock_ticks);
         break;
 
       case YALNIX_FORK:
