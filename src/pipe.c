@@ -40,6 +40,7 @@ int kernel_PipeRead(int pipe_id, void *buf, int len)
 
         Node *node = pipes->head;
         Pipe *pipe = NULL;
+        int gp_flag = 0;
         // find the pipe in the global list
         while(node/*->next*/ != NULL){
                 if ( ((Pipe*)(node->data))->id == pipe_id){
@@ -71,7 +72,7 @@ int kernel_PipeRead(int pipe_id, void *buf, int len)
                 pipe->exp_length = len;
                 curr_proc->pipe_lenght = len;
                 list_add(pipes, (void *) pipe);
-                goto_next_process(curr_proc->user_context, 0);
+                gp_flag = 1;
         }
 
 
@@ -93,6 +94,9 @@ int kernel_PipeRead(int pipe_id, void *buf, int len)
         pipe->length -= len;
 
         TracePrintf(3, "PipeRead ### end\n");
+        if(gp_flag)
+                goto_next_process(curr_proc->user_context, 1);
+
 	return(len);
 }
 
