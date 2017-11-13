@@ -4,12 +4,10 @@
 #include "pipe.h"
 #include "list.h"
 #include "kernel.h"
-#include <yalnix.h>
-#include <hardware.h>
-#include "globals.h"
 #include "syscalls.h"
 
-
+/* Finds and returns cvar of associated id from the global cvar list
+ */
 Cvar *kernel_findCvar(int cvar_id)
 {
         Node *temp = cvars->head;
@@ -19,11 +17,14 @@ Cvar *kernel_findCvar(int cvar_id)
                 temp = temp->next;
         }
         if(temp == NULL){
-                TracePrintf(0, "Cvar does not exist\n");
+                TracePrintf(5, "Cvar does not exist\n");
                 return NULL;
         } 
         return (Cvar*) temp->data;
 }
+
+/* Finds and returns lock of associated id from the global lock list
+ */
 Lock *kernel_findLock(int lock_id)
 {
         Node *temp = locks->head;
@@ -33,11 +34,14 @@ Lock *kernel_findLock(int lock_id)
                 temp = temp->next;
         }
         if(temp == NULL){
-                TracePrintf(0, "Lock does not exist\n");
+                TracePrintf(5, "Lock does not exist\n");
                 return NULL;
         } 
         return (Lock*) temp->data;
 }
+
+/* Finds and returns pipe of associated id from the global pipe list
+ */
 Pipe *kernel_findPipe(int lock_id)
 {
         Node *temp = pipes->head;
@@ -47,12 +51,19 @@ Pipe *kernel_findPipe(int lock_id)
                 temp = temp->next;
         }
         if(temp == NULL){
-                TracePrintf(0, "Pipe does not exist\n");
+                TracePrintf(5, "Pipe does not exist\n");
                 return NULL;
         } 
         return (Pipe*) temp->data;
 }
 
+/* WARNING!!! BE CAREFUL WITH THIS FUCNTION!
+ * Trashes and frees the memory assoctiated with the process.
+ * Moves the now free pagetable memory back in to the empty page list
+ *
+ * If you come accross an erorr where a procecss id becomes an address, its
+ * probably from this.
+ */
 void free_pagetables(pcb* myproc)
 {
         int i;
