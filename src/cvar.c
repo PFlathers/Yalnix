@@ -14,8 +14,6 @@ int kernel_CvarInit(int *cvar_idp)
         Cvar *cvar_to_init = (Cvar*) malloc(sizeof(Cvar));
         cvar_to_init->id = available_lock_id;
         available_lock_id++;
-        //cvar_to_init->proc_id = 0;
-        //cvar_to_init->claimed = 0;
         cvar_to_init->waiters = init_list();
         list_add(cvars, cvar_to_init);
 
@@ -80,7 +78,6 @@ int kernel_CvarWait(int cvar_id, int lock_id)
                 TracePrintf(3, "Process did not have the lock");
                 return ERROR;
         }
-        //list_remove(ready_procs, curr_proc);
         list_add(blocked_procs, curr_proc);
         list_add(my_cvar->waiters, curr_proc);
         goto_next_process(curr_proc->user_context, 0);

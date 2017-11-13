@@ -844,7 +844,7 @@ int kernel_Reclaim(int id)
             TracePrintf(6, "Can't release cvar: waiters alive \n");
             return ERROR;
         }
-        list_remove(cvars, c);
+        list_remove_pcb(cvars, c);
         free(c);
     }
     else if ((temp = findLock2(id)) != NULL ){
@@ -858,7 +858,7 @@ int kernel_Reclaim(int id)
             return ERROR;
         }
 
-        list_remove(locks, l);
+        list_remove_pcb(locks, l);
         free(l);
     }
     else if( (temp = findPipe2(id)) != NULL ){
@@ -868,7 +868,7 @@ int kernel_Reclaim(int id)
             return ERROR;
         }
 
-        list_remove(pipes, p);
+        list_remove_pcb(pipes, p);
         free(p->buffer);
         free(p);
 

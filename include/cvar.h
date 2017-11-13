@@ -8,8 +8,6 @@
 typedef struct _CVAR
 {
         int id; //id of the cvar
-        int claimed; // 0 if not claimed. 1 if claimed
-        unsigned int proc_id;
         List *waiters; // who is waiting on signal.
         Lock *lock;
 } _CVAR;
