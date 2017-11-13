@@ -51,7 +51,6 @@ int kernel_Exec(UserContext*, char *filename, char **argvec);
 void kernel_Exit(int status, UserContext *uc);
 
 
-void free_pagetables(pcb* myproc);
 /*------------------------------------------------- Kernel_Wait -----
  |  Function kernel_Wait
  |
@@ -85,9 +84,4 @@ int kernel_Delay(UserContext *user_context, int clock_ticks);
 int kernel_Reclaim(int id);
 
 
-Cvar *kernel_findCvar(int cvar_id);
-
-Lock *kernel_findLock(int lock_id);
-
-Pipe *kernel_findPipe(int lock_id);
 #endif

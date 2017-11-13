@@ -31,7 +31,7 @@ int kernel_CvarDestory(int cvar_id)
 //allow only the next waiter to get it
 int kernel_CvarSignal(int cvar_id)
 {
-        Cvar *my_cvar = findCvar(cvar_id);
+        Cvar *my_cvar = (Cvar*) kernel_findCvar(cvar_id);
         if (my_cvar->waiters->count == 0){
                 return ERROR;
         }
@@ -46,7 +46,7 @@ int kernel_CvarSignal(int cvar_id)
 //allow any waiter to get it.
 int kernel_CvarBroadcast(int cvar_id)
 {
-        Cvar *my_cvar = findCvar(cvar_id);
+        Cvar *my_cvar = (Cvar*) kernel_findCvar(cvar_id);
         if (my_cvar->waiters->count == 0){
                 return ERROR;
         }
@@ -71,9 +71,9 @@ int kernel_CvarWait(int cvar_id, int lock_id)
          * release the lock ided by lock_id
          */
 
-        Cvar *my_cvar = findCvar(cvar_id);
+        Cvar *my_cvar = (Cvar*) kernel_findCvar(cvar_id);
 
-        Lock *my_lock = findLock(lock_id);
+        Lock *my_lock = (Lock*) kernel_findLock(lock_id);
         if (kernel_Release(lock_id) != SUCCESS){
                 TracePrintf(3, "Process did not have the lock");
                 return ERROR;
@@ -85,7 +85,7 @@ int kernel_CvarWait(int cvar_id, int lock_id)
         return SUCCESS;
 
 }
-
+/*
 Cvar *findCvar(int cvar_id)
 {
         Node *temp = cvars->head;
@@ -99,4 +99,4 @@ Cvar *findCvar(int cvar_id)
                 return NULL;
         } 
         return (Cvar*) temp->data;
-}
+}*/

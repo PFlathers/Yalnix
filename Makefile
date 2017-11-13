@@ -25,7 +25,7 @@ KERNEL_ALL = yalnix
 KERNEL_SRCS = $(shell find src -type f -name '*.$(c)')
 #src/list.c src/kernel.c src/pcb.c src/interupts.c src/loadprog.c src/syscalls.c
 #List the objects to be formed form the kernel source files here.  Should be the same as the prvious list, replacing ".c" with ".o"
-KERNEL_OBJS = src/list.o src/kernel.o src/pcb.o src/interupts.o src/loadprog.o src/syscalls.o src/pipe.o src/tty.o src/lock.o src/cvar.o
+KERNEL_OBJS = src/list.o src/kernel.o src/pcb.o src/interupts.o src/loadprog.o src/syscalls.o src/pipe.o src/tty.o src/lock.o src/cvar.o src/kernel_utils.o
 #$(patsubst %.o,%.c,$(KERNEL_SRCS))
 #List all of the header files necessary for your kernel
 KERNEL_INCS = $(shell find include -type f -name '*.$(h)')
