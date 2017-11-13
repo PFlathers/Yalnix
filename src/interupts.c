@@ -147,7 +147,7 @@ void trapKernel(UserContext *uc)
           retval = ERROR;
           break;
         }
-
+        memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
         retval = kernel_PipeRead((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
         break;
 
@@ -342,7 +342,7 @@ void trapMemory(UserContext *uc)
                 (unsigned int)uc->addr > (unsigned int) uc->sp) {
                   TracePrintf(6, "\t exiting, real mapping err so sorry \n");
                   int brk_over = ((unsigned int)uc->addr < curr_proc->brk_address);
-                  TracePrintf(6, "\t error: uc->addr %d,  brk_address %d \n", (unsigned int)uc->addr, curr_proc->brk_address);
+                  TracePrintf(6, "\t error: uc->addr %p,  brk_address %d \n", (unsigned int)uc->addr, curr_proc->brk_address);
                   kernel_Exit(status, uc);
                   uc->regs[0] = status;
           }
@@ -383,7 +383,7 @@ void trapMemory(UserContext *uc)
               temp->prot = (PROT_READ | PROT_WRITE);
 
               // map  aframe to it
-              int pfn = list_pop(empty_frame_list);
+              int pfn = (int) list_pop(empty_frame_list);
               temp->pfn = (u_long) ( (pfn * PAGESIZE) >> PAGESHIFT);
 
           }

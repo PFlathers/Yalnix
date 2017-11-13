@@ -3,16 +3,36 @@
 
 int main()
 {
-	int i = Fork();
 
+        
         char a [10];
         char b [10];
         strcpy(a, "init");
-        strcpy(b, '\0');
+        strcpy(b, "\0");
 
         char *args[] = {a,b};
-        TracePrintf("%d\n", i);
+        //TracePrintf("%d\n", i);
+        
+	int i = Fork();
+        
 	if(i == 0){
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
+                Pause();
 /*
 		while(1){
                 TracePrintf(0, "I is child");
@@ -32,7 +52,7 @@ int main()
         }
 
 
-	TracePrintf(0, "I is parent");
+	//TracePrintf(0, "I is parent");
 	
 	return 0;
 }
