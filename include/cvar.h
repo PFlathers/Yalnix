@@ -13,19 +13,19 @@ typedef struct _CVAR
         List *waiters; // who is waiting on signal.
         Lock *lock;
 } _CVAR;
-typedef struct _CVAR cvar;
+typedef struct _CVAR Cvar;
 
 /* Public Facing Function Calls */
 
-int CvarInit(Cvar *cvar_to_init);
+int kernel_CvarInit(int*);
 
-int CvarDestory(int cvar_id);
+int kernel_CvarDestory(int cvar_id);
 
-int CvarSignal(int cvar_id);
+int kernel_CvarSignal(int cvar_id);
 
-int CvarBroadcast(int cvar_id);
+int kernel_CvarBroadcast(int cvar_id);
 
-int CvarWait(int cvar_id, int lock_id);
+int kernel_CvarWait(int cvar_id, int lock_id);
 
 Cvar *findCvar(int cvar_id);
 #endif

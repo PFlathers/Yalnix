@@ -87,7 +87,7 @@ int kernel_PipeRead(int pipe_id, void *buf, int len)
         //memmove((void *)buf, (void *)pipe->buffer, len);
         // if there is anything else in the pipe, move it forward
         
-        strcpy(pipe->buffer, &(pipe->buffer[len-1]));
+        strcpy(pipe->buffer, &(pipe->buffer[len]));
        
         
         //memcpy((void *)pipe->buffer, (void *)(pipe->buffer + len), MAX_PIPE_LEN - len);

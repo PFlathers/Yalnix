@@ -104,7 +104,7 @@ int list_remove(List *list_to_remove, void *data)
 		}
 	}
         list_to_remove->count--;
-	free(curr->data);
+	//free(curr->data);
 	free(curr);
 	return 0;
 }

@@ -371,7 +371,7 @@ void kernel_Exit(int status, UserContext *uc)
         if (curr_proc->parent != NULL){
             p = curr_proc->parent;
 
-            if (list_remove(p->children, curr_proc) != 0){
+            if (list_remove(p->children, (void*) curr_proc) != 0){
                 TracePrintf(6, "can't remove curr from parent thild\n");
             }
 
@@ -701,7 +701,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
 	list_remove(zombie_procs, child_pcb);
-       // free_pagetables(child_pcb);
+        free_pagetables(child_pcb);
 	
 
 	// return the pid of the child that returned (mind == blown)
