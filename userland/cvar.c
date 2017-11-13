@@ -14,26 +14,17 @@ int main()
         //TracePrintf("%d\n", i);
         
 	int i = Fork();
+        int j, k;
+        int retval = LockInit(&j); 
+        int retval2 = CvarInit(&k);
+
+        //Acquire(i);
         
 	if(i == 0){
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-                Pause();
-/*
+                while (Acquire(j)  != 0);
+                CvarWait(k, j);
+
+                /*
 		while(1){
                 TracePrintf(0, "I is child");
                 Exec("init", args);
@@ -48,7 +39,8 @@ int main()
                         Pause();
                 }
 */
-                Wait(&i);
+//                Wait(&i);
+                CvarSignal(k);
         }
 
 

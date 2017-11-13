@@ -97,6 +97,7 @@ void init_global(int phys_mem_size)
 
 	available_process_id = 0;	// at start we run at 0
         glob_resource_list = 0;         // for pipes and stuff
+        available_lock_id = 0;
 
 
 	// process tracking lists (per sean's suggestion)
@@ -104,6 +105,8 @@ void init_global(int phys_mem_size)
 	blocked_procs = (List *)init_list();
 	all_procs = (List *)init_list(); 
 	zombie_procs = (List *)init_list(); 
+        locks = (List *)init_list();
+        cvars = (List *) init_list();
 
 
         // book kepingz
@@ -577,8 +580,16 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 	pcb *current = (pcb *) current_pcb;
 	pcb *next = (pcb *) next_pcb; 
 
+        if (current != NULL){
+                memcpy((void *) current->kernel_context, (void *) kernel_context_in, sizeof(KernelContext));
+        }
 	// save current kc
-	memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+        //
+        // if statement per seans suggestions
+        if (current != NULL && current->has_kc == 0){
+                memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+                current->has_kc = 1;
+        }
 
 	// bootstrap the kernel if we are starting
 	if (next->has_kc == 0){
@@ -589,9 +600,9 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
 	// save current k stack
 	if (current != NULL) {
-      memcpy((void *) current->region0_pt,
-              (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
-              KERNEL_PAGE_COUNT * (sizeof(struct pte)));
+              memcpy((void *) current->region0_pt,
+                      (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
+                      KERNEL_PAGE_COUNT * (sizeof(struct pte)));
     }
 
 
@@ -678,17 +689,17 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 	if (current != NULL){
 		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
 	}
-
+        TracePrintf(6, "\t : passed null check \n");
 	// Save hext process' UC in the currently used uc var so that we don't have to 
 	// reallocate (tip from prof Palmer in CS50 :))
 	memcpy((void *) user_context, (void *) next->user_context, sizeof(UserContext));
-
+        TracePrintf(6, "\t : passed next->uc copy \n");
 	// current procces becomes next
 	curr_proc = next;
 
 	// magic function from 5.2
 	int r = KernelContextSwitch(MyKCS, (void *) current, (void *) next);
-
+        TracePrintf(6, "\t : surrvived MyKCS \n");
 	// make user context current one (not needed atm)
 	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));
 

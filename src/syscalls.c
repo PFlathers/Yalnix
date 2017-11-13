@@ -5,7 +5,6 @@
 #include "pcb.h"
 #include "kernel.h"
 
-
 /*------------------------------------------------- kernel_Fork -----
 |  Function kernel_Fork
 |
@@ -116,7 +115,7 @@ int kernel_Fork(UserContext *user_context)
         unsigned int src, dst;
         dst = dest_pg << PAGESHIFT;
 
-
+/* Per Sean's suggestions */
         for (i=0; i<KERNEL_PAGE_COUNT; i++){
                 src = KERNEL_STACK_BASE + (i*PAGESIZE);
 
@@ -126,6 +125,7 @@ int kernel_Fork(UserContext *user_context)
 
                 memcpy((void*) dst, (void *) src, PAGESIZE);
         }
+
 
         TracePrintf(6, "\tCopied kernel frames\n");
 
@@ -140,6 +140,7 @@ int kernel_Fork(UserContext *user_context)
                         memcpy((void*) dst, (void *) src, PAGESIZE);
                 }
         }
+
         TracePrintf(6, "\t Copied user frames \n");
 
         r0_ptlist[dest_pg].valid = bcp_valid;
@@ -187,7 +188,7 @@ int kernel_Fork(UserContext *user_context)
         else if (curr_proc == child){
                 TracePrintf(6, "\t kernel_Fork; returning to child  \n");
                 TracePrintf(3, "kernel_Fork ### end\n");
-                return(0);         
+                return 0;         
         }
         else{
                 return ERROR;
@@ -306,117 +307,212 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 // of the pcb.
 void kernel_Exit(int status, UserContext *uc)
 {
-	TracePrintf(3, "kernel_exit ### start\n");
-	pcb *temp_proc = curr_proc; // Save a reference for freeing later
-	
-	int OG_Process = 0;
-        list_remove(all_procs, (void*) temp_proc);
-        list_remove(ready_procs,(void*) temp_proc);
-        TracePrintf(3, "kernel_exit ### exiting\n");
-        //cycle_process(uc);
 
+        TracePrintf(3, "kernel_exit ### start\n");
+        Node *temp;
+        pcb *p;
+        pcb *child;
+        pcb *exiting_p = curr_proc;
+
+        int orphan_flag = (curr_proc->parent == NULL);
+        //int orphan_flag = (curr_proc->parent == NULL ? 1 : 0);
+        if(!orphan_flag){
+                list_remove(blocked_procs, curr_proc->parent);
+                list_add(ready_procs, curr_proc->parent);
+        }
+
+        if (curr_proc->process_id == 0){
+            Halt();
+        }
+
+        child = NULL;
+
+        // has kids
+        if (curr_proc->children != NULL && list_count(curr_proc->children) >0){
+            while ( (p = (pcb *) list_pop(curr_proc->children)) != NULL){
+                p->parent = NULL;
+            }
+        }
+        TracePrintf(6, "\t: passed has kids\n");
+
+        if (curr_proc->zombiez != NULL && list_count(curr_proc->zombiez) > 0){
+            while ( (p = (pcb *) list_pop(curr_proc->zombiez)) != NULL){
+                Node *temp = zombie_procs->head;
+                pcb *dead_status = NULL;
+                while(temp != NULL){
+                    if ( ((pcb*)(temp->data))->process_id == curr_proc->process_id){
+                            dead_status= (pcb*) temp->data;
+                            break;
+                    }
+                    temp = temp->next;
+                 }
+
+        //we didnt find the lock
+                if( dead_status == NULL){
+                    TracePrintf(6, "no exiting thild\n");
+                }
+                else {
+                    list_remove(zombie_procs, dead_status);
+                    free_pagetables(dead_status);
+                }
+            }
+        }
+        TracePrintf(6, "\t: passed has zombiez\n");
         
-	if(temp_proc->process_id == 0){
-		OG_Process = 1;
-	}
+        //Create a zombie process
+        //
+        /*
+        z_pcb *zp = (z_pcb*) malloc(sizeof(z_pcb));
+        zp->exit_status = status;
+        zp->parent = curr_proc->parent;
+        zp->process_id = curr_proc->process_id;
+        */
+
+        if (curr_proc->parent != NULL){
+            p = curr_proc->parent;
+
+            if (list_remove(p->children, (void*) curr_proc) != 0){
+                TracePrintf(6, "can't remove curr from parent thild\n");
+            }
+
+            if (p->zombiez == NULL){
+                p->zombiez = init_list();
+                bzero(p->zombiez, sizeof(List));
+            }
+            list_add(p->zombiez, (void*) curr_proc);
+        }
+
+        TracePrintf(6, "\t: passed has parent\n");
+        if (list_remove(all_procs, curr_proc) != 0){
+            TracePrintf(6, "can't remove curr from allprocs\n");
+        }
+
+        TracePrintf(6, "\t: well, shit\n");
 
 
-        //But what if it has zombie children?
-        // Thank you Zombie Children from informing us you died. It was very
-        // helpful. We now grant you sweet release.
-        
+
+        list_add(zombie_procs, (void *) curr_proc);
+
+        if(orphan_flag){
+                // trash pt
+                free_pagetables(curr_proc);
+                TracePrintf(6, "\t: freed pagetables\n");
+        }
+        pcb *next = list_pop(ready_procs);
+        if (!next){
+            TracePrintf(6, "\t: we are screwed\n");
+        }
+        TracePrintf(6, "\t: popped ready\n");
+
+        // while (next->has_kc == 0){
+        //     list_add(ready_procs, next);
+        //     next = list_pop(ready_procs);
+        // }
+        if (next->has_kc == 0){
+            TracePrintf(6, "\t: we are in the new one - shit\n");
+            list_add(ready_procs, next);
+            next = list_pop(ready_procs);
+        }
+        TracePrintf(6, "\t: now next kc is %d\n", next->has_kc);
+        TracePrintf(6, "\t: passed safety check\n");
+       // cycle_process(uc);
+        if (context_switch((pcb *) NULL, next, uc) != SUCCESS ){
+            exit(ERROR);
+        }
+    }
+
+
+//         if(exiting_p->process_id == 0)
+//                 Halt();
        
-       if(temp_proc->zombiez != NULL && list_count(temp_proc->zombiez) > 0){
-                pcb *zombie_child;
-                TracePrintf(0, "1Sucess");
-                while(list_count(temp_proc->zombiez) > 0){
-                        TracePrintf(0, "killing zombie children");
-                       zombie_child = (pcb*) list_pop(temp_proc->zombiez); 
-                       list_remove(zombie_procs, (void*) zombie_child);
-                       list_remove(all_procs, (void*) zombie_child);
-                       //free_pagetables(zombie_child);
-                       free(zombie_child);
+//         list_remove(ready_procs, (void*) exiting_p);
+//         list_add(zombie_procs, (void*) exiting_p);
+//         exiting_p->exit_status= status;
+       
+//         //parent is still alive 
+//         if(exiting_p->parent != NULL){
+//                 //tell parent you died
+//                 TracePrintf(0, "parent:%u\n", exiting_p->parent->process_id);
+//                 if(exiting_p->parent->zombiez == NULL)
+//                        exiting_p->parent->zombiez = init_list();
 
-                        TracePrintf(0, "2Sucess");
-                }
-                free(temp_proc->zombiez);
-       } 
-      
-        
-        TracePrintf(0, "3Sucess");
+// 		// add to parent's zombie list
+//                 list_add(exiting_p->parent->zombiez, (void*) exiting_p); 
+// 		TracePrintf(0, "I just added %u to my parents zombie list\n",
+// 				exiting_p->process_id);
+// 		// no longer a child cause you died. 
+//                 list_remove(exiting_p->parent->children, (void*) exiting_p);
+//                 TracePrintf(0, "parent's zombies: %u\n", ((pcb*)exiting_p->parent->zombiez->head->data)->process_id);
+// 		TracePrintf(0, "my parent has %u zombies\n",
+// 				exiting_p->parent->zombiez->count);
 
-        //if it has children, mark them as orphans
-        if(temp_proc->children != NULL && list_count(temp_proc->children) > 0){
-                pcb *child_pcb;
-                Node *child_node = curr_proc->children->head;
-                while(child_node != NULL){
-                        child_pcb = (pcb*) child_node->data;
-                        child_pcb->parent = NULL;
-                        child_node = child_node->next;
-                }
-                free(temp_proc->children);
-        }
+//         //you are an orphan :(
+//         } else {
+// 		orphan_flag = 1;
+//         }
 
-        TracePrintf(0, "4Sucess");
-	// If its an orphan, we dont care
-	if(temp_proc->parent == NULL){
+//         //inform your children of your demise. 
+//         if(exiting_p->children != NULL && list_count(exiting_p->children) > 0){
+// 		TracePrintf(6, "Informing children I am dead\n");
+//                 //Mark children as orphans
+//                if( list_count(exiting_p->children) > 0){
+//                         temp = exiting_p->children->head;
+//                         while(temp != NULL){
+//                                 ((pcb*) temp->data)->parent = NULL;
+//                                 temp = temp->next;
+//                         }
+//                }
+//                free(exiting_p->children);
+//         }
 
-                TracePrintf(0, "5Sucess");
-                list_remove(all_procs,(void*) temp_proc);
-                list_remove(zombie_procs,(void*) temp_proc);
-                list_remove(blocked_procs,(void *) temp_proc);
-                list_remove(ready_procs,(void*) temp_proc);
-
-                free_pagetables(temp_proc);
-		free(temp_proc);
-                TracePrintf(3, "2kernel_exit ### end\n");
-                cycle_process(uc);
-                return;
-                
-        // it becomes a zombie
-        } else{
-                
-                TracePrintf(0, "6Sucess");
-                list_add(zombie_procs,(void*) temp_proc);
-                TracePrintf(0, "6.1Sucess");
-                list_remove(temp_proc->parent->children,(void*) temp_proc);
-                TracePrintf(0, "6.2Sucess");
-                list_remove(ready_procs, (void*) temp_proc);
-                TracePrintf(0, "6.3Sucess");
-                if (temp_proc->parent->zombiez == NULL){
-                        temp_proc->parent->zombiez = init_list();
-                }
-                TracePrintf(0, "6.4Sucess");
-                list_add(temp_proc->parent->zombiez,(void*) temp_proc);
-        }
-        TracePrintf(0, "7--");
-
-
-        temp_proc->exit_status = status;
-
+//         //free your dead children
+//         if(exiting_p->zombiez != NULL && list_count(exiting_p->zombiez) > 0){
+//                 temp = exiting_p->zombiez->head;
+//                 while(temp != NULL){
+//                         p = (pcb*) temp->data;
+//                         list_remove(all_procs, (void*)p);
+// //!!!!process thinks that its parent is a child/zombie and therefore is trying to kill
+// // free it. This is a fork problem.
+// //Fixed for now.
+// 			if (p->process_id == exiting_p->process_id)
+// 			       TracePrintf(0, "I think I'm a zombie :p\n");
+// 			else if (p->process_id == exiting_p->parent->process_id)
+// 				TracePrintf(0, "I think my parent, %u, is my zombie :p\n", p->process_id);
+// 			else{
+// 				free_pagetables(p);  
+// 				free(p);
+// 			}
+//                         temp = temp->next;
+//                 }
+//         }
 	
-	TracePrintf(3, "kernel_exit ### end\n");
-	// If our root process stops, then we halt the system.
-	if(OG_Process){
-		Halt();
-	}
-        cycle_process(uc);
-        
-}
-void cycle_process(UserContext *uc)
-{
-	if (list_count(ready_procs) < 1) {
-		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
-		exit(ERROR);
-	}
-	else {
-		if (goto_next_process(uc, 0) != SUCCESS) {
-			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
-			exit(ERROR);
-		}
-                TracePrintf(0, "Sucess");
-	}
-}
+// 	if(orphan_flag){
+// 		TracePrintf(6, "I'm an orphan and I'm killing myself\n");
+// 		list_remove(all_procs, exiting_p);
+// 		list_remove(ready_procs, exiting_p);
+// 		list_remove(blocked_procs, exiting_p);
+// 		list_remove(zombie_procs, exiting_p);
+// 		free_pagetables(exiting_p);
+// 		free(p);
+// 	}
+// 	TracePrintf(0, "KERNEL EXIT ### END\n");
+//         cycle_process(uc);
+
+// }
+// void cycle_process(UserContext *uc)
+// {
+// 	if (list_count(ready_procs) < 1) {
+// 		TracePrintf(3, "kernel_Exit: no items on the ready queue - exiting\n");
+// 		exit(ERROR);
+// 	}
+// 	else {
+// 		if (goto_next_process(uc, 0) != SUCCESS) {
+// 			TracePrintf(3, "kernel_Exit: failed to context switch - exiting\n");
+// 			exit(ERROR);
+// 		}
+//                 TracePrintf(0, "Sucess");
+// 	}
+// }
 /*
  * Helper function that frees the pagetables of a pcb by returning them to 
  * empty_frame_list for use in another process later.
@@ -424,11 +520,15 @@ void cycle_process(UserContext *uc)
  * Function variables:
  *      myproc: the process that we want to recycle to pagetables.
  */
+
+
+
 void free_pagetables(pcb* myproc)
 {
         int i;
         int trash_pfn;
- 
+
+         
         //Recycle the kernel page tables
         for (i = 0; i < KERNEL_PAGE_COUNT; i ++){
                 if( (*(myproc->region0_pt + i)).valid == 0x1){
@@ -450,6 +550,7 @@ void free_pagetables(pcb* myproc)
                         (*(myproc->region1_pt + i)).valid= (u_long) 0x0;
                 }
         }
+        
         free(myproc->user_context);
         free(myproc->kernel_context);
 
@@ -478,6 +579,8 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 {
 	TracePrintf(3, "kernel_Wait ### start \n");
 	int child_pid_retval;
+    pcb *found_item = NULL;
+    Node *temp;
 	
 	// check if process has children
 	// if not, return error as the user was dumb enough to call wait wihtout them
@@ -508,22 +611,38 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// if has dead children, find them and remove them from the 
 	// parent->zombie list and global zombies list
 	if (parent->zombiez != NULL && list_count(parent->zombiez) > 0) {
-		TracePrintf(6, "kernel_Wait: found zombie children\n");
-		// pop from parent list
-		pcb *child_pcb = list_pop(parent->zombiez);
-		child_pid_retval = child_pcb->process_id;
+        	TracePrintf(6, "kernel_Wait: found zombie children\n");
+        	// pop from parent list
+        	pcb *child_pcb = (pcb*) list_pop(parent->zombiez);
+        	child_pid_retval = child_pcb->process_id;
 
-		TracePrintf(6, "kernel_Wait: I should remove procces: %d from zombie list \n", child_pcb->process_id);
-		// if my understanding is correct, status should be 
-		// the pointer to the process
-		*status_ptr = *((int *) child_pcb);
-		// remove from global list (found in kernel.h)
-		list_remove(zombie_procs, child_pcb);
+    		TracePrintf(6, "kernel_Wait: I should remove procces: %d from zombie list \n", child_pcb->process_id);
+            temp = zombie_procs->head;
+            found_item = NULL;
+            //Get the lock we are looking for
+            while(temp != NULL){
+                if ( ((pcb*)(temp->data))->process_id == child_pid_retval){
+                    found_item = (pcb*) temp->data;
+                    break;
+                }
+
+                temp = temp->next;
+            }
+
+            if (found_item == NULL) {
+                    TracePrintf(3, "wait: process not found in zombiez\n");
+                    return(ERROR);
+            }
+            // if my understanding is correct, status should be 
+    		// the pointer to the process
+    		*status_ptr = *((int *) child_pcb);
+    		// remove from global list (found in kernel.h)
+    		list_remove(zombie_procs, child_pcb);
 
 
-		// return the pid of the child that returned (mind == blown)
-		TracePrintf(3, "kernel_Wait ### end \n");
-		return child_pid_retval; 
+    		// return the pid of the child that returned (mind == blown)
+    		TracePrintf(3, "kernel_Wait ### end \n");
+    		return child_pid_retval; 
 	}
 	
 	TracePrintf(6, "kernel_Wait: parent's pid %d", parent->process_id);
@@ -545,11 +664,12 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	else {
 		if (goto_next_process(uc, 0) != SUCCESS) {
 			TracePrintf(3, "kernel_Wait: failed to kontext switch - exiting\n");
-			exit(ERROR);
+			return ERROR;
 		}
 	}
 
 	// pc should be pointing here after the wait
+            TracePrintf(3, "kernel_Wait: found a child after blocking\n");
 	// at thois point, the only scenario is that we are returning from being
 	// blocked so her we removing exited child and removing it 
 	if (list_count(parent->zombiez) < 1) {
@@ -560,16 +680,35 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// remove exited child from the pcb list
 	pcb *child_pcb = (pcb *) list_pop(parent->zombiez);
 	child_pid_retval = child_pcb->process_id;
+
+            temp = zombie_procs->head;
+    
+    //Get the lock we are looking for
+    while(temp != NULL){
+        if ( ((pcb*)(temp->data))->process_id == child_pid_retval){
+            found_item = (pcb*) temp->data;
+            break;
+        }
+
+        temp = temp->next;
+    }
+
+    if (found_item == NULL) {
+            TracePrintf(3, "wait: process not found in zombiez\n");
+            return(ERROR);
+    }  
 	
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
 	list_remove(zombie_procs, child_pcb);
+        free_pagetables(child_pcb);
 	
 
 	// return the pid of the child that returned (mind == blown)
 	TracePrintf(3, "kernel_Wait ### end \n");
 	return child_pid_retval; 
 }
+
 
 int kernel_GetPid()
 {

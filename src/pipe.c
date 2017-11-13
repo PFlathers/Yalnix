@@ -2,6 +2,7 @@
 #include "globals.h"
 #include "pipe.h"
 #include "kernel.h"
+#include <string.h>
 
 
 int PipeInit(int *pipe_idp)
@@ -41,6 +42,7 @@ int kernel_PipeRead(int pipe_id, void *buf, int len, UserContext *uc)
 
         Node *node = pipes->head;
         Pipe *pipe = NULL;
+        int gp_flag = 0;
         // find the pipe in the global list
         while(node/*->next*/ != NULL){
                 if ( ((Pipe*)(node->data))->id == pipe_id){
@@ -72,21 +74,25 @@ int kernel_PipeRead(int pipe_id, void *buf, int len, UserContext *uc)
                 pipe->exp_length = len;
                 curr_proc->pipe_lenght = len;
                 list_add(pipes, (void *) pipe);
-                goto_next_process(uc/*curr_proc->user_context*/, 0);
+                gp_flag = 1;
         }
 
+        strncpy((char*) buf, pipe->buffer, len);
 
         /* Reading starts, god help me */
-
-        // memcpy((void *)buf, (void *)pipe->buffer, len);
+        //memcpy((void *)buf, (void *)pipe->buffer, len);
         // EDIT: run into bugs with memcpy
         // trying memmove based on https://stackoverflow.com/a/4415926
         // (segfaulted, dunno why yet)
 
-        memmove((void *)buf, (void *)pipe->buffer, len);
+        //memmove((void *)buf, (void *)pipe->buffer, len);
         // if there is anything else in the pipe, move it forward
+        
+        strcpy(pipe->buffer, &(pipe->buffer[len]));
+       
+        
         //memcpy((void *)pipe->buffer, (void *)(pipe->buffer + len), MAX_PIPE_LEN - len);
-        memmove((void *)pipe->buffer, (void *)(pipe->buffer + len), MAX_PIPE_LEN - len);
+        //memmove((void *)pipe->buffer, (void *)(pipe->buffer + len), MAX_PIPE_LEN - len);
         // zero out the old shifted stuff
         bzero(pipe->buffer + (MAX_PIPE_LEN - len), len);
 
@@ -94,7 +100,10 @@ int kernel_PipeRead(int pipe_id, void *buf, int len, UserContext *uc)
         pipe->length -= len;
 
         TracePrintf(3, "PipeRead ### end\n");
-	return(len);
+        if(gp_flag)
+                goto_next_process(curr_proc->user_context, 1);
+
+	return len;
 }
 
 int kernel_PipeWrite(int pipe_id, void *buf, int len)

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "globals.h"
-//#include "list.h"
+#include "list.h"
 
 // create list
 List *init_list()
@@ -38,6 +38,27 @@ void list_add(List *list_to_add, void *data)
         list_to_add->count++;
 }
 
+void list_push(List *list_to_push, void *data)
+{
+	Node *new_node = malloc(sizeof(Node));
+	ALLOC_CHECK(new_node, "list_add");
+
+	new_node->data = data;
+	new_node->prev = NULL;
+	new_node->next = NULL;
+
+	// we have an empty list
+	if(!list_to_push->tail){
+		list_to_push->head = new_node;
+		list_to_push->tail = new_node;
+	// append onto begining of list
+	} else {
+                new_node->next = list_to_push->head;
+                list_to_push->head->prev = new_node;
+                list_to_push->head = new_node;
+	}
+        list_to_push->count++;
+} 
 
 // 0 if we found and removed the data. -1 if not exisit
 int list_remove(List *list_to_remove, void *data)
@@ -83,7 +104,7 @@ int list_remove(List *list_to_remove, void *data)
 		}
 	}
         list_to_remove->count--;
-	free(curr->data);
+	//free(curr->data);
 	free(curr);
 	return 0;
 }
