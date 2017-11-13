@@ -15,13 +15,18 @@ typedef struct _CVAR Cvar;
 
 /* Public Facing Function Calls */
 
+//Initializes a cvar and sets the passed pointer to the cvar's id
 int kernel_CvarInit(int*);
 
+// Pops a waiting process and schedules it to run
 int kernel_CvarSignal(int cvar_id);
 
+// Pops all the waiting process and schedule them to run
 int kernel_CvarBroadcast(int cvar_id);
 
+/* Set the current proc as blocked and wait for a condition to be met
+ * before running again.
+ */
 int kernel_CvarWait(int cvar_id, int lock_id);
 
-Cvar *findCvar(int cvar_id);
 #endif
