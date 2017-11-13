@@ -49,18 +49,18 @@ int main(int argc, char *argv[])
                 TracePrintf(1, "\t pipe test: read %d chars from the pipe: %s\n", read, to_read);
 
                 Pause();
-                Exit(0);
+                return 0;
         } else {
-                char to_read[6] ;//= (char *)malloc(6 * sizeof(char));
+                char to_read[100] ;//= (char *)malloc(6 * sizeof(char));
                 int read;
                 Pause();
                 Pause();
                 read = PipeRead(id, &to_read, 6);
                 TracePrintf(1, "\t pipe test: read %d chars from the pipe: %s\n", read, to_read);
-
+                
+                Wait(&rc);
                 Pause();
-                Exit(0);
-
+                return 0;
         }
 
 return 0;
