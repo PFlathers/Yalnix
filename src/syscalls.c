@@ -2,15 +2,8 @@
 #include "syscalls.h"
 #include "pipe.h"
 #include "cvar.h"
-#include "lock.h"
 #include "pcb.h"
 #include "kernel.h"
-
-
-
-Cvar *findCvar2(int cvar_id);
-Lock *findLock2(int lock_id);
-Pipe *findPipe2(int lock_id);
 
 /*------------------------------------------------- kernel_Fork -----
 |  Function kernel_Fork
@@ -838,16 +831,18 @@ int kernel_Reclaim(int id)
 {
 	void *temp;
 	
-    if ((temp = findCvar2(id)) != NULL ){
+    if ((temp = ((void*) kernel_findCvar(id)) ) != NULL ){
         Cvar *c = (Cvar *) temp;
         if (list_count(c->waiters) > 0){
             TracePrintf(6, "Can't release cvar: waiters alive \n");
             return ERROR;
         }
-        list_remove_pcb(cvars, c);
+        list_remove(cvars, c);
+        while (list_pop(c->waiters) != NULL);
+        free(c->waiters);
         free(c);
     }
-    else if ((temp = findLock2(id)) != NULL ){
+    else if ((temp = ((void*) kernel_findLock(id)) ) != NULL ){
         Lock *l = (Lock *) temp;
         if (l->claimed){
             TracePrintf(6, "Can't release lock: taken \n");
@@ -858,17 +853,21 @@ int kernel_Reclaim(int id)
             return ERROR;
         }
 
-        list_remove_pcb(locks, l);
+        list_remove(locks, l);
+        while (list_pop(l->waiters) != NULL);
+        free(l->waiters);
         free(l);
     }
-    else if( (temp = findPipe2(id)) != NULL ){
+    else if( (temp = ((void*) kernel_findPipe(id)) ) != NULL ){
         Pipe *p =  (Pipe*) temp;
         if (list_count(p->pipe_queue) > 0){
             TracePrintf(6, "Can't release pipe: waiters (i.e.) \n");
             return ERROR;
         }
 
-        list_remove_pcb(pipes, p);
+        list_remove(pipes, p);
+        while (list_pop(p->pipe_queue) != NULL);
+        free(p->pipe_queue);
         free(p->buffer);
         free(p);
 
@@ -877,7 +876,7 @@ int kernel_Reclaim(int id)
 }
 
 
-Cvar *findCvar2(int cvar_id)
+Cvar *kernel_findCvar(int cvar_id)
 {
         Node *temp = cvars->head;
         while (temp != NULL){
@@ -891,7 +890,7 @@ Cvar *findCvar2(int cvar_id)
         } 
         return (Cvar*) temp->data;
 }
-Lock *findLock2(int lock_id)
+Lock *kernel_findLock(int lock_id)
 {
         Node *temp = locks->head;
         while (temp != NULL){
@@ -905,7 +904,7 @@ Lock *findLock2(int lock_id)
         } 
         return (Lock*) temp->data;
 }
-Pipe *findPipe2(int lock_id)
+Pipe *kernel_findPipe(int lock_id)
 {
         Node *temp = pipes->head;
         while (temp != NULL){

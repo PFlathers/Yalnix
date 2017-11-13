@@ -8,6 +8,8 @@
 #include "pipe.h"
 #include "tty.h"
 #include "pcb.h"
+#include "cvar.h"
+#include "lock.h"
 
 
 /* Macros */
@@ -81,4 +83,11 @@ int kernel_Brk(void *addr);
 int kernel_Delay(UserContext *user_context, int clock_ticks);
 
 int kernel_Reclaim(int id);
+
+
+Cvar *kernel_findCvar(int cvar_id);
+
+Lock *kernel_findLock(int lock_id);
+
+Pipe *kernel_findPipe(int lock_id);
 #endif
