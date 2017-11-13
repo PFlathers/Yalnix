@@ -238,6 +238,23 @@ void trapKernel(UserContext *uc)
         case YALNIX_LOCK_RELEASE:
                 retval = kernel_Release((int) uc->regs[0]);
                 break;
+
+        case YALNIX_CVAR_INIT:
+          retval = kernel_CvarInit((int*)uc->regs[0]);
+          break;
+
+        case YALNIX_CVAR_SIGNAL:
+          retval = kernel_CvarSignal((int)uc->regs[0]);
+          break;
+
+        case YALNIX_CVAR_BROADCAST:
+          retval = kernel_CvarBroadcast((int)uc->regs[0]);
+          break;
+          
+        case YALNIX_CVAR_WAIT:
+          retval = kernel_CvarWait((int)uc->regs[0], (int)uc->regs[1]);
+          break;
+
       default:
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
