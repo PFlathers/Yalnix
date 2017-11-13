@@ -80,9 +80,10 @@ int kernel_CvarWait(int cvar_id, int lock_id)
                 TracePrintf(3, "Process did not have the lock");
                 return ERROR;
         }
-        list_remove(ready_procs, curr_proc);
+        //list_remove(ready_procs, curr_proc);
         list_add(blocked_procs, curr_proc);
         list_add(my_cvar->waiters, curr_proc);
+        goto_next_process(curr_proc->user_context, 0);
 
         return SUCCESS;
 
