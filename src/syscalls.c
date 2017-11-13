@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "syscalls.h"
 #include "pipe.h"
-
+#include "cvar.h"
 #include "pcb.h"
 #include "kernel.h"
 
