@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
                 written = PipeWrite(id, buffer2, 6);
 
                 Pause();
-                char to_read[6] ;//= (char *)malloc(6 * sizeof(char));
+                char to_read[100] ;//= (char *)malloc(6 * sizeof(char));
                 int read;
                 Pause();
                 Pause();
