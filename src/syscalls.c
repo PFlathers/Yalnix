@@ -309,6 +309,8 @@ void kernel_Exit(int status, UserContext *uc)
 {
 
         TracePrintf(3, "kernel_exit ### start\n");
+        if(curr_proc->parent != NULL)
+                TracePrintf(10, "parent's pid is %d\n", curr_proc->parent->process_id);
         Node *temp;
         pcb *p;
         pcb *child;
@@ -336,25 +338,33 @@ void kernel_Exit(int status, UserContext *uc)
         TracePrintf(6, "\t: passed has kids\n");
 
         if (curr_proc->zombiez != NULL && list_count(curr_proc->zombiez) > 0){
+
             while ( (p = (pcb *) list_pop(curr_proc->zombiez)) != NULL){
+               TracePrintf(10, "Removing a zombie\n"); 
+                /*
                 Node *temp = zombie_procs->head;
                 pcb *dead_status = NULL;
                 while(temp != NULL){
+
                     if ( ((pcb*)(temp->data))->process_id == curr_proc->process_id){
                             dead_status= (pcb*) temp->data;
                             break;
                     }
                     temp = temp->next;
                  }
+                */
+                list_remove(zombie_procs, p);
+                free_pagetables(p);
 
         //we didnt find the lock
+        /*
                 if( dead_status == NULL){
                     TracePrintf(6, "no exiting thild\n");
                 }
                 else {
                     list_remove(zombie_procs, dead_status);
                     free_pagetables(dead_status);
-                }
+                }*/
             }
         }
         TracePrintf(6, "\t: passed has zombiez\n");
@@ -379,6 +389,7 @@ void kernel_Exit(int status, UserContext *uc)
                 p->zombiez = init_list();
                 bzero(p->zombiez, sizeof(List));
             }
+            TracePrintf(10, "adding a zombie to my parent\n");
             list_add(p->zombiez, (void*) curr_proc);
         }
 
@@ -391,12 +402,12 @@ void kernel_Exit(int status, UserContext *uc)
 
 
 
-        list_add(zombie_procs, (void *) curr_proc);
-
         if(orphan_flag){
                 // trash pt
                 free_pagetables(curr_proc);
                 TracePrintf(6, "\t: freed pagetables\n");
+        }else {
+                list_add(zombie_procs, (void *) curr_proc);
         }
         pcb *next = list_pop(ready_procs);
         if (!next){
