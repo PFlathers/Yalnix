@@ -829,11 +829,86 @@ int kernel_Delay(UserContext *user_context, int clock_ticks)
  */
 int kernel_Reclaim(int id)
 {
-	//If id is cvar
-	// CvarDestory(id);
-	// // if id is lock
-	// LockDestory(id);
-	// // if id is pipe
-	// PipeDestroy(id);
+	void *temp;
+	
+    if ((temp = fintCvar(id)) != NULL ){
+        Cvar *c = (Cvar *) temp;
+        if (list_count(c->waiters) > 0){
+            TracePrintf(6, "Can't release cvar: waiters alive \n");
+            return ERROR;
+        }
+        list_remove(cvars, c);
+        free(c);
+    }
+    else if ((temp = fintLock(id)) != NULL ){
+        Lock *l = (Lock *) temp;
+        if (l->claimed){
+            TracePrintf(6, "Can't release lock: taken \n");
+            return ERROR;
+        }
+        if (list_count(l->waiters) > 0){
+            TracePrintf(6, "Can't release lock: waiters \n");
+            return ERROR;
+        }
+
+        list_remove(locks, l);
+        free(l);
+    }
+    else if( (temp = fintPipe(id)) != NULL ){
+        Pipe *p =  (Pipe*) temp;
+        if (list_count(p->pipe_queue) > 0){
+            TracePrintf(6, "Can't release pipe: waiters (i.e.) \n");
+            return ERROR;
+        }
+
+        list_remove(pipes, p);
+        free(p->buffer);
+        free(p);
+
+    }
 	return 0;
+}
+
+
+Cvar *findCvar(int cvar_id)
+{
+        Node *temp = cvars->head;
+        while (temp != NULL){
+                if ( ((Cvar*)temp->data)->id == cvar_id)
+                        break;
+                temp = temp->next;
+        }
+        if(temp == NULL){
+                TracePrintf(0, "Cvar does not exist\n");
+                return NULL;
+        } 
+        return (Cvar*) temp->data;
+}
+Lock *findLock(int lock_id)
+{
+        Node *temp = locks->head;
+        while (temp != NULL){
+                if ( ((Lock*)temp->data)->id == lock_id)
+                        break;
+                temp = temp->next;
+        }
+        if(temp == NULL){
+                TracePrintf(0, "Lock does not exist\n");
+                return NULL;
+        } 
+        return (Lock*) temp->data;
+}
+Pipe *findPipe(int lock_id)
+{
+        Node *temp = pipes->head;
+        while (temp != NULL){
+                if ( ((Pipe*)temp->data)->id == lock_id)
+                        break;
+                temp = temp->next;
+        }
+        if(temp == NULL){
+                TracePrintf(0, "Pipe does not exist\n");
+                return NULL;
+        } 
+        return (Pipe*) temp->data;
 }
