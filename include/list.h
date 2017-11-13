@@ -24,5 +24,5 @@ List *init_list();
 void list_push(List *list_to_push, void *data);
 void *list_pop(List *list_to_pop);
 int list_count(List *list_to_count);
-
+int list_remove_non_delete(List *list_to_remove, void *data)
 #endif
