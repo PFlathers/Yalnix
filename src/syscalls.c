@@ -1,9 +1,16 @@
 #include "globals.h"
 #include "syscalls.h"
 #include "pipe.h"
-
+#include "cvar.h"
+#include "lock.h"
 #include "pcb.h"
 #include "kernel.h"
+
+
+
+Cvar *findCvar2(int cvar_id);
+Lock *findLock2(int lock_id);
+Pipe *findPipe2(int lock_id);
 
 /*------------------------------------------------- kernel_Fork -----
 |  Function kernel_Fork
@@ -831,7 +838,7 @@ int kernel_Reclaim(int id)
 {
 	void *temp;
 	
-    if ((temp = fintCvar(id)) != NULL ){
+    if ((temp = findCvar2(id)) != NULL ){
         Cvar *c = (Cvar *) temp;
         if (list_count(c->waiters) > 0){
             TracePrintf(6, "Can't release cvar: waiters alive \n");
@@ -840,7 +847,7 @@ int kernel_Reclaim(int id)
         list_remove(cvars, c);
         free(c);
     }
-    else if ((temp = fintLock(id)) != NULL ){
+    else if ((temp = findLock2(id)) != NULL ){
         Lock *l = (Lock *) temp;
         if (l->claimed){
             TracePrintf(6, "Can't release lock: taken \n");
@@ -854,7 +861,7 @@ int kernel_Reclaim(int id)
         list_remove(locks, l);
         free(l);
     }
-    else if( (temp = fintPipe(id)) != NULL ){
+    else if( (temp = findPipe2(id)) != NULL ){
         Pipe *p =  (Pipe*) temp;
         if (list_count(p->pipe_queue) > 0){
             TracePrintf(6, "Can't release pipe: waiters (i.e.) \n");
@@ -870,7 +877,7 @@ int kernel_Reclaim(int id)
 }
 
 
-Cvar *findCvar(int cvar_id)
+Cvar *findCvar2(int cvar_id)
 {
         Node *temp = cvars->head;
         while (temp != NULL){
@@ -884,7 +891,7 @@ Cvar *findCvar(int cvar_id)
         } 
         return (Cvar*) temp->data;
 }
-Lock *findLock(int lock_id)
+Lock *findLock2(int lock_id)
 {
         Node *temp = locks->head;
         while (temp != NULL){
@@ -898,7 +905,7 @@ Lock *findLock(int lock_id)
         } 
         return (Lock*) temp->data;
 }
-Pipe *findPipe(int lock_id)
+Pipe *findPipe2(int lock_id)
 {
         Node *temp = pipes->head;
         while (temp != NULL){
