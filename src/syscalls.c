@@ -316,6 +316,10 @@ void kernel_Exit(int status, UserContext *uc)
 
         int orphan_flag = (curr_proc->parent == NULL);
         //int orphan_flag = (curr_proc->parent == NULL ? 1 : 0);
+        if(!orphan_flag){
+                list_remove(blocked_procs, curr_proc->parent);
+                list_add(ready_procs, curr_proc->parent);
+        }
 
         if (curr_proc->process_id == 0){
             Halt();
@@ -660,12 +664,12 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	else {
 		if (goto_next_process(uc, 0) != SUCCESS) {
 			TracePrintf(3, "kernel_Wait: failed to kontext switch - exiting\n");
-			exit(ERROR);
+			return ERROR;
 		}
 	}
 
 	// pc should be pointing here after the wait
-    TracePrintf(3, "kernel_Wait: found a child after blocking\n");
+            TracePrintf(3, "kernel_Wait: found a child after blocking\n");
 	// at thois point, the only scenario is that we are returning from being
 	// blocked so her we removing exited child and removing it 
 	if (list_count(parent->zombiez) < 1) {
@@ -677,7 +681,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	pcb *child_pcb = (pcb *) list_pop(parent->zombiez);
 	child_pid_retval = child_pcb->process_id;
 
-    temp = zombie_procs->head;
+            temp = zombie_procs->head;
     
     //Get the lock we are looking for
     while(temp != NULL){
@@ -697,7 +701,7 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 	// remove exited child from the global list
 	*status_ptr = *((int *) child_pcb);
 	list_remove(zombie_procs, child_pcb);
-        free_pagetables(child_pcb);
+       // free_pagetables(child_pcb);
 	
 
 	// return the pid of the child that returned (mind == blown)
