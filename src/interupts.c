@@ -255,6 +255,11 @@ void trapKernel(UserContext *uc)
           retval = kernel_CvarWait((int)uc->regs[0], (int)uc->regs[1]);
           break;
 
+
+        case YALNIX_RECLAIM:
+          retval = kernel_Reclaim((int)uc->regs[0]);
+          break;   
+
       default:
         TracePrintf(3, "Unrecognized syscall: %d\n", uc->code);
         break;
