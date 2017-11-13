@@ -148,7 +148,7 @@ void trapKernel(UserContext *uc)
           break;
         }
         memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
-        retval = kernel_PipeRead((int) uc->regs[0], (void *) uc->regs[1], (int) uc->regs[2]);
+        retval = kernel_PipeRead((int) uc->regs[0], (void *) uc->regs[1], (int) uc->regs[2], uc);
         break;
 
       case YALNIX_PIPE_WRITE:

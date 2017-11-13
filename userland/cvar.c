@@ -45,6 +45,8 @@ int main()
 
 
 	//TracePrintf(0, "I is parent");
+        Reclaim(j);
+        Reclaim(k);
 	
 	return 0;
 }

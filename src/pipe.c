@@ -21,7 +21,7 @@ int PipeInit(int *pipe_idp)
         
 
         // set pipe id, length
-        pipe->id = glob_resource_list++;
+        pipe->id = available_lock_id++;
         pipe->length = 0;
         pipe->exp_length = 0;
         pipe->pipe_queue->head = NULL;
