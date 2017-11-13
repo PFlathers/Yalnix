@@ -17,8 +17,6 @@ typedef struct _CVAR Cvar;
 
 int kernel_CvarInit(int*);
 
-int kernel_CvarDestory(int cvar_id);
-
 int kernel_CvarSignal(int cvar_id);
 
 int kernel_CvarBroadcast(int cvar_id);
