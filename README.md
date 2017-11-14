@@ -65,7 +65,7 @@ and to run it with extended debugging info, run
 --- 
 
 ## Trivia:
-1. when I first started to write this readme, I wanted to write it using [the top ten hundred words](https://www.xkcd.com/simplewriter/), however the closest thing to writing _kernel_ with it was _many letters that allow computer to run things on it and not break_.
+1. when I first started to write this readme, I wanted to write it using [the top ten hundred words](https://www.xkcd.com/simplewriter/), however the closest thing to writing _"kernel"_ with it was _"many letters that allow computer to run things on it and not break"_.
 2. While writing _fork_, Bruno wrote half of it using python syntax. He attributes that to the [lack of alchohol](https://xkcd.com/323/) involved in the proccess.
 3. _kernel_Exit_ was rewritten from scratch for a total 4 times; _kernel_Fork_ was rewritten 3 times. The problem was actually in fork userland info
 4. We discovered and abused `git blame`
@@ -77,5 +77,7 @@ and to run it with extended debugging info, run
 ![true story](https://imgs.xkcd.com/comics/git_commit_2x.png)
 
 ---
+more like, 10 weeks
 
 ![What we do](http://folk.uio.no/hpv/linuxtoons/foxtrot.1999-08-16.png)
+
