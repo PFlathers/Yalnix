@@ -703,29 +703,3 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 }	
 
 
-void scheduler(void)
-{
-	TracePrintf(2, "Scheduler ### Start \n");
-
-	unsigned int i;
-	int retval;
-
-	pcb *next_pcb;
-	pcb *curr_pcb = curr_proc;
-
-	if (list_count(ready_procs) > 0){
-		next_pcb = list_pop(ready_procs);
-		curr_proc = next_pcb;
-
-		retval = KernelContextSwitch(MyKCS, (void *) curr_pcb, (void *) next_pcb);
-	}
-
-	if (retval != 0){
-		TracePrintf(1, "Scheduler ### ERROR KCS FAILED");
-		exit(FAILURE);
-	}
-
-	TracePrintf(2, "Scheduler ### End \n");
-
-}
-

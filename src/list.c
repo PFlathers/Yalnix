@@ -174,13 +174,4 @@ void *list_pop(List *list_to_pop)
 int list_count(List *list_to_count)
 {
         return list_to_count->count;
-        /*
-	Node *place_holder = list_to_count->head;
-	int count = 0;
-	while(place_holder != NULL){
-		count++;
-		place_holder = place_holder->next;
-	}
-	return count;
-        */
 }
