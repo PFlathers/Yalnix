@@ -271,7 +271,7 @@ void create_idle_proc(UserContext *user_context)
 
 	// region0 pagetable is malloced in the same way as the user one
 	idle_proc->region0_pt = (struct pte *)malloc( KERNEL_PAGE_COUNT * sizeof(struct pte));
-	// this 
+
 	memcpy((void *)idle_proc->region0_pt,
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
@@ -291,7 +291,7 @@ void create_idle_proc(UserContext *user_context)
  */
 void create_init_proc(UserContext *user_context, char *cmd_args[])
 {
-	int i;
+	 int i;
 	 // base it of of the init (so that I don't have to re-do things)
 	 pcb *init_proc = (pcb *) new_process(user_context);
 
@@ -375,12 +375,6 @@ void KernelStart(char *cmd_args[],
                  UserContext *user_context) 
 {
 	TracePrintf(0, "KernelStart ### Start\n");
-
-	/*LOCAL VARIABLES*/
-
-	int i; 
-	int arg_count; // number of variables passed 
-
 
 	// lowest frame in region 1 - see figure 2.2
 	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
