@@ -14,10 +14,13 @@ typedef struct _LOCK
 typedef struct _LOCK Lock;
 
 /* Public Facing Function Calls */
+//create a new lock
 int kernel_LockInit(int *lock_to_init);
-int kernel_Acquire(int lock_id);
-int kernel_Release(int lock_id);
-int kernel_LockDestroy(int lock_id);
 
-Lock *findLock(int lock_id);
+//acquire lock by id
+int kernel_Acquire(int lock_id);
+
+//release lock by id
+int kernel_Release(int lock_id);
+
 #endif
