@@ -38,6 +38,7 @@ void list_add(List *list_to_add, void *data)
         list_to_add->count++;
 }
 
+// Adds a node with the data passed onto the head of the list
 void list_push(List *list_to_push, void *data)
 {
 	Node *new_node = malloc(sizeof(Node));
@@ -61,6 +62,7 @@ void list_push(List *list_to_push, void *data)
 } 
 
 // 0 if we found and removed the data. -1 if not exisit
+// Remove the first node in the list containing the data passed.
 int list_remove(List *list_to_remove, void *data)
 {
 	if (!list_to_remove->head){
@@ -104,12 +106,13 @@ int list_remove(List *list_to_remove, void *data)
 		}
 	}
         list_to_remove->count--;
-	//free(curr->data);
 	free(curr);
 	return 0;
 }
 
 // 0 if we found and removed the data. -1 if not exisit
+// Remove the first node in the list containing the data passed.
+// delete reference to the data as well
 int list_remove_delete(List *list_to_remove, void *data)
 {
 	if (!list_to_remove->head){
@@ -157,20 +160,31 @@ int list_remove_delete(List *list_to_remove, void *data)
 	free(curr);
 	return 0;
 }
+
+// returns the data for the first node in the list
 void *list_pop(List *list_to_pop)
 {
-        if(list_to_pop->count == 0)
+        //some checks on the list
+        if(list_to_pop == NULL || list_to_pop->count == 0)
                 return NULL;
+
+        //pointer gymnatstics
 	Node *pop_node = list_to_pop->head;
 	void *ret_data = pop_node->data;
 	list_to_pop->head = list_to_pop->head->next;
+
+        //Does check so we do not dereference a null pointer if we have an 
+        // empty list
         if(list_to_pop->head != NULL)
                 list_to_pop->head->prev = NULL;
+
         list_to_pop->count--;
 	free(pop_node);
+
 	return ret_data;
 }
 
+// gets the count in a nice function
 int list_count(List *list_to_count)
 {
         return list_to_count->count;
