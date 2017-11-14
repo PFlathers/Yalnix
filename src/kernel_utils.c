@@ -99,7 +99,9 @@ void free_pagetables(pcb* myproc)
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 }
 
-
+/* Checks whether or not pointer is in range of the valid page table entires
+ * for the process
+ */
 int check_pointer_range(u_long ptr) 
 {                                                         
         // if argument is withing outside the bounds return 1, else return 0
@@ -111,6 +113,8 @@ int check_pointer_range(u_long ptr)
 }   
 
 
+/* Checks whether or not the point is to valid memory for the process
+ */
 int check_pointer_valid(u_long ptr)
 {                                                          
         struct pte *ptr_pte;
@@ -121,7 +125,10 @@ int check_pointer_valid(u_long ptr)
         else
                 return 0;
 }                                                                                  
-                                                                                    
+
+/* Checks whether there are read permission on the memory the pointer is
+ * pointing to
+ */
 int check_pointer_read(u_long ptr) 
 {                                                          
         struct pte *ptr_pte;
@@ -133,6 +140,9 @@ int check_pointer_read(u_long ptr)
                 return 1;
 }                                                                                  
                                                                                     
+/* Checks whether there are write permission on the memory the pointer is
+ * pointing to
+ */
 int check_pointer_write(u_long ptr) 
 {                                                         
         struct pte *ptr_pte;
@@ -145,14 +155,15 @@ int check_pointer_write(u_long ptr)
 
 }
 
+/* Checks both read and write
+ */
 int is_rw(u_long ptr)
 {
         return (check_pointer_write(ptr) || check_pointer_read(ptr));
 } 
 
-
-
-
+/* Checks all the permissions for a String
+ */
 int check_string_validity(u_long ptr, int len) 
 {
         int i;
