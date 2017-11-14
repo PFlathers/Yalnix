@@ -99,3 +99,71 @@ void free_pagetables(pcb* myproc)
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
 }
 
+
+int check_pointer_range(u_long ptr) 
+{                                                         
+        // if argument is withing outside the bounds return 1, else return 0
+        if((unsigned int) ptr < VMEM_1_BASE || (unsigned int) ptr > VMEM_1_LIMIT){
+                return 1;
+        } else {
+                return 0;
+        }                                                                            
+}   
+
+
+int check_pointer_valid(u_long ptr)
+{                                                          
+        struct pte *ptr_pte;
+        ptr_pte = curr_proc->region1_pt + (ptr >> PAGESHIFT) - 128;
+
+        if (ptr_pte->valid != (u_long) 0x1)
+                return 1;
+        else
+                return 0;
+}                                                                                  
+                                                                                    
+int check_pointer_read(u_long ptr) 
+{                                                          
+        struct pte *ptr_pte;
+        ptr_pte = curr_proc->region1_pt + (ptr >> PAGESHIFT) - 128;
+
+        if (ptr_pte->prot | (u_long) PROT_READ)
+                return 0;
+        else
+                return 1;
+}                                                                                  
+                                                                                    
+int check_pointer_write(u_long ptr) 
+{                                                         
+        struct pte *ptr_pte;
+        ptr_pte = curr_proc->region1_pt + (ptr >> PAGESHIFT) - 128;
+
+        if (ptr_pte->prot | (u_long) PROT_WRITE)
+                return 0;
+        else
+                return 1;
+
+}
+
+int is_rw(u_long ptr)
+{
+        return (check_pointer_write(ptr) || check_pointer_read(ptr));
+} 
+
+
+
+
+int check_string_validity(u_long ptr, int len) 
+{
+        int i;
+
+        for (i = 0; i < (len / PAGESIZE); i++) {
+                if (check_pointer_range(ptr + (i * PAGESIZE)) ||
+                        check_pointer_valid(ptr + (i * PAGESIZE)) ||
+                        is_rw(ptr + (i * PAGESIZE))
+                )
+                return 1;
+        }
+
+        return 0;
+}         
