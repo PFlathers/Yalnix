@@ -133,10 +133,59 @@ int kernel_Wait(int * status_ptr, UserContext *uc);
  *-------------------------------------------------------------------*/
 int kernel_GetPid();
 
+/*------------------------------------------------- kernel_Brk -----
+ |  Function kernel_Brk
+ |
+ | Description:  sets the operating system’s idea of the lowest location 
+ | not used by the program (called the “break”) to addr (rounded up to 
+ | the next multiple of PAGESIZE bytes). This call has the effect of allocating 
+ | or deallocating enough memory to cover only up to the specified address. 
+ | Locations not less than addr and below the stack pointer are not in the 
+ | address space of the process and will thus cause an exception if accessed. 
+ | The value 0 is returned on success. If any error is encountered (for example, 
+ | if not enough memory is available or if the address addr is invalid), the 
+ | value ERROR is returned.
+ |
+ |  Parameters:
+ |      void *addr (IN): address to set the brk to
+ |                   
+ |
+ |  Returns:  SUCCESS if ok, ERROR otherwise
+ *-------------------------------------------------------------------*/
 int kernel_Brk(void *addr);
 
+/*------------------------------------------------- kernel_Delay -----
+ |  Function kernel_Delay
+ |
+ | Description:  The calling process is blocked until clock ticks clock 
+ | interrupts have occurred after the call. Upon completion of the delay, 
+ | the value 0 is returned. If clock ticks is 0, return is immediate. If 
+ | clock ticks is less than 0, time travel is not carried out, and ERROR 
+ | is returned instead.
+ |
+ |  Parameters:
+ |      UserContext *user_context (IN): current user context
+ |      int clock_ticks (IN): how long to delay a process
+ |                   
+ |
+ |  Returns:  SUCCESS if delay completed, ERROR otherwise
+ *-------------------------------------------------------------------*/
 int kernel_Delay(UserContext *user_context, int clock_ticks);
 
+
+/*------------------------------------------------- kernel_Reclaim -----
+ |  Function kernel_Reclaim
+ |
+ | Description: Destroy the lock, condition variable, or pipe indentified by 
+ | id, and release any associated resources. In case of any error, the value 
+ | ERROR is returned.
+ |
+ |  Parameters:
+ |      int id (IN): ID of the resource to be reclaimed
+ |                   
+ |
+ |  Returns:  SUCCESS if reclaimed, ERROR otherwise
+ *-------------------------------------------------------------------*/
 int kernel_Reclaim(int id);
 
 

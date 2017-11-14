@@ -571,14 +571,45 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 }
 
 
+
+/*------------------------------------------------- kernel_GetPid -----
+ |  Function kernel_GetPid
+ |
+ | Description: returns curr proc PID
+ |
+ |  Parameters:
+ |      none
+ |
+ |  Returns:  int with current PID
+ *-------------------------------------------------------------------*/
 int kernel_GetPid()
 {
 	return curr_proc->process_id;
 }
 
+
+
+
+/*------------------------------------------------- kernel_Brk -----
+ |  Function kernel_Brk
+ |
+ | Purpose:  sets the operating system’s idea of the lowest location 
+ | not used by the program (called the “break”) to addr (rounded up to 
+ | the next multiple of PAGESIZE bytes).
+ |      1. check if addr in range
+ |      2. allocate frames  and assign them to the process PTs
+ |      3. traverse heap and make sure that permissions align
+ |
+ |  Parameters:
+ |      void *addr (IN): address to set the brk to
+ |                   
+ |
+ |  Returns:  SUCCESS if ok, ERROR otherwise
+ *-------------------------------------------------------------------*/
 int kernel_Brk(void *addr)
 {
 
+    TracePrintf(3, "kernel_Brk ### start \n");
 	int i; // counter
 	int page_id; // temp
 
@@ -600,7 +631,7 @@ int kernel_Brk(void *addr)
         unsigned int heap_top_page = (unsigned int) (heap_bottom << PAGESHIFT);
 	if (u_addr > stack_bottom_page || 
 		u_addr < heap_top_page ){
-		TracePrintf(1, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
+		TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
 		return ERROR;
 	}
 
@@ -609,7 +640,7 @@ int kernel_Brk(void *addr)
 		if ((*(curr_proc->region1_pt + i)).valid != 0x1) {
 			// check for empty space
                         if (list_count(empty_frame_list) < 1){
-				TracePrintf(2, "kernel_Brk: out of memory");
+				TracePrintf(3, "kernel_Brk: out of memory");
 				return ERROR;
 			}
 
@@ -633,12 +664,28 @@ int kernel_Brk(void *addr)
 	}
 
 	curr_proc->brk_address = heap_top << PAGESHIFT;
+    TracePrintf(3, "kernel_Brk ### end \n");
 	return SUCCESS;
 }
 
 
 
-
+/*------------------------------------------------- kernel_Delay -----
+ |  Function kernel_Delay
+ |
+ | Description:  The calling process is blocked until clock ticks clock 
+ | interrupts have occurred after the call. 
+ |      1. Set up block
+ |      2. bookkeep
+ |      3. Switch to new process
+ |
+ |  Parameters:
+ |      UserContext *user_context (IN): current user context
+ |      int clock_ticks (IN): how long to delay a process
+ |                   
+ |
+ |  Returns:  SUCCESS if delay completed, ERROR otherwise
+ *-------------------------------------------------------------------*/
 int kernel_Delay(UserContext *user_context, int clock_ticks)
 {
 	TracePrintf(3, "kernel_Delay ### start ");
@@ -655,7 +702,7 @@ int kernel_Delay(UserContext *user_context, int clock_ticks)
 
 
 	//Interupts off
-	//list_remove(&ready_procs, (void *) curr_proc);
+	//list_remove(ready_procs, (void *) curr_proc);
 	list_add(blocked_procs, (void *) curr_proc);
 
 	if (list_count(ready_procs) < 1){
@@ -668,14 +715,25 @@ int kernel_Delay(UserContext *user_context, int clock_ticks)
 	}
 
 	return SUCCESS;
-
-
 }
 
-/* 
- * Destroys the lock, cvar, or pipe identified by the id, and releases any
- * associated resources. In case of error, the value ERROR is returned.
- */
+
+
+/*------------------------------------------------- kernel_Reclaim -----
+ |  Function kernel_Reclaim
+ |
+ | Purpose: Destroy the lock, condition variable, or pipe indentified by 
+ | id. 
+ | `    1. check if it's cvar/lock/pipe/buff
+ |      2. check if it is in use
+ }      3. follow procedure for reclaiming based on what we are reclaiming
+ |
+ |  Parameters:
+ |      int id (IN): ID of the resource to be reclaimed
+ |                   
+ |
+ |  Returns:  SUCCESS if reclaimed, ERROR otherwise
+ *-------------------------------------------------------------------*/
 int kernel_Reclaim(int id)
 {
 	void *temp;
