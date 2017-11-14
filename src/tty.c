@@ -197,7 +197,7 @@ int kernel_TtyWrite(int tty_id, void *buf, int len)
 
 
         // move on
-        goto_next_process(curr_proc->user_context, 0);
+        goto_next_process(curr_proc->user_context, 1);
 
         // here, the waiting process should return after tty trap
         TracePrintf(6, "TtyWrite: \t proc %d returned after waiting \n", curr_proc->process_id);

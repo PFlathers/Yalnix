@@ -119,18 +119,6 @@ typedef struct _PCB {
 typedef struct _PCB pcb;
 
 
-/*
- DS for the Zombie PCBs 
-typedef struct _ZPCB {
-        unsigned int process_id;
-        int exit_status;
-        pcb *parent;
-} _ZPCB;
-
-typedef struct _ZPCB z_pcb;
-
-
-
 /* Public Facing Function Calls */
 
 
