@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 
         TracePrintf("%d\n", i);
 	if(j == 0){
-           while (Acquire(i) == 0 ){
+           while (Acquire(i) != 0 ){
 
            }
 	}
