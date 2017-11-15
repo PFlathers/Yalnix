@@ -120,7 +120,7 @@ int check_pointer_valid(u_long ptr)
         struct pte *ptr_pte;
         ptr_pte = curr_proc->region1_pt + (ptr >> PAGESHIFT) - 128;
 
-        if (ptr_pte->valid != (u_long) 0x1)
+        if (ptr_pte->valid == (u_long) 0x1)
                 return 1;
         else
                 return 0;

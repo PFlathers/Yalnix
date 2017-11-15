@@ -627,13 +627,18 @@ int kernel_Brk(void *addr)
 	unsigned int u_addr = (unsigned int) addr; 
         TracePrintf(3, "kernel_Brk: current brk = %u, requesting: %u \n", curr_proc->brk_address, u_addr);
 
-        unsigned int stack_bottom_page = (unsigned int) (stack_bottom << PAGESHIFT);
-        unsigned int heap_top_page = (unsigned int) (heap_bottom << PAGESHIFT);
-	if (u_addr > stack_bottom_page || 
-		u_addr < heap_top_page ){
-		TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
-		return ERROR;
-	}
+ //        unsigned int stack_bottom_page = (unsigned int) (stack_bottom << PAGESHIFT);
+ //        unsigned int heap_top_page = (unsigned int) (heap_bottom << PAGESHIFT);
+	// if (u_addr > stack_bottom_page || 
+	// 	u_addr < heap_top_page ){
+	// 	TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
+	// 	return ERROR;
+	// }
+
+    if ( ((unsigned int)addr >> PAGESHIFT) >= (DOWN_TO_PAGE(curr_proc->user_context->sp)>>PAGESHIFT) ){
+        TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds to %u \n", (unsigned int) addr, (DOWN_TO_PAGE(curr_proc->user_context->sp)>>PAGESHIFT));
+        return ERROR;
+    }
 
 	// heap
 	for (i = heap_bottom; i<= heap_top; i++){
@@ -663,7 +668,7 @@ int kernel_Brk(void *addr)
 		}
 	}
 
-	curr_proc->brk_address = heap_top << PAGESHIFT;
+	curr_proc->brk_address = addr;
     TracePrintf(3, "kernel_Brk ### end \n");
 	return SUCCESS;
 }
