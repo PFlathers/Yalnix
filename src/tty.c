@@ -1,9 +1,44 @@
+/*=============================================================================
+ |   Assignment:   Yalnix Operating System
+ |
+ |       Author:  P.J.Flathers and B.Korbar
+ |     Language:  C
+ |   To Compile:  part of the yalnix os --- see makefile in the root folder
+ |
+ |        Class:  COSC 58 - Operating Systems
+ |   Instructor:  Dr. Sean Smith
+ |     Due Date:  Nov 16th, 2017
+ |
+ +-----------------------------------------------------------------------------
+ |
+ |  Purpose:  Basic implementation of reading and writing to the terminal
+ |
+ *===========================================================================*/
+
+/* 
+ * Local includes
+ */
 #include "globals.h"
 #include "list.h"
 #include "tty.h"
 #include "kernel.h"
 
 
+/*------------------------------------------------- kernel_TtyRead -----
+|  Function kernel_TtyRead
+|
+|  Purpose:  "reads" len chars from a tty buffer of the corresponding TTY, 
+|           by copying it's context (properly formatted) to the output 
+|           buffer 
+|
+|  Parameters:
+|      int tty_id (IN) - id of the tty we read from
+|      void *buf (OUT) - pointer to the char array of the buffer we are
+|                       reading into
+|      int len (IN)    - length of the reading buffer
+|
+|  Returns:  length of the successful read, or ERROR
+*-------------------------------------------------------------------*/
 int kernel_TtyRead(int tty_id, void *buf, int len)
 {
         TracePrintf(3, "TtyRead ### Start\n");
@@ -24,7 +59,7 @@ int kernel_TtyRead(int tty_id, void *buf, int len)
                 tty = (TTY*)node->next->data;
         }
         if (tty == NULL) {
-                TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
+                TracePrintf(3, "TtyWrite ERROR; tty %d out of bounds \
                                 - should not happen \n", tty_id);
                 return ERROR;
         }
@@ -40,21 +75,21 @@ int kernel_TtyRead(int tty_id, void *buf, int len)
 
 
                 // should wake up here after enough process switches
-                TracePrintf(6, "ttwRead: \t woken after no buffer\n");
+                TracePrintf(6, "ttyRead: \t woken after no buffer\n");
                 popped_buf = list_pop(tty->buffers);
 
         }
 
         // check if our local buffer is full 
         if (!popped_buf) {
-            TracePrintf(6, "ttwRead: ayayayayay\n");
+            TracePrintf(3, "ttyRead ERROR: ayayayayay\n");
             return ERROR;    
         }
 
         // memcpy that buffer to the in/out one
-        TracePrintf(6, "ttwRead: \t about to read buffer\n");
+        TracePrintf(6, "ttyRead: \t about to read buffer\n");
         memcpy(buf, popped_buf->buf, len);
-        TracePrintf(6, "ttwRead: \t read buffer, reset pcb read counter\n");
+        TracePrintf(6, "ttyRead: \t read buffer, reset pcb read counter\n");
         curr_proc->read_length = 0;
 
         /* here is the thing that I'm unsure about, 
@@ -65,7 +100,7 @@ int kernel_TtyRead(int tty_id, void *buf, int len)
 
         // if there is anything left
         if (to_store > 0) {
-                TracePrintf(6, "ttwRead: didn't read entire thing\n");
+                TracePrintf(6, "ttyRead: \t didn't read entire thing\n");
                 len = len - to_store;
                 // buffer we want to store will be the pooped buffer
                 // shifted by the length we have read
@@ -75,7 +110,7 @@ int kernel_TtyRead(int tty_id, void *buf, int len)
                 list_add(tty->buffers, popped_buf);
         }
         else {
-                TracePrintf(6, "ttwRead: read entire thing first time\n");
+                TracePrintf(6, "ttyRead: \t read entire thing first time\n");
         }
 
 
@@ -83,11 +118,26 @@ int kernel_TtyRead(int tty_id, void *buf, int len)
 	return len;
 }
 
+/*------------------------------------------------- kernel_TtyWrite -----
+|  Function kernel_TtyWrite
+|
+|  Purpose:  "writes" len chars from a input buffer by copying it's context (properly 
+|           formatted) to the output buffer of the corresponding TTY
+|           
+|
+|  Parameters:
+|      int tty_id (IN) - id of the tty we write to
+|      void *buf (IN) - pointer to the char array of the buffer we are
+|                       writing from
+|      int len (IN)    - length of the reading buffer
+|
+|  Returns:  length of the successful write, or ERROR
+*-------------------------------------------------------------------*/
 int kernel_TtyWrite(int tty_id, void *buf, int len)
 {
         TracePrintf(3, "TtyWrite ### Start\n");
 
-	// look up tty by it's id
+	   // look up tty by it's id
         TTY *tty = NULL;
         Node * node =  ttys->head;
         while (node->next != NULL){
@@ -103,7 +153,7 @@ int kernel_TtyWrite(int tty_id, void *buf, int len)
         }
 
         if (tty == NULL) {
-                TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
+                TracePrintf(3, "TtyWrite: ERROR; tty %d out of bounds \
                                 - should not happen \n", tty_id);
                 return ERROR;
         }
@@ -148,7 +198,7 @@ int kernel_TtyWrite(int tty_id, void *buf, int len)
 
         TracePrintf(6, "TtyWrite: \t there are writers in front of me, wait \n");
         // move on
-        goto_next_process(curr_proc->user_context, 0);
+        goto_next_process(curr_proc->user_context, 1);
 
         // here, the waiting process should return after tty trap
         TracePrintf(6, "TtyWrite: \t proc %d returned after waiting \n", curr_proc->process_id);
