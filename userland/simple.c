@@ -2,5 +2,7 @@
 
 int main()
 {
-return 0;
+        char *a = (char*) malloc(100);
+        TracePrintf(0, "%s", a);
+        return 0;
 }

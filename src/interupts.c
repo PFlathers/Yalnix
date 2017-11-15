@@ -424,6 +424,7 @@ void trapMemory(UserContext *uc)
       // flush me baby flush me baby
       WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
       TracePrintf(0, "Illegal Memory: Holly shit we survived%d\n");
+      kernel_Exit(-1, uc);
 
       	
 }
