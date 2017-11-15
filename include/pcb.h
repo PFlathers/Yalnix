@@ -80,7 +80,7 @@ typedef struct _PCB {
 	unsigned int process_id;			     // pid
 	UserContext *user_context;          // user context related 
 	KernelContext *kernel_context;    // kernel context related 
-	int has_kc  // boolean flag telling us if we have copied kc
+	int has_kc;  // boolean flag telling us if we have copied kc
 
 	// see DS above - rather than having
 	// clock_ticks and lock DS, we can generalize
