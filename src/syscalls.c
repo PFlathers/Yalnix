@@ -23,6 +23,7 @@
 | 			as a kid (return value == 0) and as a parent (return value ==
 | 			child's id). 
 *-------------------------------------------------------------------*/
+//TODO: Fix this.
 int kernel_Fork(UserContext *user_context)
 {
         TracePrintf(3, "kernel_Fork ### Start\n");
@@ -59,9 +60,9 @@ int kernel_Fork(UserContext *user_context)
         child->brk_address = parent->brk_address;
         TracePrintf(0, "BRK ADDRESSES IN FORK \nparent:%d\nchild:%d\n", parent->brk_address, child->brk_address);
 
-        TracePrintf(6, "kernel_Fork: \t succesfully bootstraped new proces \n");
+        TracePrintf(6, "kernel_Fork: succesfully bootstraped new proces \n");
 
-        TracePrintf(6, "kernel_Fork: \t starting pagetable copy\n");
+        TracePrintf(6, "kernel_Fork: starting pagetable copy\n");
 
         // copy parent's pgtbl into child
         memcpy((void *) child->region1_pt, (void *) parent->region1_pt, \
@@ -70,10 +71,10 @@ int kernel_Fork(UserContext *user_context)
         memcpy( (void *) child->region0_pt, (void *) parent->region0_pt, \
                 KERNEL_PAGE_COUNT * sizeof(struct pte) );
 
-        TracePrintf(6, "kernel_Fork: \t end pagetable copy\n");
+        TracePrintf(6, "kernel_Fork: end pagetable copy\n");
 
 
-        TracePrintf(6, "kernel_Fork: \t create frames for pagetable\n");
+        TracePrintf(6, "kernel_Fork: create frames for pagetable\n");
         for (i = 0; i<KERNEL_PAGE_COUNT; i++){
                 if (list_count(empty_frame_list) <= 0){
                         return ERROR;
@@ -99,10 +100,10 @@ int kernel_Fork(UserContext *user_context)
                         (*(child->region1_pt + i)).pfn = (u_long) 0x0;
                 }
         }
-        TracePrintf(6, "kernel_Fork: \t end creating frames for pagetable\n");
+        TracePrintf(6, "kernel_Fork: end creating frames for pagetable\n");
 
 
-        TracePrintf(6, "kernel_Fork: \t copy parent's memory into child\n");
+        TracePrintf(6, "kernel_Fork: copy parent's memory into child\n");
         dest_pg = (KERNEL_STACK_BASE >> PAGESHIFT) - 1;
 
         bcp_valid = r0_ptlist[dest_pg].valid;
@@ -115,7 +116,7 @@ int kernel_Fork(UserContext *user_context)
         unsigned int src, dst;
         dst = dest_pg << PAGESHIFT;
 
-        /* Per Sean's suggestions */
+/* Per Sean's suggestions */
         for (i=0; i<KERNEL_PAGE_COUNT; i++){
                 src = KERNEL_STACK_BASE + (i*PAGESIZE);
 
@@ -127,7 +128,7 @@ int kernel_Fork(UserContext *user_context)
         }
 
 
-        TracePrintf(6, "kernel_Fork: \t copied kernel frames\n");
+        TracePrintf(6, "\tCopied kernel frames\n");
 
         for (i=0; i<VREG_1_PAGE_COUNT; i++) {
                 if ( (*(child->region1_pt + i)).valid == 0x1 ) {
@@ -141,21 +142,21 @@ int kernel_Fork(UserContext *user_context)
                 }
         }
 
-        TracePrintf(6, "kernel_Fork:\t Copied user frames \n");
+        TracePrintf(6, "\t Copied user frames \n");
 
         r0_ptlist[dest_pg].valid = bcp_valid;
         r0_ptlist[dest_pg].pfn = bcp_pfn;
-        TracePrintf(6, "kernel_Fork:\t restored frames from backup \n");
+        TracePrintf(6, "\t Restored frames from backup \n");
 
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-        TracePrintf(6, "kernel_Fork: \t end copy parent's memory into child\n");
+        TracePrintf(6, "kernel_Fork: end copy parent's memory into child\n");
 
 
-        TracePrintf(6, "kernel_Fork: \t bookkeeping\n");
-        TracePrintf(6, "kernel_Fork:\t: child->parent = parent\n");
+        TracePrintf(6, "kernel_Fork: bookkeeping\n");
+        TracePrintf(6, "\t: child->parent = parent\n");
 
         child->parent = parent;
-        TracePrintf(6, "kernel_Fork:\t: parent->children = children\n");
+        TracePrintf(6, "\t: parent->children = children\n");
 
         if (parent->children == NULL){
                 parent->children = init_list();
@@ -164,30 +165,30 @@ int kernel_Fork(UserContext *user_context)
 
 
         list_add(parent->children, (void *) child);
-        TracePrintf(6, "kernel_Fork:\t add to child to allprocs and parent to ready procs \n");
+        TracePrintf(6, "\t: add to child to allprocs and parent to ready procs \n");
 
         list_add(all_procs, (void*) child);
         list_add(ready_procs, (void *) parent);
 
 
-        TracePrintf(6, "kernel_Fork: \t context switch arr\n");
+        TracePrintf(6, "kernel_Fork: context switch arr\n");
         if (context_switch(parent, child, user_context) != 0) {
                 return ERROR;
         }
 
-        TracePrintf(6, "kernel_Fork: \t end context switch arr\n");
+        TracePrintf(6, "kernel_Fork: end context switch arr\n");
 
 
-        TracePrintf(3, "kernel_Fork: return\n");
+        TracePrintf(6, "kernel_Fork: return\n");
         if (curr_proc == parent){
                 TracePrintf(6, "\t kernel_Fork; returning to parent  \n");
-                TracePrintf(3, "kernel_Fork parent ### end\n");
+                TracePrintf(3, "kernel_Fork ### end\n");
                 return child->process_id;
 
         }
         else if (curr_proc == child){
                 TracePrintf(6, "\t kernel_Fork; returning to child  \n");
-                TracePrintf(3, "kernel_Fork child ### end\n");
+                TracePrintf(3, "kernel_Fork ### end\n");
                 return 0;         
         }
         else{
@@ -265,10 +266,10 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 	WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_1);
 
 
-        TracePrintf(6, "kexev: %s\n", argvec[0]);
-        TracePrintf(6, "filename: %s\n", filename);
-        TracePrintf(6, "proc: %d\n", proc->process_id);
-        TracePrintf(6, "kexev: %s\n", argvec[0]);
+        TracePrintf(3, "kexev: %s\n", argvec[0]);
+        TracePrintf(3, "filename: %s\n", filename);
+        TracePrintf(3, "proc: %d\n", proc->process_id);
+        TracePrintf(3, "kexev: %s\n", argvec[0]);
         for (i = 0; i < argc; i ++){
                 TracePrintf(3, "%s\n", argvec[i]);
         }
@@ -571,45 +572,14 @@ int kernel_Wait(int * status_ptr, UserContext *uc)
 }
 
 
-
-/*------------------------------------------------- kernel_GetPid -----
- |  Function kernel_GetPid
- |
- | Description: returns curr proc PID
- |
- |  Parameters:
- |      none
- |
- |  Returns:  int with current PID
- *-------------------------------------------------------------------*/
 int kernel_GetPid()
 {
 	return curr_proc->process_id;
 }
 
-
-
-
-/*------------------------------------------------- kernel_Brk -----
- |  Function kernel_Brk
- |
- | Purpose:  sets the operating system’s idea of the lowest location 
- | not used by the program (called the “break”) to addr (rounded up to 
- | the next multiple of PAGESIZE bytes).
- |      1. check if addr in range
- |      2. allocate frames  and assign them to the process PTs
- |      3. traverse heap and make sure that permissions align
- |
- |  Parameters:
- |      void *addr (IN): address to set the brk to
- |                   
- |
- |  Returns:  SUCCESS if ok, ERROR otherwise
- *-------------------------------------------------------------------*/
 int kernel_Brk(void *addr)
 {
 
-    TracePrintf(3, "kernel_Brk ### start \n");
 	int i; // counter
 	int page_id; // temp
 
@@ -631,7 +601,7 @@ int kernel_Brk(void *addr)
         unsigned int heap_top_page = (unsigned int) (heap_bottom << PAGESHIFT);
 	if (u_addr > stack_bottom_page || 
 		u_addr < heap_top_page ){
-		TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
+		TracePrintf(1, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
 		return ERROR;
 	}
 
@@ -640,7 +610,7 @@ int kernel_Brk(void *addr)
 		if ((*(curr_proc->region1_pt + i)).valid != 0x1) {
 			// check for empty space
                         if (list_count(empty_frame_list) < 1){
-				TracePrintf(3, "kernel_Brk: out of memory");
+				TracePrintf(2, "kernel_Brk: out of memory");
 				return ERROR;
 			}
 
@@ -664,28 +634,9 @@ int kernel_Brk(void *addr)
 	}
 
 	curr_proc->brk_address = heap_top << PAGESHIFT;
-    TracePrintf(3, "kernel_Brk ### end \n");
 	return SUCCESS;
 }
 
-
-
-/*------------------------------------------------- kernel_Delay -----
- |  Function kernel_Delay
- |
- | Description:  The calling process is blocked until clock ticks clock 
- | interrupts have occurred after the call. 
- |      1. Set up block
- |      2. bookkeep
- |      3. Switch to new process
- |
- |  Parameters:
- |      UserContext *user_context (IN): current user context
- |      int clock_ticks (IN): how long to delay a process
- |                   
- |
- |  Returns:  SUCCESS if delay completed, ERROR otherwise
- *-------------------------------------------------------------------*/
 int kernel_Delay(UserContext *user_context, int clock_ticks)
 {
 	TracePrintf(3, "kernel_Delay ### start ");
@@ -702,7 +653,7 @@ int kernel_Delay(UserContext *user_context, int clock_ticks)
 
 
 	//Interupts off
-	//list_remove(ready_procs, (void *) curr_proc);
+	//list_remove(&ready_procs, (void *) curr_proc);
 	list_add(blocked_procs, (void *) curr_proc);
 
 	if (list_count(ready_procs) < 1){
@@ -715,25 +666,29 @@ int kernel_Delay(UserContext *user_context, int clock_ticks)
 	}
 
 	return SUCCESS;
+	
+	//Interupts on
+
+	/* As part of the Scheduler:
+	 * Move from ready list to blocked list.
+	 * for each process in blocked list:
+	 *	if(pcb->timeflag == 1):
+	 *		if  pcb->start_count > 0:
+	 *			start_count --;
+	 *		else:
+	 *			move pcb from blocked to ready.
+	 */
+
+	/* Round Robin for this only has a quantum of 1 clock tick. since the
+	 * kernel is uninteruptable we wont be counting clock ticks when we are
+	 * scheduling.
+	 */
 }
 
-
-
-/*------------------------------------------------- kernel_Reclaim -----
- |  Function kernel_Reclaim
- |
- | Purpose: Destroy the lock, condition variable, or pipe indentified by 
- | id. 
- | `    1. check if it's cvar/lock/pipe/buff
- |      2. check if it is in use
- }      3. follow procedure for reclaiming based on what we are reclaiming
- |
- |  Parameters:
- |      int id (IN): ID of the resource to be reclaimed
- |                   
- |
- |  Returns:  SUCCESS if reclaimed, ERROR otherwise
- *-------------------------------------------------------------------*/
+/* 
+ * Destroys the lock, cvar, or pipe identified by the id, and releases any
+ * associated resources. In case of error, the value ERROR is returned.
+ */
 int kernel_Reclaim(int id)
 {
 	void *temp;
