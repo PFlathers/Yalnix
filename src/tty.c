@@ -140,12 +140,13 @@ int kernel_TtyWrite(int tty_id, void *buf, int len)
                 else {
                         TtyTransmit(tty_id, buf, len);
                 }
-        }
-        else{
-                TracePrintf(6, "TtyWrite: \t there are writers in front of me, wait \n");
+
+                TracePrintf(3, "TtyWrite ### End, returning %d No Wait\n", len);
+                list_remove(tty->to_write, (void*)curr_proc);
+                return len;
         }
 
-
+        TracePrintf(6, "TtyWrite: \t there are writers in front of me, wait \n");
         // move on
         goto_next_process(curr_proc->user_context, 0);
 

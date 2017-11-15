@@ -194,7 +194,7 @@ void trapKernel(UserContext *uc)
 
        case YALNIX_TTY_WRITE:
                 if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
-                        TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
+                        TracePrintf(3, "trapTTYWRITE: error in string, out of range\n");
                         retval = ERROR;
                         break;
                 }
