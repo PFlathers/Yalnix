@@ -1,13 +1,26 @@
+/*=============================================================================
+ |   Assignment:   Yalnix Operating System
+ |
+ |       Author:  P.J.Flathers and B.Korbar
+ |     Language:  C
+ |   To Compile:  part of the yalnix os --- see makefile in the root folder
+ |
+ |        Class:  COSC 58 - Operating Systems
+ |   Instructor:  Dr. Sean Smith
+ |     Due Date:  Nov 16th, 2017
+ |
+ +-----------------------------------------------------------------------------
+ |
+ |  Purpose:  implements the operations on the PCB
+ |
+ *===========================================================================*/
+
+
+
 /*
- * PCB.c
- * the only function we should need here is 
- * the "new_process function", which would take
- * either user or kernel context (if we can take kernel context)
- * and return a pcb for it
+ * System includes
  */
-
 #include <hardware.h>
-
 
 /*
  * Local includes
@@ -18,8 +31,17 @@
 #include "kernel.h"
 
 
-/* Prototype new_process function */
-
+/*------------------------------------------------- new_process -----
+|  Function new_process
+|
+|  Purpose:  Allocates and creates the PCB for the new process
+|
+|  Parameters:
+|      User Context uc (IN/OUT) - current user context, 
+|   				it is returned as a part of PCB
+|
+|  Returns:  pointer to the PCB of the newly created process
+*-------------------------------------------------------------------*/
 pcb *new_process(UserContext *uc)
 {
 	TracePrintf(3, "new_process ### enter\n");
@@ -81,25 +103,41 @@ pcb *new_process(UserContext *uc)
 	return new_pcb;
 }
 
-
+/*------------------------------------------------- check_block_status -----
+|  Function check_block_status
+|
+|  Purpose:  Check if the process is blocking; used only for delay 
+|
+|  Parameters:
+|      DelayHandler *block (IN) -- pointer to the DelayHandler datastructure
+| 				usually found in the pcb as pcb->block
+|
+|  Returns:  returns 0 if block is inactive, 1 if active and ERROR 
+| 	     otherwise
+*-------------------------------------------------------------------*/
 int check_block_status(DelayHandler *block)
 {
 	unsigned int ticks;
 	pcb *proc_on_delay;
 
+	// if block is inactive
 	if (block->is_active == INACTIVE){
 		return(0);
-	}
+	} // if it's neither active or inactive
 	else if (block->is_active != ACTIVE){
 		return(ERROR);
 	}
 
+	// if there is no block, zero out the memory, and
+	// return NO_BLOCK
 	if (block->type == NO_BLOCK) {
 		bzero((char *) block, sizeof(DelayHandler));
 		return(0);
 	}
 
-	// check the length of the delay and decement
+	// if the block is of the type delay, it has a ticks 
+	// count -> find that count and decrement it as we would
+	// call this from the CLOCK trap 
 	if (block->type == DELAY){
 		ticks = (unsigned int) block->stats.count;
 
@@ -108,6 +146,8 @@ int check_block_status(DelayHandler *block)
 			return 1;
 		}
 		else{
+			// if we are done blocking, zero out the memory, and
+			// return NO_BLOCK
 			bzero((char *) block, sizeof(DelayHandler));
 			return(0);
 		}
