@@ -450,18 +450,26 @@ int SetKernelBrk(void * addr)
 		unsigned int page_bottom = VMEM_0_BASE >> PAGESHIFT;
 		// page adress is pageshifted toPage(addr)
 		unsigned int page_addr = DOWN_TO_PAGE(addr) >> PAGESHIFT;
+                unsigned int page_brk = DOWN_TO_PAGE(kernel_brk) >> PAGESHIFT;
 		// botom of the stack is pageshifted toPage(KERNEL BASE)
 		unsigned int stack_bottom = DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT;
 
+                // safety check 2
+                for (i = page_bottom; i <= page_brk; i++){
+                        if ( r0_ptlist[i].valid == 0x0){
+                                TracePrintf(1, "SetKernelBrk: \t region below heap is corrupted \n");
+                        }
+                }
+
 		// from bottom to addr of page, update validity as (u_long) 0x01
 		for (i = page_bottom; i <= page_addr; i++){
-			if ( r0_ptlist[i].valid == 0x1){
+			if ( r0_ptlist[i].valid != 0x1){
                                 r0_ptlist[i].valid = (u_long) 0x1;
                         }
 		}
 
 		// from addr of pade to bottom of stack invalid
-		for (i  = page_addr; i< stack_bottom; i++){
+		for (i  = page_addr; i<  stack_bottom; i++){
                         if ( r0_ptlist[i].valid == 0x1){
                                 r0_ptlist[i].valid = (u_long) 0x0;
                         }
