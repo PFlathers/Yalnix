@@ -73,7 +73,7 @@ void free_pagetables(pcb* myproc)
         //Recycle the kernel page tables
         for (i = 0; i < KERNEL_PAGE_COUNT; i ++){
                 if( (*(myproc->region0_pt + i)).valid == 0x1){
-                        trash_pfn = FRAME_TO_PAGE( (*(myproc->region0_pt + i)).pfn );
+                        trash_pfn = PAGE_TO_FRAME( (*(myproc->region0_pt + i)).pfn );
                         list_add(empty_frame_list, (void *) trash_pfn);
 
                         (*(myproc->region0_pt + i)).valid = (u_long) 0x0;
@@ -84,7 +84,7 @@ void free_pagetables(pcb* myproc)
         //Recycle the userland page tables
         for (i = 0; i < VREG_1_PAGE_COUNT; i++){
                 if( (*(myproc->region1_pt + i)).valid == 0x1 ){
-                        trash_pfn = FRAME_TO_PAGE( (*(myproc->region0_pt + i)).pfn );
+                        trash_pfn = PAGE_TO_FRAME( (*(myproc->region0_pt + i)).pfn );
                         list_add(empty_frame_list, (void*) trash_pfn);
 
                         (*(myproc->region1_pt + i)).pfn = (u_long) 0x0;
@@ -94,6 +94,8 @@ void free_pagetables(pcb* myproc)
         
         free(myproc->user_context);
         free(myproc->kernel_context);
+        free(myproc->region1_pt);
+        free(myproc->region0_pt);
 
         //Dont forget to flush.
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);

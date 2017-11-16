@@ -479,6 +479,11 @@ int SetKernelBrk(void * addr)
 		unsigned int u_brk = (unsigned int) kernel_brk;
 		// add safety check for casts
 
+                if ( ((unsigned int)addr>>PAGESHIFT) >= (DOWN_TO_PAGE(KERNEL_STACK_BASE)>>PAGESHIFT) ) {
+                    TracePrintf(1, "Growing kernel heap into kernel stack or higher\n");
+                    return ERROR;
+                }
+
 		// if address is larger than the previous break, set new break, 
 		// else we do nothing
 		if ( u_addr > u_brk ){
@@ -501,6 +506,7 @@ void DoIdle() {
     Pause();
   } 
 } 
+
 
 /*
  * Clones the kernel context stack so that if a process does not yet have a 

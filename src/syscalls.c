@@ -316,7 +316,19 @@ void kernel_Exit(int status, UserContext *uc)
         pcb *child;
         pcb *exiting_p = curr_proc;
 
-        int orphan_flag = (exiting_p->parent == NULL);
+        // if it's on the ready list remove it
+        temp = ready_procs->head;
+        while(temp->next != NULL){
+            if ( ((pcb*)temp->data)->process_id == exiting_p->process_id){
+                list_remove(ready_procs, exiting_p);
+                TracePrintf(6,"\t:exiting being removed from ready\n");
+
+            }
+            temp = temp->next;
+        }
+        TracePrintf(6,"\texiting process not on the list or \n");
+
+        int orphan_flag = (exiting_p->parent == NULL || exiting_p->parent->process_id == 0);
         //int orphan_flag = (curr_proc->parent == NULL ? 1 : 0);
         if(!orphan_flag){
                 list_remove(blocked_procs, exiting_p->parent);
@@ -364,7 +376,7 @@ void kernel_Exit(int status, UserContext *uc)
                  }
                 
                 list_remove(zombie_procs, dead_status);
-                free_pagetables(dead_status);
+                // free_pagetables(dead_status);
 
         //we didnt find the lock
         /*
@@ -386,7 +398,7 @@ void kernel_Exit(int status, UserContext *uc)
         }
         TracePrintf(6, "\t: passed has zombiez\n");
         
-        if (exiting_p->parent != NULL){
+        if (exiting_p->parent != NULL && exiting_p->parent->process_id != 0){
             p = exiting_p->parent;
 
             if (list_remove(p->children, (void*) exiting_p) != 0){
