@@ -11,15 +11,17 @@ char *argv[];
     if ((pid = Fork()) == 0)
     {
       TracePrintf(0,"CHILD\n");
-      recurse("child", 33);
+      //recurse("child", 33);
     }
     else
     {
       TracePrintf(0,"PARENT: child pid = %d\n", pid);
-      recurse("parent", 33);
+      //recurse("parent", 33);
+      TtyPrintf(0, "%p", &pid);
+      Wait(&pid);
     }
 
-    Exit(0);
+    return 0;
 }
 
 recurse(who, i)
