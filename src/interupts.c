@@ -28,17 +28,18 @@ void trapKernel(UserContext *uc)
    *Warning: Do not redefine while switching traps
    */
   int retval = 0;
-  void *addr;
   int len;
   int tty_id;
   void *buf;
 
   // weee - switching
   switch(uc->code) { 
+
+          //Handles trap for excec and checks if the inputs are valid.
       case YALNIX_EXEC:
                 TracePrintf(3, "trapKernel: YALNIX_EXEC\n");
 
-                //Check all the pointers to ensure nothing is wrong
+                // Check that the pointers are not outisde the pagetable 
                 if ( check_pointer_range(uc->regs[0]) 
                   || check_pointer_range(uc->regs[1]) ){
 
@@ -46,7 +47,8 @@ void trapKernel(UserContext *uc)
                         retval = ERROR;
                         break;
                 }
-
+                
+                //check that the memory is valid.
                 if ( check_pointer_valid(uc->regs[0])
                   || check_pointer_valid(uc->regs[1]) ){
 
@@ -54,6 +56,8 @@ void trapKernel(UserContext *uc)
                         retval = ERROR;
                         break;
                 }
+
+                //check that there are proper permissions
                 if ( is_rw(uc->regs[0]) \
                   || is_rw(uc->regs[1]) ){
 
@@ -68,31 +72,35 @@ void trapKernel(UserContext *uc)
 
                 //need to copy the file name into kernel space
                 char *filename = (char *) malloc(file_size); 
-                ALLOC_CHECK(filename, "exec");
-                memcpy((void*) filename, (void*) fname_p, file_size);
+                ALLOC_CHECK(filename, "exec"); //double check that filename was malloced
+                memcpy((void*) filename, (void*) fname_p, file_size); //make a kernel copy of the filename
                 TracePrintf(6, "trapKernel: calling exec on %s\n", filename);
                 TracePrintf(3, "tk:%s\n", arg_p[0]);
 
                 //begin exec-ing
                 kernel_Exec(uc, filename, arg_p); 
+                TracePrintf(3, "trapKernel: YALNIX_EXEC End\n");
                 break;
 
       case YALNIX_DELAY:
                 TracePrintf(3, "trapKernel: YALNIX_DELAY \n");
                 clock_ticks = (int) uc->regs[0];
                 retval = kernel_Delay(uc, clock_ticks);
+                TracePrintf(3, "trapKernel: YALNIX_DELAY End \n");
                 break;
 
       case YALNIX_FORK:
         TracePrintf(3, "trapKernel: YALNIX_FORK\n");
         retval = kernel_Fork(uc);
-        TracePrintf(0, "retval: %d\n", retval);
+        TracePrintf(8, "retval: %d\n", retval);
+        TracePrintf(3, "trapKernel: YALNIX_FORK End\n");
         break;
 
       case YALNIX_EXIT:
         TracePrintf(3, "trapKernel: YALNIX_EXIT\n");
       	int status = (int) uc->regs[0];
       	kernel_Exit(status, uc);
+        TracePrintf(3, "trapKernel: YALNIX_EXIT End\n");
         break;
 
       case YALNIX_WAIT:
@@ -121,14 +129,17 @@ void trapKernel(UserContext *uc)
                 // process.
                 int *status_pt = (int *) uc->regs[0];
                 retval = kernel_Wait(status_pt, uc);
+                TracePrintf(3, "trapKernel: YALNIX_WAIT End\n");
                 break;
 
       case YALNIX_GETPID:
                 TracePrintf(3, "trapKernel: YALNIX_GETPID\n");
                 retval = kernel_GetPid(uc);
+                TracePrintf(3, "trapKernel: YALNIX_GETPID End\n");
                 break;
 
       case YALNIX_PIPE_INIT:
+                TracePrintf(3, "trapKernel: YALNIX_PIPE_INIT\n");
                 // check if in range
                 if ( check_pointer_range(uc->regs[0]) ){
                         TracePrintf(3, "trapKernel: error in PipeInit, pointer out of range\n");
@@ -149,26 +160,38 @@ void trapKernel(UserContext *uc)
                 }
 
                 retval = PipeInit((int*) uc->regs[0]);
+                TracePrintf(3, "trapKernel: YALNIX_PIPE_INIT End\n");
                 break;
 
       case YALNIX_PIPE_READ:
+                TracePrintf(3, "trapKernel: YALNIX_PIPE_READ\n");
+
+                //check if the supposed buffer is valid.
                 if( check_string_validity(uc->regs[1], uc->regs[2]) ){
                         retval = ERROR;
                         break;
                 }
                 memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
                 retval = kernel_PipeRead((int) uc->regs[0], (void *) uc->regs[1], (int) uc->regs[2], uc);
+
+                TracePrintf(3, "trapKernel: YALNIX_PIPE_READ End\n");
                 break;
 
       case YALNIX_PIPE_WRITE:
+                TracePrintf(3, "trapKernel: YALNIX_PIPE_WRITE\n");
+
                 if( check_string_validity(uc->regs[1], uc->regs[2]) ){
                         retval = ERROR;
                         break;
                 }
                 retval = kernel_PipeWrite((int) uc->regs[0], (void * ) uc->regs[1], (int) uc->regs[2]);
+
+                TracePrintf(3, "trapKernel: YALNIX_PIPE_WRITE End\n");
                 break;
 
       case YALNIX_BRK:
+                TracePrintf(3, "trapKernel: YALNIX_BRK\n");
+
                 // check if in range
                 if ( check_pointer_range(uc->regs[0]) ){
                         TracePrintf(0, "trapKernel: brk to set is: %d\n", (int)uc->regs[0]);
@@ -188,13 +211,16 @@ void trapKernel(UserContext *uc)
                         retval = ERROR;
                         break;
                 }
-                addr = (void *) uc->regs[0];
+
+                void *addr = (void *) uc->regs[0];
                 retval = kernel_Brk(addr);
+
+                TracePrintf(3, "trapKernel: YALNIX_BRK\n");
                 break;
 
        case YALNIX_TTY_WRITE:
                 if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
-                        TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
+                        TracePrintf(3, "trapTTYWRITE: error in string, out of range\n");
                         retval = ERROR;
                         break;
                 }
@@ -208,7 +234,7 @@ void trapKernel(UserContext *uc)
        case YALNIX_TTY_READ:
                  //check string validity in uc->regs
                 if ( check_string_validity(uc->regs[1], uc->regs[2]) ){
-                        TracePrintf(3, "trapTTYWRITE: error in sting, out of range\n");
+                        TracePrintf(3, "trapTTYWRITE: error in string, out of range\n");
                         retval = ERROR;
                         break;
                 }
@@ -226,13 +252,6 @@ void trapKernel(UserContext *uc)
                         retval = ERROR;
                         break;
                 }
-                // check if pages are valid
-                // if ( check_pointer_valid(uc->regs[0]) ){
-                //         TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, page not valid \n");
-                //         retval = ERROR;
-                //         break;
-                // }
-                // check if RW
                 if ( is_rw(uc->regs[0]) ){
                         TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, page not rw\n");
                         retval = ERROR;
@@ -243,6 +262,7 @@ void trapKernel(UserContext *uc)
                 break;
 
         case YALNIX_LOCK_ACQUIRE:
+                        TracePrintf(3, "trap Aquire\n");
                 retval = kernel_Acquire((int) uc->regs[0]);
                 break;
 
@@ -255,6 +275,7 @@ void trapKernel(UserContext *uc)
                 break;
 
         case YALNIX_CVAR_SIGNAL:
+                TracePrintf(3, "trap Signal\n");
                 retval = kernel_CvarSignal((int)uc->regs[0]);
                 break;
 
@@ -361,79 +382,6 @@ void trapIllegal(UserContext *uc)
         uc->regs[0] = status;
 }
 
-/*void trapMemory(UserContext *uc)
-{
-        TracePrintf(0, "Illegal Memory code %d\n", uc->code);
-        TracePrintf(6, "\t address %p \n \t sp %p \n \t pc %p \n", uc->addr, uc->sp, uc->pc);
-
-        //memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
-
-      	int status = -1;
-
-        if (uc->code == YALNIX_ACCERR) {
-          TracePrintf(6, "\t Process had access error at %p \n", uc->code);
-          kernel_Exit(status, uc);
-        }
-        else if (uc->code == YALNIX_MAPERR) {
-          TracePrintf(6, "\t Process had a mapping error \n");
-          if ( (unsigned int)uc->addr > curr_proc->brk_address ||
-            (DOWN_TO_PAGE(uc->addr)>>PAGESHIFT) <= ((DOWN_TO_PAGE(curr_process->brk_address) >> PAGESHIFT) + 1) ){
-                  TracePrintf(6, "\t exiting, real mapping err so sorry \n");
-                  int brk_over = ((unsigned int)uc->addr < curr_proc->brk_address);
-                  TracePrintf(6, "\t error: uc->addr %u,  brk_address %d \n", (unsigned int)uc->addr, curr_proc->brk_address);
-                  kernel_Exit(status, uc);
-                  // uc->regs[0] = status;
-          }
-        }
-
-      unsigned int addr_page = DOWN_TO_PAGE(uc->addr) >> PAGESHIFT;
-      unsigned int stack_top_page = VMEM_1_LIMIT >> PAGESHIFT;
-      unsigned int usr_brk_page = UP_TO_PAGE(curr_proc->brk_address) >> PAGESHIFT;
-      unsigned int usr_heap_bottom = curr_proc->heap_start_pg;
-      
-      int i; 
-
-      // check if the requested adreess would mess up the heap,
-      // i.e there should be at least one page to make it work
-      // two not to mess it up
-      TracePrintf(6, "trapKernelMemory: \t addr_page %u, brk page %u", addr_page, usr_brk_page);
-      if ( (addr_page - usr_brk_page) <= 2 && (addr_page - usr_brk_page) < ) {
-            TracePrintf(6, "Illegal Memory: process out of memory \n");
-            kernel_Exit(status, uc);
-            //uc->regs[0] = status;
-      }   
-
-      unsigned int vm_pg_start = addr_page - 128;
-      unsigned int vm_pg_end = stack_top_page - 128;
-      struct pte *temp;
-      for (i = vm_pg_start; i<= vm_pg_end; i++){
-                temp = (curr_proc->region1_pt + i);
-
-                // no page allocated for region 1 pt
-                if (temp->valid == (u_long) 0x0) {
-                        if (list_count(empty_frame_list) < 1) {
-                                TracePrintf(6, "Illegal Memory: not enough frames to grow stack \n");
-                                kernel_Exit(status, uc);
-                                //uc->regs[0] = status;
-                        }
-
-                        // set page to valid
-                        temp->valid = (u_long) 0x1;
-                        temp->prot = (u_long) (PROT_READ | PROT_WRITE);
-
-                        // map  aframe to it
-                        int pfn = (int) list_pop(empty_frame_list);
-                        temp->pfn = (u_long) ( (pfn * PAGESIZE) >> PAGESHIFT);
-
-                }
-      }
-      // flush me baby flush me baby
-      WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-      TracePrintf(0, "Illegal Memory: Holly shit we survived\n");
-      //kernel_Exit(-1, uc);
-
-      	
-}*/
 void trapMemory(UserContext *uc)
 {
         TracePrintf(0, "Illegal Memory code %d\n", uc->code);
@@ -474,7 +422,6 @@ void trapMemory(UserContext *uc)
       if ( (addr_page - usr_brk_page) <= 2 && ((int)addr_page - (int)usr_brk_page) < 0) {
             TracePrintf(6, "Illegal Memory: process out of memory \n");
             kernel_Exit(status, uc);
-            //uc->regs[0] = status;
       }   
 
       unsigned int vm_pg_start = addr_page - 128;
@@ -488,7 +435,6 @@ void trapMemory(UserContext *uc)
                         if (list_count(empty_frame_list) < 1) {
                                 TracePrintf(6, "Illegal Memory: not enough frames to grow stack \n");
                                 kernel_Exit(status, uc);
-                                //uc->regs[0] = status;
                         }
 
                         // set page to valid
@@ -503,8 +449,7 @@ void trapMemory(UserContext *uc)
       }
       // flush me baby flush me baby
       WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-      TracePrintf(0, "Illegal Memory: Holly shit we survived\n");
-      //kernel_Exit(-1, uc);
+      TracePrintf(0, "Illegal Memory: Surived\n");
 
         
 }
@@ -574,7 +519,6 @@ void trapTTYReceive(UserContext *uc)
 void trapTTYTransmit(UserContext *uc)
 {
         TracePrintf(0, "trapTTYTransmit ### start \n");
-        //memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
 
         // find the tty by uc->code
         int tty_id = uc->code;
@@ -632,13 +576,6 @@ void trapTTYTransmit(UserContext *uc)
                         // in the syscall)
                         TracePrintf(6, "TtyWrite: \n nothing remains, adding to ready\n");
 
-/*
-                        Node *temp = blocked_procs->head;
-                        pcb *p2 = NULL;
-                        while(temp != NULL){
-                            if()
-                        }
-                        */
                         list_add_messy(ready_procs, writer);
                         pcb *next;
                         if (list_count(tty->to_write) > 0) {

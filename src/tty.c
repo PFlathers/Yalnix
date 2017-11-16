@@ -47,16 +47,12 @@ int kernel_TtyRead(int tty_id, void *buf, int len)
         TTY *tty = NULL;
         Node * node =  ttys->head;
 
-        while (node->next != NULL){
+        while (node != NULL){
                 if ( ((TTY*)node->data)->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
                 }
                 node = node->next;
-        }
-        //edge case
-        if ( ((TTY*)node->next->data)->tty_id == tty_id) {
-                tty = (TTY*)node->next->data;
         }
         if (tty == NULL) {
                 TracePrintf(3, "TtyWrite ERROR; tty %d out of bounds \
@@ -141,14 +137,13 @@ int kernel_TtyWrite(int tty_id, void *buf, int len)
 	   // look up tty by it's id
         TTY *tty = NULL;
         Node * node =  ttys->head;
-        while (node->next != NULL){
+        while (node != NULL){
                 if ( ((TTY*)node->data)->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
                 }
                 node = node->next;
         }
-        
 
         if (tty == NULL) {
                 TracePrintf(3, "TtyWrite: ERROR; tty %d out of bounds \

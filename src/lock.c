@@ -5,8 +5,6 @@
 #include "kernel.h"
 
 
-//Prototypes for lock.
-
 //Intializes Lock.
 //Warning: sets lock to free and proc_id to 0, no one has claimed it.
 int kernel_LockInit(int * lock_idp)
@@ -57,7 +55,7 @@ int kernel_Acquire(int lock_id)
                 /* this is probably very wrond, but 
                 i don't understand patrick's logit */
                 list_add(my_lock->waiters, curr_proc);
-                goto_next_process(curr_proc->user_context, 0);
+                goto_next_process(curr_proc->user_context, 1);
 
                 // when returned from the last process
                 return  SUCCESS;

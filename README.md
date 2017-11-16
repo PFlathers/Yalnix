@@ -23,7 +23,7 @@ This is quite a futile part of the readme, as I realized that to write it comple
 
 
 ##### Documented issues
-1. yes
+1. None as of now.
 
 
 --- 

@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
            }
 	}
         else{
+                Delay(6);
                 Release(i);
         }
 
