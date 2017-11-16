@@ -97,6 +97,7 @@ void init_global(int phys_mem_size)
 
 	available_process_id = 0;	// at start we run at 0
         glob_resource_list = 0;         // for pipes and stuff
+        available_lock_id = 0;
 
 
 	// process tracking lists (per sean's suggestion)
@@ -104,6 +105,8 @@ void init_global(int phys_mem_size)
 	blocked_procs = (List *)init_list();
 	all_procs = (List *)init_list(); 
 	zombie_procs = (List *)init_list(); 
+        locks = (List *)init_list();
+        cvars = (List *) init_list();
 
 
         // book kepingz
@@ -268,7 +271,7 @@ void create_idle_proc(UserContext *user_context)
 
 	// region0 pagetable is malloced in the same way as the user one
 	idle_proc->region0_pt = (struct pte *)malloc( KERNEL_PAGE_COUNT * sizeof(struct pte));
-	// this 
+
 	memcpy((void *)idle_proc->region0_pt,
 		  (void *) &(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT]), 
 		  KERNEL_PAGE_COUNT * sizeof(struct pte));
@@ -288,7 +291,7 @@ void create_idle_proc(UserContext *user_context)
  */
 void create_init_proc(UserContext *user_context, char *cmd_args[])
 {
-	int i;
+	 int i;
 	 // base it of of the init (so that I don't have to re-do things)
 	 pcb *init_proc = (pcb *) new_process(user_context);
 
@@ -373,12 +376,6 @@ void KernelStart(char *cmd_args[],
 {
 	TracePrintf(0, "KernelStart ### Start\n");
 
-	/*LOCAL VARIABLES*/
-
-	int i; 
-	int arg_count; // number of variables passed 
-
-
 	// lowest frame in region 1 - see figure 2.2
 	int r1_base_frame = DOWN_TO_PAGE(VMEM_1_BASE) >> PAGESHIFT;
 	// highest frame in region 1 - see 3ipure 2.2
@@ -453,18 +450,26 @@ int SetKernelBrk(void * addr)
 		unsigned int page_bottom = VMEM_0_BASE >> PAGESHIFT;
 		// page adress is pageshifted toPage(addr)
 		unsigned int page_addr = DOWN_TO_PAGE(addr) >> PAGESHIFT;
+                unsigned int page_brk = DOWN_TO_PAGE(kernel_brk) >> PAGESHIFT;
 		// botom of the stack is pageshifted toPage(KERNEL BASE)
 		unsigned int stack_bottom = DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT;
 
+                // safety check 2
+                for (i = page_bottom; i <= page_brk; i++){
+                        if ( r0_ptlist[i].valid == 0x0){
+                                TracePrintf(1, "SetKernelBrk: \t region below heap is corrupted \n");
+                        }
+                }
+
 		// from bottom to addr of page, update validity as (u_long) 0x01
 		for (i = page_bottom; i <= page_addr; i++){
-			if ( r0_ptlist[i].valid == 0x1){
+			if ( r0_ptlist[i].valid != 0x1){
                                 r0_ptlist[i].valid = (u_long) 0x1;
                         }
 		}
 
 		// from addr of pade to bottom of stack invalid
-		for (i  = page_addr; i< stack_bottom; i++){
+		for (i  = page_addr; i<  stack_bottom; i++){
                         if ( r0_ptlist[i].valid == 0x1){
                                 r0_ptlist[i].valid = (u_long) 0x0;
                         }
@@ -481,6 +486,11 @@ int SetKernelBrk(void * addr)
 		unsigned int u_addr = (unsigned int) addr;
 		unsigned int u_brk = (unsigned int) kernel_brk;
 		// add safety check for casts
+
+                if ( ((unsigned int)addr>>PAGESHIFT) >= (DOWN_TO_PAGE(KERNEL_STACK_BASE)>>PAGESHIFT) ) {
+                    TracePrintf(1, "Growing kernel heap into kernel stack or higher\n");
+                    return ERROR;
+                }
 
 		// if address is larger than the previous break, set new break, 
 		// else we do nothing
@@ -504,6 +514,7 @@ void DoIdle() {
     Pause();
   } 
 } 
+
 
 /*
  * Clones the kernel context stack so that if a process does not yet have a 
@@ -577,8 +588,16 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 	pcb *current = (pcb *) current_pcb;
 	pcb *next = (pcb *) next_pcb; 
 
+        if (current != NULL){
+                memcpy((void *) current->kernel_context, (void *) kernel_context_in, sizeof(KernelContext));
+        }
 	// save current kc
-	memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+        //
+        // if statement per seans suggestions
+        if (current != NULL && current->has_kc == 0){
+                memcpy( (void *) (current->kernel_context), (void *) kernel_context_in, sizeof(KernelContext));
+                current->has_kc = 1;
+        }
 
 	// bootstrap the kernel if we are starting
 	if (next->has_kc == 0){
@@ -589,9 +608,9 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
 	// save current k stack
 	if (current != NULL) {
-      memcpy((void *) current->region0_pt,
-              (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
-              KERNEL_PAGE_COUNT * (sizeof(struct pte)));
+              memcpy((void *) current->region0_pt,
+                      (void *) (&(r0_ptlist[KERNEL_STACK_BASE >> PAGESHIFT])),
+                      KERNEL_PAGE_COUNT * (sizeof(struct pte)));
     }
 
 
@@ -609,6 +628,9 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
     // return	
     TracePrintf(2, "MyKCS ### End : my guess \n");
+    if (!next->kernel_context){
+        TracePrintf(6, "OOOOH SHIIIIIT \n");
+    }
     return next->kernel_context;
 
 }
@@ -678,17 +700,17 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 	if (current != NULL){
 		memcpy((void *)current->user_context, (void *) user_context, sizeof(UserContext));
 	}
-
+        TracePrintf(6, "\t : passed null check \n");
 	// Save hext process' UC in the currently used uc var so that we don't have to 
 	// reallocate (tip from prof Palmer in CS50 :))
 	memcpy((void *) user_context, (void *) next->user_context, sizeof(UserContext));
-
+        TracePrintf(6, "\t : passed next->uc copy \n");
 	// current procces becomes next
 	curr_proc = next;
 
 	// magic function from 5.2
 	int r = KernelContextSwitch(MyKCS, (void *) current, (void *) next);
-
+        TracePrintf(6, "\t : surrvived MyKCS \n");
 	// make user context current one (not needed atm)
 	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));
 
@@ -697,30 +719,4 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 	return r;
 }	
 
-
-void scheduler(void)
-{
-	TracePrintf(2, "Scheduler ### Start \n");
-
-	unsigned int i;
-	int retval;
-
-	pcb *next_pcb;
-	pcb *curr_pcb = curr_proc;
-
-	if (list_count(ready_procs) > 0){
-		next_pcb = list_pop(ready_procs);
-		curr_proc = next_pcb;
-
-		retval = KernelContextSwitch(MyKCS, (void *) curr_pcb, (void *) next_pcb);
-	}
-
-	if (retval != 0){
-		TracePrintf(1, "Scheduler ### ERROR KCS FAILED");
-		exit(FAILURE);
-	}
-
-	TracePrintf(2, "Scheduler ### End \n");
-
-}
 

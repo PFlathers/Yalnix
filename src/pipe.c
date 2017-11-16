@@ -1,8 +1,12 @@
+#include <hardware.h>
 #include "globals.h"
 #include "pipe.h"
 #include "kernel.h"
+#include <string.h>
 
-
+/*
+ * Creates a new pipe. pipe_id will return the id of the pipe to userland
+ */
 int PipeInit(int *pipe_idp)
 {
         TracePrintf(3, "PipeInit ### start\n");
@@ -19,7 +23,7 @@ int PipeInit(int *pipe_idp)
         
 
         // set pipe id, length
-        pipe->id = glob_resource_list++;
+        pipe->id = available_lock_id++;
         pipe->length = 0;
         pipe->exp_length = 0;
         pipe->pipe_queue->head = NULL;
@@ -34,24 +38,27 @@ int PipeInit(int *pipe_idp)
         return SUCCESS;
 }
 
-int PipeRead(int pipe_id, void *buf, int len)
+/*
+ * Read and return x amount of characters from the pipe. 
+ * Arguement:
+ *      pipe_id: the pipe we will be reading from
+ *      buf: the buf we will be writing to
+ *      len: the number of characters to read
+ */
+int kernel_PipeRead(int pipe_id, void *buf, int len, UserContext *uc)
 {
         TracePrintf(3, "PipeRead ### start\n");
 
         Node *node = pipes->head;
         Pipe *pipe = NULL;
+        int gp_flag = 0;
         // find the pipe in the global list
-        while(node->next != NULL){
+        while(node != NULL){
                 if ( ((Pipe*)(node->data))->id == pipe_id){
                         pipe = (Pipe *)node->data;
                         break;
                 }
                 node = node->next;
-        }
-
-        // edge case 
-        if ( ((Pipe*)node->next->data)->id == pipe_id){
-                pipe = ((Pipe *) node->next->data);//->id;
         }
 
         // if there are no requested pipes,return error
@@ -69,21 +76,16 @@ int PipeRead(int pipe_id, void *buf, int len)
                 pipe->exp_length = len;
                 curr_proc->pipe_lenght = len;
                 list_add(pipes, (void *) pipe);
-                goto_next_process(curr_proc->user_context, 0);
+                gp_flag = 1;
         }
+        
+        //reading x chars into the return buffer
+        strncpy((char*) buf, pipe->buffer, len);
 
-
-        /* Reading starts, god help me */
-
-        // memcpy((void *)buf, (void *)pipe->buffer, len);
-        // EDIT: run into bugs with memcpy
-        // trying memmove based on https://stackoverflow.com/a/4415926
-        // (segfaulted, dunno why yet)
-
-        memmove((void *)buf, (void *)pipe->buffer, len);
-        // if there is anything else in the pipe, move it forward
-        //memcpy((void *)pipe->buffer, (void *)(pipe->buffer + len), MAX_PIPE_LEN - len);
-        memmove((void *)pipe->buffer, (void *)(pipe->buffer + len), MAX_PIPE_LEN - len);
+        //move stuff down the pipe 
+        strcpy(pipe->buffer, &(pipe->buffer[len]));
+       
+        
         // zero out the old shifted stuff
         bzero(pipe->buffer + (MAX_PIPE_LEN - len), len);
 
@@ -91,17 +93,27 @@ int PipeRead(int pipe_id, void *buf, int len)
         pipe->length -= len;
 
         TracePrintf(3, "PipeRead ### end\n");
-	return(len);
+        if(gp_flag)
+                goto_next_process(curr_proc->user_context, 1);
+
+	return len;
 }
 
-int PipeWrite(int pipe_id, void *buf, int len)
+/*
+ * Writes the given buffer to the pipe
+ * Arguements:
+ *      pipe_id: the pipe we will be writing to
+ *      buf: the buffer that contains what we will be writing
+ *      len: the length of the buffer
+ */
+int kernel_PipeWrite(int pipe_id, void *buf, int len)
 {
         TracePrintf(3, "PipeWrite ### start\n");
        Node *node = pipes->head;
         Pipe *pipe = NULL;
 
         // find the pipe in the global list
-        while(node/*->next*/ != NULL){
+        while(node != NULL){
                 if ( ((Pipe*)node->data)->id == pipe_id){
                         pipe = (Pipe *)node->data;
                         break;
@@ -146,9 +158,3 @@ int PipeWrite(int pipe_id, void *buf, int len)
         TracePrintf(3, "PipeWrite ### end\n");
 	return len;
 }
-
-// replace by kernel_Reclaim
-// int PipeDestroy(int pipe_id)
-// {
-// 	return 0;
-// }

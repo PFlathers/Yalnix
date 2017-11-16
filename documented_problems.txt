@@ -1,4 +1,10 @@
 - FIXED: child doesnt have a parent.
-- When process exits and calls goto_next_process, we segfault when we about to "pop a molly" to process 0.
-        Nothing has yet been freed in kernel_exit.
+- FIXED: parent thinks its the child
 - Child thinks it is its own child.
+- set brk segfaults
+- set kernel brk segfaults
+- wait is broken
+- parent's pid turns into an address if it terminates before the child
+- when we call piperead, the next process turns into an address... This means
+  that we corrupted something in pipe read. probably the same thing that we
+  corrupted in exiting the parent before the child.

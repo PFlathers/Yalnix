@@ -14,43 +14,53 @@ int main(int argc, char *argv[])
         }
 
         rc = Fork();
+        Pause();
         if (rc == 0) {
-                char *buffer = (char *)malloc(5 * sizeof(char));
+                char buffer[5]; //= (char *)malloc(5 * sizeof(char));
                 buffer[0] = 'b';
                 buffer[1] = 'r';
                 buffer[2] = 'u';
                 buffer[3] = 'n';
-                buffer[4] = 'o';
+                buffer[4] = '\0';
 
-                char *buffer2 = (char *)malloc(5 * sizeof(char));
+                char buffer2[5];// = (char *)malloc(5 * sizeof(char));
                 buffer2[0] = 's';
                 buffer2[1] = 'u';
                 buffer2[2] = 'c';
                 buffer2[3] = 'k';
-                buffer2[4] = 's';
+                buffer2[4] = '\0';
 
                 int written;
 
 
                 Pause();
-                written = PipeWrite(id, buffer, 4);
+                written = PipeWrite(id, buffer, 6);
                 Pause();
 
                 Pause();
-                written = PipeWrite(id, buffer2, 4);
+                written = PipeWrite(id, buffer2, 6);
 
                 Pause();
-                Exit(0);
-        } else {
-                char *to_read = (char *)malloc(6 * sizeof(char));
+                char to_read[100] ;//= (char *)malloc(6 * sizeof(char));
                 int read;
                 Pause();
                 Pause();
-                read = PipeRead(id, to_read, 6);
+                read = PipeRead(id, &to_read, 6);
                 TracePrintf(1, "\t pipe test: read %d chars from the pipe: %s\n", read, to_read);
 
                 Pause();
-                Exit(0);
+                return 0;
+        } else {
+                char to_read[100] ;//= (char *)malloc(6 * sizeof(char));
+                int read;
+                Pause();
+                Pause();
+                read = PipeRead(id, &to_read, 6);
+                TracePrintf(1, "\t pipe test: read %d chars from the pipe: %s\n", read, to_read);
+                
+                Wait(&rc);
+                Pause();
+                return 0;
         }
 
 return 0;

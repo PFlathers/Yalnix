@@ -2,25 +2,31 @@
 #define _CVAR_H_
 
 #include "list.h"
+#include "lock.h"
 
 
 typedef struct _CVAR
 {
         int id; //id of the cvar
-        int claimed; // 0 if not claimed. 1 if claimed
-        struct node *waiters; // who is waiting on signal.
+        List *waiters; // who is waiting on signal.
+        Lock *lock;
 } _CVAR;
-typedef struct _CVAR cvar;
+typedef struct _CVAR Cvar;
 
 /* Public Facing Function Calls */
 
-int CvarInit(Cvar *cvar_to_init);
+//Initializes a cvar and sets the passed pointer to the cvar's id
+int kernel_CvarInit(int*);
 
-int CvarDestory(int cvar_id);
+// Pops a waiting process and schedules it to run
+int kernel_CvarSignal(int cvar_id);
 
-int CvarSignal(int cvar_id);
+// Pops all the waiting process and schedule them to run
+int kernel_CvarBroadcast(int cvar_id);
 
-int CvarBroadcast(int cvar_id);
+/* Set the current proc as blocked and wait for a condition to be met
+ * before running again.
+ */
+int kernel_CvarWait(int cvar_id, int lock_id);
 
-int CvarWait(int cvar_id, int lock_id);
 #endif

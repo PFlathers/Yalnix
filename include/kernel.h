@@ -70,6 +70,7 @@ List *empty_frame_list;
 unsigned int available_process_id;
 unsigned int glob_resource_list;
 
+unsigned int available_lock_id;
 
 // process tracking lists -
 List *ready_procs;
@@ -85,8 +86,8 @@ struct pte r1_ptlist[VREG_1_PAGE_COUNT];
 
 
 
-// List *locks;
-// List *cvars;
+List *locks;
+List *cvars;
 List *pipes;
 List *ttys;
 
@@ -118,6 +119,5 @@ int SetKernelBrk(void * addr);
 void DoIdle();
 int goto_next_process(UserContext *user_context, int repeat_bool);
 int context_switch(pcb *current, pcb *next, UserContext *user_context);
-void scheduler(void);
 void cycle_process(UserContext *uc);
 #endif
