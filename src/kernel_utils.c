@@ -94,6 +94,8 @@ void free_pagetables(pcb* myproc)
         
         free(myproc->user_context);
         free(myproc->kernel_context);
+        free(myproc->region1_pt);
+        free(myproc->region0_pt);
 
         //Dont forget to flush.
         WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);

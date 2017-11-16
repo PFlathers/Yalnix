@@ -148,10 +148,7 @@ int kernel_TtyWrite(int tty_id, void *buf, int len)
                 }
                 node = node->next;
         }
-        //edge case
-        if ( ((TTY*)node->next->data)->tty_id == tty_id) {
-                tty = (TTY*)node->next->data;
-        }
+        
 
         if (tty == NULL) {
                 TracePrintf(3, "TtyWrite: ERROR; tty %d out of bounds \
