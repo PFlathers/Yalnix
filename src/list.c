@@ -18,7 +18,13 @@ List *init_list()
 // append to end of list
 void list_add(List *list_to_add, void *data)
 {
-
+	Node *temp = list_to_add->head;
+	while(temp != NULL){
+		if (temp->data == data)
+			return;
+		temp = temp->next;
+	}
+	
 	Node *new_node = malloc(sizeof(Node));
 	ALLOC_CHECK(new_node, "list_add");
 
