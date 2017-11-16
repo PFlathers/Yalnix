@@ -437,8 +437,9 @@ void trapIllegal(UserContext *uc)
 void trapMemory(UserContext *uc)
 {
         TracePrintf(0, "Illegal Memory code %d\n", uc->code);
-        TracePrintf(6, "\t address %p \n \t sp %p \n \t pc %p \n", uc->addr, uc->sp, uc->pc);
         pcb* curr = curr_proc;
+        TracePrintf(6, "\t address %p \n \t sp %p \n \t pc %p \n \t \t brk %p \n", uc->addr, uc->sp, uc->pc, curr->brk_address);
+        
         //memcpy((void*) curr->user_context, (void*) uc, sizeof(UserContext));
 
         int status = -1;

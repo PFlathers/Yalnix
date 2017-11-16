@@ -316,32 +316,40 @@ void kernel_Exit(int status, UserContext *uc)
         pcb *child;
         pcb *exiting_p = curr_proc;
 
-        int orphan_flag = (curr_proc->parent == NULL);
+        int orphan_flag = (exiting_p->parent == NULL);
         //int orphan_flag = (curr_proc->parent == NULL ? 1 : 0);
         if(!orphan_flag){
-                list_remove(blocked_procs, curr_proc->parent);
-                list_add(ready_procs, curr_proc->parent);
+                list_remove(blocked_procs, exiting_p->parent);
+                list_add(ready_procs, exiting_p->parent);
         }
 
         // if it's init
-        if (curr_proc->process_id == 0){
+        if (exiting_p->process_id == 0){
             Halt();
         }
 
         child = NULL;
 
         // has kids
-        if (curr_proc->children != NULL && list_count(curr_proc->children) >0){
-            while ( (p = (pcb *) list_pop(curr_proc->children)) != NULL){
+        if (exiting_p->children != NULL && list_count(exiting_p->children) > 0){
+            while ( (p = (pcb *) list_pop(exiting_p->children)) != NULL){
                 p->parent = NULL;
+            }
+
+            if (exiting_p->children->count == 0){
+                TracePrintf(6, "\t :sfreeing %d children list", exiting_p->process_id);
+                free(exiting_p->children);
+            }
+            else {
+                TracePrintf(6, "\t :shit 1");
             }
         }
         TracePrintf(6, "\t: passed has kids\n");
 
         // has exited kids
-        if (curr_proc->zombiez != NULL && list_count(curr_proc->zombiez) > 0){
+        if (exiting_p->zombiez != NULL && list_count(exiting_p->zombiez) > 0){
 
-            while ( (p = (pcb *) list_pop(curr_proc->zombiez)) != NULL){
+            while ( (p = (pcb *) list_pop(exiting_p->zombiez)) != NULL){
                TracePrintf(10, "Removing a zombie\n"); 
                 int child_pid = p->process_id;
                 Node *temp = zombie_procs->head;
@@ -368,26 +376,33 @@ void kernel_Exit(int status, UserContext *uc)
                     free_pagetables(dead_status);
                 }*/
             }
+            if (exiting_p->zombiez->count == 0){
+                TracePrintf(6, "\t :sfreeing %d zombie list", exiting_p->process_id);
+                free(exiting_p->zombiez);
+            } 
+            else {
+                TracePrintf(6, "\t : shit^2");
+            }
         }
         TracePrintf(6, "\t: passed has zombiez\n");
         
-        if (curr_proc->parent != NULL){
-            p = curr_proc->parent;
+        if (exiting_p->parent != NULL){
+            p = exiting_p->parent;
 
-            if (list_remove(p->children, (void*) curr_proc) != 0){
+            if (list_remove(p->children, (void*) exiting_p) != 0){
                 TracePrintf(6, "can't remove curr from parent thild\n");
             }
 
             if (p->zombiez == NULL){
                 p->zombiez = init_list();
-                bzero(p->zombiez, sizeof(List));
+                //bzero(p->zombiez, sizeof(List));
             }
             TracePrintf(10, "adding a zombie to my parent\n");
-            list_add(p->zombiez, (void*) curr_proc);
+            list_add(p->zombiez, (void*) exiting_p);
         }
 
         TracePrintf(6, "\t: passed has parent\n");
-        if (list_remove(all_procs, curr_proc) != 0){
+        if (list_remove(all_procs, exiting_p) != 0){
             TracePrintf(6, "can't remove curr from allprocs\n");
         }
 
@@ -397,10 +412,10 @@ void kernel_Exit(int status, UserContext *uc)
 
         if(orphan_flag){
                 // trash pt
-                free_pagetables(curr_proc);
+                free_pagetables(exiting_p);
                 TracePrintf(6, "\t: freed pagetables\n");
         }else {
-                list_add(zombie_procs, (void *) curr_proc);
+                list_add(zombie_procs, (void *) exiting_p);
         }
         pcb *next = list_pop(ready_procs);
         if (!next){
@@ -408,12 +423,13 @@ void kernel_Exit(int status, UserContext *uc)
         }
         TracePrintf(6, "\t: popped ready\n");
 
-        if (next->has_kc == 0){
+        while (next->has_kc == 0){
             TracePrintf(6, "\t: we are in the new one - shit\n");
             list_add(ready_procs, next);
             next = list_pop(ready_procs);
         }
         TracePrintf(6, "\t: now next kc is %d\n", next->has_kc);
+        
         TracePrintf(6, "\t: passed safety check\n");
         if (context_switch((pcb *) NULL, next, uc) != SUCCESS ){
             exit(ERROR);
@@ -629,13 +645,14 @@ int kernel_Brk(void *addr)
 	unsigned int u_addr = (unsigned int) addr; 
         TracePrintf(3, "kernel_Brk: current brk = %u, requesting: %u \n", curr_proc->brk_address, u_addr);
 
- //        unsigned int stack_bottom_page = (unsigned int) (stack_bottom << PAGESHIFT);
- //        unsigned int heap_top_page = (unsigned int) (heap_bottom << PAGESHIFT);
-	// if (u_addr > stack_bottom_page || 
-	// 	u_addr < heap_top_page ){
-	// 	TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
-	// 	return ERROR;
-	// }
+    unsigned int stack_bottom_page = (unsigned int) (stack_bottom << PAGESHIFT);
+    unsigned int heap_top_page = (unsigned int) (heap_bottom << PAGESHIFT);
+
+	if (u_addr > stack_bottom_page || 
+		u_addr < heap_top_page ){
+		TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
+		return ERROR;
+	}
 
     if ( ((unsigned int)addr >> PAGESHIFT) >= (DOWN_TO_PAGE(curr_proc->user_context->sp)>>PAGESHIFT) ){
         TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds to %u \n", (unsigned int) addr, (DOWN_TO_PAGE(curr_proc->user_context->sp)>>PAGESHIFT));
