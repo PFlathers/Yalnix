@@ -227,11 +227,11 @@ void trapKernel(UserContext *uc)
                         break;
                 }
                 // check if pages are valid
-                if ( check_pointer_valid(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, page not valid \n");
-                        retval = ERROR;
-                        break;
-                }
+                // if ( check_pointer_valid(uc->regs[0]) ){
+                //         TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, page not valid \n");
+                //         retval = ERROR;
+                //         break;
+                // }
                 // check if RW
                 if ( is_rw(uc->regs[0]) ){
                         TracePrintf(3, "trapKernel: error in YALNIX_LOCK_INIT, page not rw\n");
@@ -361,23 +361,28 @@ void trapIllegal(UserContext *uc)
         uc->regs[0] = status;
 }
 
-void trapMemory(UserContext *uc)
+/*void trapMemory(UserContext *uc)
 {
         TracePrintf(0, "Illegal Memory code %d\n", uc->code);
+        TracePrintf(6, "\t address %p \n \t sp %p \n \t pc %p \n", uc->addr, uc->sp, uc->pc);
+
+        //memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
+
       	int status = -1;
 
         if (uc->code == YALNIX_ACCERR) {
           TracePrintf(6, "\t Process had access error at %p \n", uc->code);
+          kernel_Exit(status, uc);
         }
         else if (uc->code == YALNIX_MAPERR) {
           TracePrintf(6, "\t Process had a mapping error \n");
-          if ((unsigned int)uc->addr < curr_proc->brk_address || 
-                (unsigned int)uc->addr > (unsigned int) uc->sp) {
+          if ( (unsigned int)uc->addr > curr_proc->brk_address ||
+            (DOWN_TO_PAGE(uc->addr)>>PAGESHIFT) <= ((DOWN_TO_PAGE(curr_process->brk_address) >> PAGESHIFT) + 1) ){
                   TracePrintf(6, "\t exiting, real mapping err so sorry \n");
                   int brk_over = ((unsigned int)uc->addr < curr_proc->brk_address);
-                  TracePrintf(6, "\t error: uc->addr %p,  brk_address %d \n", (unsigned int)uc->addr, curr_proc->brk_address);
+                  TracePrintf(6, "\t error: uc->addr %u,  brk_address %d \n", (unsigned int)uc->addr, curr_proc->brk_address);
                   kernel_Exit(status, uc);
-                  uc->regs[0] = status;
+                  // uc->regs[0] = status;
           }
         }
 
@@ -391,29 +396,30 @@ void trapMemory(UserContext *uc)
       // check if the requested adreess would mess up the heap,
       // i.e there should be at least one page to make it work
       // two not to mess it up
-      if (addr_page - usr_brk_page <= 2) {
+      TracePrintf(6, "trapKernelMemory: \t addr_page %u, brk page %u", addr_page, usr_brk_page);
+      if ( (addr_page - usr_brk_page) <= 2 && (addr_page - usr_brk_page) < ) {
             TracePrintf(6, "Illegal Memory: process out of memory \n");
             kernel_Exit(status, uc);
-            uc->regs[0] = status;
+            //uc->regs[0] = status;
       }   
 
       unsigned int vm_pg_start = addr_page - 128;
       unsigned int vm_pg_end = stack_top_page - 128;
       struct pte *temp;
       for (i = vm_pg_start; i<= vm_pg_end; i++){
-                temp = curr_proc->region1_pt + i;
+                temp = (curr_proc->region1_pt + i);
 
                 // no page allocated for region 1 pt
-                if (temp->valid == 0x0) {
+                if (temp->valid == (u_long) 0x0) {
                         if (list_count(empty_frame_list) < 1) {
                                 TracePrintf(6, "Illegal Memory: not enough frames to grow stack \n");
                                 kernel_Exit(status, uc);
-                                uc->regs[0] = status;
+                                //uc->regs[0] = status;
                         }
 
                         // set page to valid
-                        temp->valid = 0x1;
-                        temp->prot = (PROT_READ | PROT_WRITE);
+                        temp->valid = (u_long) 0x1;
+                        temp->prot = (u_long) (PROT_READ | PROT_WRITE);
 
                         // map  aframe to it
                         int pfn = (int) list_pop(empty_frame_list);
@@ -423,11 +429,85 @@ void trapMemory(UserContext *uc)
       }
       // flush me baby flush me baby
       WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-      TracePrintf(0, "Illegal Memory: Holly shit we survived%d\n");
-      kernel_Exit(-1, uc);
+      TracePrintf(0, "Illegal Memory: Holly shit we survived\n");
+      //kernel_Exit(-1, uc);
 
       	
+}*/
+void trapMemory(UserContext *uc)
+{
+        TracePrintf(0, "Illegal Memory code %d\n", uc->code);
+        TracePrintf(6, "\t address %p \n \t sp %p \n \t pc %p \n", uc->addr, uc->sp, uc->pc);
+        pcb* curr = curr_proc;
+        //memcpy((void*) curr->user_context, (void*) uc, sizeof(UserContext));
+
+        int status = -1;
+
+        if (uc->code == YALNIX_ACCERR) {
+          TracePrintf(6, "\t Process had access error at %p \n", uc->code);
+          kernel_Exit(status, uc);
+        }
+        else if (uc->code == YALNIX_MAPERR) {
+          TracePrintf(6, "\t Process had a mapping error \n");
+          if ((unsigned int)uc->addr < curr->brk_address || 
+                (unsigned int)uc->addr > (unsigned int) uc->sp){
+                  TracePrintf(6, "\t exiting, real mapping err so sorry \n");
+                  int brk_over = ((unsigned int)uc->addr < curr->brk_address);
+                  TracePrintf(6, "\t error: uc->addr %u,  brk_address %d \n", (unsigned int)uc->addr, curr->brk_address);
+                  kernel_Exit(status, uc);
+                  // uc->regs[0] = status;
+          }
+        }
+
+      unsigned int addr_page = DOWN_TO_PAGE(uc->addr) >> PAGESHIFT;
+      unsigned int stack_top_page = VMEM_1_LIMIT >> PAGESHIFT;
+      unsigned int usr_brk_page = UP_TO_PAGE(curr->brk_address) >> PAGESHIFT;
+      unsigned int usr_heap_bottom = curr->heap_start_pg;
+      
+      int i; 
+
+      // check if the requested adreess would mess up the heap,
+      // i.e there should be at least one page to make it work
+      // two not to mess it up
+      TracePrintf(6, "trapKernelMemory: \t addr_page %u, brk page %u", addr_page, usr_brk_page);
+      if ( (addr_page - usr_brk_page) <= 2 && ((int)addr_page - (int)usr_brk_page) < 0) {
+            TracePrintf(6, "Illegal Memory: process out of memory \n");
+            kernel_Exit(status, uc);
+            //uc->regs[0] = status;
+      }   
+
+      unsigned int vm_pg_start = addr_page - 128;
+      unsigned int vm_pg_end = stack_top_page - 128;
+      struct pte *temp;
+      for (i = vm_pg_start; i<= vm_pg_end; i++){
+                temp = (curr->region1_pt + i);
+
+                // no page allocated for region 1 pt
+                if (temp->valid == (u_long) 0x0) {
+                        if (list_count(empty_frame_list) < 1) {
+                                TracePrintf(6, "Illegal Memory: not enough frames to grow stack \n");
+                                kernel_Exit(status, uc);
+                                //uc->regs[0] = status;
+                        }
+
+                        // set page to valid
+                        temp->valid = (u_long) 0x1;
+                        temp->prot = (u_long) (PROT_READ | PROT_WRITE);
+
+                        // map  aframe to it
+                        int pfn = (int) list_pop(empty_frame_list);
+                        temp->pfn = (u_long) ( (pfn * PAGESIZE) >> PAGESHIFT);
+
+                }
+      }
+      // flush me baby flush me baby
+      WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
+      TracePrintf(0, "Illegal Memory: Holly shit we survived\n");
+      //kernel_Exit(-1, uc);
+
+        
 }
+
 
 void trapMath(UserContext *uc)
 {
@@ -446,17 +526,14 @@ void trapTTYReceive(UserContext *uc)
         int tty_id = uc->code;
         TTY *tty = NULL;
         Node * node =  ttys->head;
-        while (node->next != NULL){
+        while (node != NULL){
                 if ( ((TTY*)(node->data))->tty_id == tty_id){
                         tty = (TTY *) node->data;
                         break;
                 }
                 node = node->next;
         }
-        //edge case
-        if ( ((TTY*)(node->data))->tty_id == tty_id) {
-                tty = ((TTY*)(node->next->data));
-        }
+ 
 
         if (tty == NULL) {
                 TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
@@ -466,11 +543,12 @@ void trapTTYReceive(UserContext *uc)
 
         //allocate new buffer
         Buffer *new = (Buffer *) malloc(sizeof(Buffer));
-        new->buf = (char *) malloc(TERMINAL_MAX_LINE);
+        new->buf = (char *) calloc(TERMINAL_MAX_LINE, sizeof(char));
         // call TtyRecieve
         new->len = TtyReceive(tty->tty_id, new->buf, TERMINAL_MAX_LINE);
+        TracePrintf(6, "recieved buffer %s, of len %d from teriminal %d", (char *) new->buf, new->len, tty->tty_id);
 
-        
+
 
         // add the created buffer on the list of buffers
         // for that tty
@@ -482,6 +560,7 @@ void trapTTYReceive(UserContext *uc)
         // put it back on the ready list
         int len = new->len;
         while ( (list_count(tty->to_read) > 0) && (len > 0) ) {
+            TracePrintf(0, "trapTTYReceive to the next and beyond\n");
                 pcb *waiter = list_pop(tty->to_read);
                 list_add(ready_procs, waiter);
                 len = len - waiter->read_length;
@@ -493,7 +572,9 @@ void trapTTYReceive(UserContext *uc)
 
 void trapTTYTransmit(UserContext *uc)
 {
-        TracePrintf(0, "trapTTYTransmit ### start\n");
+        TracePrintf(0, "trapTTYTransmit ### start \n");
+        //memcpy((void*) curr_proc->user_context, (void*) uc, sizeof(UserContext));
+
         // find the tty by uc->code
         int tty_id = uc->code;
         TTY *tty = NULL;
@@ -509,16 +590,28 @@ void trapTTYTransmit(UserContext *uc)
         if (tty == NULL) {
                 TracePrintf(6, "TtyWrite: ERROR; tty %d out of bounds \
                                 - should not happen \n", tty_id);
-                return ;
+                return;
         }
-        if(tty->to_write || tty->to_write->count == 0)
+
+        TracePrintf(0, "COUNT: %d\n", tty->to_write->count);
+
+        if( list_count(tty->to_write) <= 0)
         {
-                TracePrintf(3, "TtyWrite: Nothing to write\n");
+                TracePrintf(3, "TtyWrite: Nothing to write on %d\n", tty_id);
         } else {
-                pcb *writer = list_pop(tty->to_write);
+                TracePrintf(6, "TtyWrite: \n about to pop a waiter\n");
+                if(tty->to_write->head == NULL)
+                  TracePrintf(0, "hi %d\n\n\n", tty->to_write->count);
+                if(tty->to_write->head->data == NULL)
+                  TracePrintf(0, "failure\n\n\n");
+                pcb *writer = (pcb *)list_pop(tty->to_write);
+
+               TracePrintf(6, "TtyWrite: \n done poppa a waiter\n");
+             
                 // check if we need to write more then once,
                 // otherwise call TtyTransmit
                 int remains = writer->buffer->len - TERMINAL_MAX_LINE;
+
                 if (remains > 0 ) {
                         writer->buffer->len = remains;
                         writer->buffer->buf = writer->buffer + TERMINAL_MAX_LINE;
@@ -526,34 +619,45 @@ void trapTTYTransmit(UserContext *uc)
                         list_add(tty->to_write, (void *) writer);
 
                         if (remains > TERMINAL_MAX_LINE) {
-                                TtyTransmit(tty->tty_id, writer->buffer->buf, TERMINAL_MAX_LINE);
+                                TtyTransmit(tty_id, writer->buffer->buf, TERMINAL_MAX_LINE);
                         }
                         else {
-                                TtyTransmit(tty->tty_id, writer->buffer->buf, writer->buffer->len);
+                                TtyTransmit(tty_id, writer->buffer->buf, writer->buffer->len);
                         }
                 }
                 else {
                         // check if there are waiting process, and call
                         // the transmit for them (see where I break it up
                         // in the syscall)
+                        TracePrintf(6, "TtyWrite: \n nothing remains, adding to ready\n");
 
-                        list_add(ready_procs, writer);
-
+/*
+                        Node *temp = blocked_procs->head;
+                        pcb *p2 = NULL;
+                        while(temp != NULL){
+                            if()
+                        }
+                        */
+                        list_add_messy(ready_procs, writer);
+                        pcb *next;
                         if (list_count(tty->to_write) > 0) {
-                                pcb *next = list_pop(tty->to_write);
+                                next = list_pop(tty->to_write);
                                 list_add(tty->to_write, (void *) next);
+                                if(tty->to_write->head == NULL)
+                                  TracePrintf(0, "cukdasfdsa\n");
 
                                 int next_len = (int) next->buffer->len;
                                 if (next_len > TERMINAL_MAX_LINE){
-                                        TtyTransmit(tty->tty_id, next->buffer->buf, TERMINAL_MAX_LINE);
+                                        TtyTransmit(tty_id, next->buffer->buf, TERMINAL_MAX_LINE);
                                 }
                                 else {
-                                        TtyTransmit(tty->tty_id, next->buffer->buf, next_len);
+                                        TtyTransmit(tty_id, next->buffer->buf, next_len);
                                 }
                         }
 
                 }
         }
+
         TracePrintf(0, "trapTTYTransmit ### end\n");
 
 }
