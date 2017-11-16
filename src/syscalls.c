@@ -699,7 +699,7 @@ int kernel_Brk(void *addr)
 		}
 	}
 
-	curr_proc->brk_address = addr;
+	curr_proc->brk_address = (int) addr;
     TracePrintf(3, "kernel_Brk ### end \n");
 	return SUCCESS;
 }

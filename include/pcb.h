@@ -99,9 +99,9 @@ typedef struct _PCB {
 			 // parent to know its faith
 
 	/* Process Memory management */
-	int brk_address; // top of the heap +1
+	unsigned int brk_address; // top of the heap +1
 
-	int stack_pointer; // or start of the stack ptr
+	unsigned int stack_pointer; // or start of the stack ptr
 	int heap_start_pg; //or last heap page
 
 	// pointers to the kernel and user stack;
