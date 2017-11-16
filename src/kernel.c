@@ -614,6 +614,9 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
 
     // return	
     TracePrintf(2, "MyKCS ### End : my guess \n");
+    if (!next->kernel_context){
+        TracePrintf(6, "OOOOH SHIIIIIT \n");
+    }
     return next->kernel_context;
 
 }
