@@ -323,6 +323,7 @@ void kernel_Exit(int status, UserContext *uc)
                 list_add(ready_procs, curr_proc->parent);
         }
 
+        // if it's init
         if (curr_proc->process_id == 0){
             Halt();
         }
@@ -337,24 +338,25 @@ void kernel_Exit(int status, UserContext *uc)
         }
         TracePrintf(6, "\t: passed has kids\n");
 
+        // has exited kids
         if (curr_proc->zombiez != NULL && list_count(curr_proc->zombiez) > 0){
 
             while ( (p = (pcb *) list_pop(curr_proc->zombiez)) != NULL){
                TracePrintf(10, "Removing a zombie\n"); 
-                /*
+                int child_pid = p->process_id;
                 Node *temp = zombie_procs->head;
                 pcb *dead_status = NULL;
                 while(temp != NULL){
 
-                    if ( ((pcb*)(temp->data))->process_id == curr_proc->process_id){
+                    if ( ((pcb*)(temp->data))->process_id == child_pid){
                             dead_status= (pcb*) temp->data;
                             break;
                     }
                     temp = temp->next;
                  }
-                */
-                list_remove(zombie_procs, p);
-                free_pagetables(p);
+                
+                list_remove(zombie_procs, dead_status);
+                free_pagetables(dead_status);
 
         //we didnt find the lock
         /*
