@@ -12,8 +12,6 @@ int main(int argc, char *argv[]) {
   int rc;
   rc = Fork();
   if (rc == 0) {
-    // dramatic effect
-    Pause();
     Pause();
     // write to terminal one
     TtyWrite(1, buffer, size);
@@ -21,7 +19,6 @@ int main(int argc, char *argv[]) {
     return 0;
   } 
   else {
-    // parent read the message baby
     char read_buffer[10];
     size = sizeof(read_buffer);
     // if this works I will cut my left leg off

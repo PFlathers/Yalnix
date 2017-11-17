@@ -1,9 +1,13 @@
 # Unit Test and Testing software
 
-#### Test.h
-Constants for testing that are not in the globals. 
-Main ones are: 
-1. *TEST_TRACE* so far set to **10**: this is only for TracePrint
 
 
-#### utest_list.c
+- brk.c : mallocs stuff
+- cvar.c : tests acquire and wait and signal
+- cvar_b.c : same thing but adds broadcast
+- delay.c : delays for a short while
+- forc.c : forks once and waits
+- pipe.c : write to pipe, read from pipe
+- simple.c : runs, mallocs and exits
+- tty.c : writes and reads using "TtyRead and TtyWrite" syscalls; for the provided TtyPrintf is tested in programs in [test folder](../test)
+- wait.c : waits?

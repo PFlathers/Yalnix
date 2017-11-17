@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
   // kiddo
   if (rc == 0) {
     pid = GetPid();
-    TracePrintf(1, "\t childs pid is %d\n", pid);
+    TracePrintf(1, "\t pid of the child %d\n", pid);
     for (i = 0; i < 5; i++) {
       Pause();
     }
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     // wait call should return automatically
     int *stat_ptr = (int *) malloc(sizeof(int));
     *stat_ptr = 0;
-    TracePrintf(1, "PARENT about to wait for child\n");
+    TracePrintf(1, "\t parent about to wait for child\n");
     rc = Wait(stat_ptr);
   }
 

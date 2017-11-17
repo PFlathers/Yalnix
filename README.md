@@ -2,8 +2,8 @@
 ### Group: ‘54 65 61 6D’; Drop Tables; team
 Members: Patrick J. Flathers (pjflathers) and Bruno Korbar (bjuncek)
 
-This is a part of a our operating system. Our operating system is the greatest operating system. It runs programs
-![](http://folk.uio.no/hpv/linuxtoons/foxtrot.2003-08-14.gif)
+This is a part of a our operating system. Our operating system is the greatest operating system. It runs programs.
+![image](http://folk.uio.no/hpv/linuxtoons/foxtrot.2003-08-14.gif)
 
 
 ---
@@ -20,6 +20,8 @@ This is quite a futile part of the readme, as I realized that to write it comple
 2. Checkpoint three *4/5*
 3. Checkpoint four *4/5*
 4. Checkpoint five *4/5*
+5. Checkpoint six *4/5*
+
 
 
 ##### Documented issues
@@ -58,18 +60,36 @@ and to run it with extended debugging info, run
 ## Folder organisation
 - **src**: source files
 - **include**: header files, datastructure definitions
+- **test**: Sean's test files and some of our additions
 - **userland**: userland programs that illustrate how each part of our program would behave and work
 - **sample**: provided by Sean, and templates
 - **sample_include**: sample .h files for interaction with yalnix "hardware", provided by Sean
 
 --- 
 
+## Testing
+- all programs in [userland](./userland) complile and behave as expected
+- [forktest](./test/forktest.c) runs and exits, kernel keeps running
+- [torture](./test/torture.c) runs for at least an hour
+
+
+---
+## Acknowledgments
+- Galen's group for brainstorming pipe and tty stuff
+- Juan and Seok for explaining two ways we can context switch and outlining some test files
+- Shashwat for various help, including outlining some test files
+- Vijay, dr.bx, and dr.Reeves for debugging tips, general encouragement and Nitendo Wii lessons
+- Sean for actually replying to our emails with `HELP` or `URGENT!!!` in the subject
+
+---
+
 ## Trivia:
 1. when I first started to write this readme, I wanted to write it using [the top ten hundred words](https://www.xkcd.com/simplewriter/), however the closest thing to writing _"kernel"_ with it was _"many letters that allow computer to run things on it and not break"_.
 2. While writing _fork_, Bruno wrote half of it using python syntax. He attributes that to the [lack of alchohol](https://xkcd.com/323/) involved in the proccess.
 3. _kernel_Exit_ was rewritten from scratch for a total 4 times; _kernel_Fork_ was rewritten 3 times. The problem was actually in fork userland info
-4. We discovered and abused `git blame`
+4. We discovered and abused `git blame` command
 5. Sean spent 4 hours finding 3 extra chars in the interrupt handler (git blame: Bruno) 
+
 
 
 ---
