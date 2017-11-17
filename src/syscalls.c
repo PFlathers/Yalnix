@@ -277,7 +277,7 @@ int kernel_Exec(UserContext *uc, char *filename, char **argvec)
 
 	retval = LoadProgram(filename, argvec, proc);
 	if (retval != SUCCESS) {
-		TracePrintf(3, "kernel_Exec: could not load program \n");
+		TracePrintf(3, "kernel_Exec: could not load program; pid %d\n", curr_proc->process_id);
 		exit(ERROR);
 	}
 
@@ -402,7 +402,7 @@ void kernel_Exit(int status, UserContext *uc)
             p = exiting_p->parent;
 
             if (list_remove(p->children, (void*) exiting_p) != 0){
-                TracePrintf(6, "can't remove curr from parent thild\n");
+                TracePrintf(6, "kernelExit in (%d)\t can't remove curr from parent thild\n", curr_proc->process_id);
             }
 
             if (p->zombiez == NULL){
@@ -415,7 +415,7 @@ void kernel_Exit(int status, UserContext *uc)
 
         TracePrintf(6, "\t: passed has parent\n");
         if (list_remove(all_procs, exiting_p) != 0){
-            TracePrintf(6, "can't remove curr from allprocs\n");
+            TracePrintf(6, "can't remove curr (%d) from allprocs\n", curr_proc->process_id);
         }
 
         TracePrintf(6, "\t: well, shit\n");
@@ -435,6 +435,8 @@ void kernel_Exit(int status, UserContext *uc)
         }
         TracePrintf(6, "\t: popped ready\n");
 
+        // don't start from exit, that would be bed given our 
+        // KCS implementation
         while (next->has_kc == 0){
             TracePrintf(6, "\t: we are in the new one - shit\n");
             list_add(ready_procs, next);
@@ -662,12 +664,12 @@ int kernel_Brk(void *addr)
 
 	if (u_addr > stack_bottom_page || 
 		u_addr < heap_top_page ){
-		TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds %u to %u \n", u_addr, heap_top_page, stack_bottom_page);
+		TracePrintf(3, "kernel_Brk (pid %d): address requested (uaddr = %u) out of bounds %u to %u \n", curr_proc->process_id, u_addr, heap_top_page, stack_bottom_page);
 		return ERROR;
 	}
 
     if ( ((unsigned int)addr >> PAGESHIFT) >= (DOWN_TO_PAGE(curr_proc->user_context->sp)>>PAGESHIFT) ){
-        TracePrintf(3, "kernel_Brk: address requested (uaddr = %u) out of bounds to %u \n", (unsigned int) addr, (DOWN_TO_PAGE(curr_proc->user_context->sp)>>PAGESHIFT));
+        TracePrintf(3, "kernel_Brk (pid %d): address requested (uaddr = %u) out of bounds %u to %u \n", curr_proc->process_id, u_addr, heap_top_page, stack_bottom_page);
         return ERROR;
     }
 
@@ -676,7 +678,7 @@ int kernel_Brk(void *addr)
 		if ((*(curr_proc->region1_pt + i)).valid != 0x1) {
 			// check for empty space
                         if (list_count(empty_frame_list) < 1){
-				TracePrintf(3, "kernel_Brk: out of memory");
+				TracePrintf(3, "kernel_Brk (pid %d): out of memory", curr_proc->process_id);
 				return ERROR;
 			}
 
@@ -746,7 +748,7 @@ int kernel_Delay(UserContext *user_context, int clock_ticks)
 		exit(FAILURE);
 	} else {
 		if (goto_next_process(user_context, 0) != SUCCESS){
-			TracePrintf(3, "Delay: goto_next_process failed with error");
+			TracePrintf(3, "Delay (pid %d): goto_next_process failed with error", curr_proc->process_id);
 		}
 	}
 
@@ -777,7 +779,7 @@ int kernel_Reclaim(int id)
     if ((temp = ((void*) kernel_findCvar(id)) ) != NULL ){
         Cvar *c = (Cvar *) temp;
         if (list_count(c->waiters) > 0){
-            TracePrintf(6, "Can't release cvar: waiters alive \n");
+            TracePrintf(6, "Proc %d Can't release cvar: waiters alive \n", curr_proc->process_id);
             return ERROR;
         }
         list_remove(cvars, c);
@@ -788,11 +790,11 @@ int kernel_Reclaim(int id)
     else if ((temp = ((void*) kernel_findLock(id)) ) != NULL ){
         Lock *l = (Lock *) temp;
         if (l->claimed){
-            TracePrintf(6, "Can't release lock: taken \n");
+            TracePrintf(6, "Proc %d Can't release lock: taken \n", curr_proc->process_id);
             return ERROR;
         }
         if (list_count(l->waiters) > 0){
-            TracePrintf(6, "Can't release lock: waiters \n");
+            TracePrintf(6, "Proc %d Can't release lock: waiters \n", curr_proc->process_id);
             return ERROR;
         }
 
@@ -804,7 +806,7 @@ int kernel_Reclaim(int id)
     else if( (temp = ((void*) kernel_findPipe(id)) ) != NULL ){
         Pipe *p =  (Pipe*) temp;
         if (list_count(p->pipe_queue) > 0){
-            TracePrintf(6, "Can't release pipe: waiters (i.e.) \n");
+            TracePrintf(6, "Proc %d Can't release pipe: waiters (i.e.) \n", curr_proc->process_id);
             return ERROR;
         }
 

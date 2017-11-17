@@ -89,7 +89,7 @@ int kernel_CvarWait(int cvar_id, int lock_id)
 
         // Check that I currently have the lock
         if (kernel_Release(lock_id) != SUCCESS){
-                TracePrintf(3, "Process did not have the lock");
+                TracePrintf(3, "Process %d did not have the lock", curr_proc->process_id);
                 return ERROR;
         }
 

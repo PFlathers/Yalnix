@@ -94,12 +94,13 @@ int kernel_Release(int lock_id)
 
         //we didnt find the lock
         if( my_lock == NULL){
-                TracePrintf(6, "lock does not exisit\n");
+                TracePrintf(6, "ERROR pid %d:lock does not exisit \n", curr_proc->process_id);
                 return ERROR;
         }
 
         //Current process lied or is misinformed
         if (!my_lock->claimed || my_lock->proc_id != curr_proc->process_id){
+                TracePrintf(6, "ERROR: pid %d:messing with lock \n", curr_proc->process_id);
                 return ERROR;
         }
 

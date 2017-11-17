@@ -138,7 +138,7 @@ int kernel_PipeWrite(int pipe_id, void *buf, int len)
         pipe->length += len;
 
         if(pipe->pipe_queue->count == 0 ){
-                TracePrintf(0, "PipeWrite ### pipe_queue is empty\n");
+                TracePrintf(3, "PipeWrite ### pipe_queue is empty\n");
         }
         // handle processes in the queue
         else if(pipe->pipe_queue->count != 0){

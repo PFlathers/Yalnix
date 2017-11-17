@@ -79,7 +79,7 @@ int kernel_TtyRead(int tty_id, void *buf, int len)
 
         // check if our local buffer is full 
         if (!popped_buf) {
-            TracePrintf(3, "ttyRead ERROR: ayayayayay\n");
+            TracePrintf(3, "ttyRead ERROR (pid %d): ayayayayay\n", curr_proc->process_id);
             return ERROR;    
         }
 
