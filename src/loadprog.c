@@ -280,7 +280,6 @@ int LoadProgram(char *name, char *args[], pcb *proc)
     close(fd);
     return KILL;
   }
-  TracePrintf(3, "weeeee \n");
   /*
    * Now set the page table entries for the program text to be readable
    * and executable, but not writable.

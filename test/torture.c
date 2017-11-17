@@ -14,11 +14,11 @@ void Bouncer(int cvar, int mutex)
     TtyPrintf(1, "Bouncer here\n");
     while (1)
     {
-	TtyPrintf(0, "Waiting for ping...");
+	TtyPrintf(1, "Waiting for ping...");
 	Acquire(mutex);
 	CvarWait(cvar, mutex);
 	Release(mutex);
-	TtyPrintf(0, "boing!\n");
+	TtyPrintf(1, "boing!\n");
     }
     TtyPrintf(1, "*** SHOULDN'T BE HERE!!!\n");
     Exit(-1);
@@ -80,12 +80,9 @@ void SonarGuy(int cvar, int mutex)
     while (1)
     {
 	TtyPrintf(0, "Signaling Bouncer...");
-//	Delay(2);
-        TtyPrintf(0, "1");
+	Delay(2);
 	Acquire(mutex);
-        TtyPrintf(0, "2");
 	CvarSignal(cvar);
-        TtyPrintf(0, "3");
 	Release(mutex);
 	TtyPrintf(0, "ping!\n");
     }
@@ -149,36 +146,25 @@ int main(void)
 	TtyRead(0, buf, 100);
     } while (buf[0] != 'g' || buf[1] != 'o');
 
-
     pid = Fork();
-    if (pid == 0){
-            //TtyPrintf(0, "1\n");
+    if (pid == 0)
 	Bouncer(cvar, mutex);
-    }
     
     pid = Fork();
-    if (pid == 0){
-            //TtyPrintf(0, "2\n");
+    if (pid == 0)
 	ThatAnnoyingGuy();
-    }
 
     pid = Fork();
-    if (pid == 0){
-            //TtyPrintf(0, "3\n");
+    if (pid == 0)
 	SonarGuy(cvar, mutex);
-    }
   
     pid = Fork();
-    if (pid == 0){
-    //TtyPrintf(0, "4\n");
+    if (pid == 0)
 	MallocMan();
-    }
 
     pid = Fork();
-    if (pid == 0){
-    //TtyPrintf(0, "5\n");
+    if (pid == 0)
 	GarbageMan();
-    }
 
     while(1)
     {

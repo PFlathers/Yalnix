@@ -7,7 +7,9 @@
 
 //Intializes Lock.
 //Warning: sets lock to free and proc_id to 0, no one has claimed it.
-int kernel_LockInit(int * lock_idp)
+//      int *lock_idp: a pointer to userland that we should write the lock
+//              id to.
+int kernel_LockInit(int *lock_idp)
 {
         Lock *lock_to_init = (Lock*) malloc(sizeof(Lock));
         lock_to_init->id = available_lock_id;
@@ -23,6 +25,11 @@ int kernel_LockInit(int * lock_idp)
 	return SUCCESS;
 }
 
+//Try to acquire the lock. 
+//If the lock is free give the process the lock
+//Else put the lock on a waiters list so we know
+//priority.
+//      lock_id: the id of the lock we are trying to acquire
 int kernel_Acquire(int lock_id)
 {
         TracePrintf(6, "Acquiring lock\n");
@@ -70,6 +77,7 @@ int kernel_Acquire(int lock_id)
 }
 
 // If the proces has the lock, release it.
+//      lock_id: the id of the lock we are trying to acquire
 int kernel_Release(int lock_id)
 {
         TracePrintf(6, "Releasing lock\n");

@@ -53,7 +53,7 @@ void (*interrupt_vector[TRAP_VECTOR_SIZE]) = {
 
 /* from pg 14, bullet 1
 At boot time, the hardware invokes SetKernelData 
-to tell your kernel some basic pa- rameters about the data segment
+to tell your kernel some basic parameters about the data segment
 */
 void SetKernelData(void * _KernelDataStart, void *_KernelDataEnd) 
 { 
@@ -350,16 +350,16 @@ void create_init_proc(UserContext *user_context, char *cmd_args[])
   		char *program_name = argument_list[0];
 
   		int lpr;
-                TracePrintf(0, "preloadprog count:%d\n", list_count(ready_procs));
+                TracePrintf(5, "Preloadprog count:%d\n", list_count(ready_procs));
   		if ( (lpr = LoadProgram(program_name, argument_list, init_proc)) == SUCCESS ) {
   			list_add(all_procs, (void *) init_proc);
   			list_add(ready_procs, (void*) init_proc);
-  			TracePrintf(3, "LoadProgram added %s on the ready list; code %d", program_name, lpr);
-                        TracePrintf(0, "loadprog count:%d\n", list_count(ready_procs));
+  			TracePrintf(3, "LoadProgram added %s on the ready list; code %d\n", program_name, lpr);
+                        TracePrintf(0, "Loadprog count:%d\n", list_count(ready_procs));
   		} else{
   			WriteRegister(REG_PTBR1, (unsigned int) &r1_ptlist);
   			WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_ALL);
-  			TracePrintf(3, "LoadProgram failed; code %d", lpr);
+  			TracePrintf(3, "LoadProgram failed; code %d\n", lpr);
   		}
   	}
 }
@@ -429,14 +429,14 @@ void KernelStart(char *cmd_args[],
  */
 int SetKernelBrk(void * addr) 
 {
-	TracePrintf(1, "SetKernelBrk ### Start");
+	TracePrintf(1, "SetKernelBrk ### Start\n");
 	int i;
 
 	// Check that the address is within bounds
 	if ((unsigned int) addr > (unsigned int) KERNEL_STACK_BASE || \
                            addr < kernel_data_start){
 
-                TracePrintf(3, "SetKernelBrk: ERROR ### addres: %p out of bounds", addr);
+                TracePrintf(3, "SetKernelBrk: ERROR ### addres: %p out of bounds\n", addr);
                 return ERROR;
         }
 
@@ -502,7 +502,7 @@ int SetKernelBrk(void * addr)
 	} // end if(vm_enabled)
 	
 	// exit function
-	TracePrintf(1, "SetKernelBrk ### End");
+	TracePrintf(1, "SetKernelBrk ### End\n");
 	return 0;
 
 }
@@ -629,7 +629,7 @@ KernelContext *MyKCS(KernelContext *kernel_context_in, void *current_pcb, void *
     // return	
     TracePrintf(2, "MyKCS ### End : my guess \n");
     if (!next->kernel_context){
-        TracePrintf(6, "OOOOH SHIIIIIT \n");
+        TracePrintf(6, "Failure to give the next process a kernel context.\n");
     }
     return next->kernel_context;
 
@@ -710,7 +710,7 @@ int context_switch(pcb *current, pcb *next, UserContext *user_context)
 
 	// magic function from 5.2
 	int r = KernelContextSwitch(MyKCS, (void *) current, (void *) next);
-        TracePrintf(6, "\t : surrvived MyKCS \n");
+        TracePrintf(6, "\t : survived MyKCS \n");
 	// make user context current one (not needed atm)
 	memcpy((void *) user_context, (void *) curr_proc->user_context, sizeof(UserContext));
 

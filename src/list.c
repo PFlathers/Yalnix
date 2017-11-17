@@ -32,52 +32,6 @@ void list_add(List *list_to_add, void *data)
 	new_node->prev = NULL;
 	new_node->next = NULL;
 
-/*
-	if(list_to_add->head == NULL){
-		list_to_add->head = new_node;
-		list_to_add->tail = new_node;
-		return;
-	}*/
-
-	// we have an empty list
-	if(!list_to_add->tail){
-		list_to_add->head = new_node;
-		list_to_add->tail = new_node;
-	// append onto end of list
-	} else {
-		list_to_add->tail->next = new_node;
-		new_node->prev = list_to_add->tail;
-		list_to_add->tail = new_node;
-	}
-        list_to_add->count++;
-}
-
-
-// append to end of list
-void list_add_messy(List *list_to_add, void *data)
-{
-	Node *temp = list_to_add->head;
-	while(temp != NULL){
-		if (temp->data == data)
-			return;
-		temp = temp->next;
-	}
-
-
-	Node *new_node = malloc(sizeof(Node));
-	ALLOC_CHECK(new_node, "list_add");
-
-	new_node->data = data;
-	new_node->prev = NULL;
-	new_node->next = NULL;
-
-/*
-	if(list_to_add->head == NULL){
-		list_to_add->head = new_node;
-		list_to_add->tail = new_node;
-		return;
-	}*/
-
 	// we have an empty list
 	if(!list_to_add->tail){
 		list_to_add->head = new_node;

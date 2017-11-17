@@ -24,8 +24,6 @@ List *init_list();
 
 // adds data onto the end of the list
 void list_add(List *list_to_add, void *data);
-void list_add_messy(List *list_to_add, void *data);
-
 
 // add data onto the begining of the list
 void list_push(List *list_to_push, void *data);
