@@ -43,7 +43,7 @@ void trapKernel(UserContext *uc)
                 if ( check_pointer_range(uc->regs[0]) 
                   || check_pointer_range(uc->regs[1]) ){
 
-                        TracePrintf(3, "trapKernel: error in EXEC, out of range\n");
+                        TracePrintf(3, "trapKernel (pid %d): error in EXEC, out of range\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
@@ -52,7 +52,7 @@ void trapKernel(UserContext *uc)
                 if ( check_pointer_valid(uc->regs[0])
                   || check_pointer_valid(uc->regs[1]) ){
 
-                        TracePrintf(3, "trapKernel: error in EXEC, invalid\n");
+                        TracePrintf(3, "trapKernel (pid %d): error in EXEC, invalid\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
@@ -61,7 +61,7 @@ void trapKernel(UserContext *uc)
                 if ( is_rw(uc->regs[0]) \
                   || is_rw(uc->regs[1]) ){
 
-                        TracePrintf(3, "trapKernel: error in EXEC, not rw\n");
+                        TracePrintf(3, "trapKernel (pid %d): error in EXEC, not rw\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
@@ -108,19 +108,19 @@ void trapKernel(UserContext *uc)
 
                  //check if in range
                 if ( check_pointer_range(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in WAIT, pointer out of range\n");
+                        TracePrintf(3, "trapKernel (pid %d): error in WAIT, pointer out of range\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
                 // check if pages are valid
                 if ( check_pointer_valid(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in WAIT, page not valid \n");
+                        TracePrintf(3, "trapKernel (pid %d): error in WAIT, page not valid \n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
                 // check if RW
                 if ( is_rw(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in WAIT, page not rw\n");
+                        TracePrintf(3, "trapKernel (pid %d): error in WAIT, page not rw\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
@@ -142,19 +142,19 @@ void trapKernel(UserContext *uc)
                 TracePrintf(3, "trapKernel: YALNIX_PIPE_INIT\n");
                 // check if in range
                 if ( check_pointer_range(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in PipeInit, pointer out of range\n");
+                        TracePrintf(3, "trapKernel(pid %d): error in PipeInit, pointer out of range\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
                 // check if pages are valid
                 if ( check_pointer_valid(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in PipeInit, pointer address not valid \n");
+                        TracePrintf(3, "trapKernel:(pid %d) error in PipeInit, pointer address not valid \n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
                 // check if RW
                 if ( is_rw(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in PipeInit, address not rw\n");
+                        TracePrintf(3, "trapKernel(pid %d): error in PipeInit, address not rw\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
@@ -194,20 +194,20 @@ void trapKernel(UserContext *uc)
 
                 // check if in range
                 if ( check_pointer_range(uc->regs[0]) ){
-                        TracePrintf(0, "trapKernel: brk to set is: %d\n", (int)uc->regs[0]);
+                        TracePrintf(0, "trapKernel: pid %d: brk to set is: %d\n", curr_proc->process_id, (int)uc->regs[0]);
                         TracePrintf(3, "trapKernel: error in Brk, pointer out of range\n");
                         retval = ERROR;
                         break;
                 }
                 // check if pages are valid
                 if ( check_pointer_valid(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in Brk, pointer address not valid\n");
+                        TracePrintf(3, "trapKernel (pid %d): error in Brk, pointer address not valid\n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
                 // check if RW
                 if ( is_rw(uc->regs[0]) ){
-                        TracePrintf(3, "trapKernel: error in Brk, address not rw \n");
+                        TracePrintf(3, "trapKernel (pid %d): error in Brk, address not rw \n", curr_proc->process_id);
                         retval = ERROR;
                         break;
                 }
@@ -410,8 +410,8 @@ void trapIllegal(UserContext *uc)
 //so long as they do not grow into eachother
 void trapMemory(UserContext *uc)
 {
-        TracePrintf(0, "Illegal Memory code %d\n", uc->code);
         pcb* curr = curr_proc;
+        TracePrintf(0, "Illegal Memory code %d in pid %d\n", uc->code, curr->process_id);
         TracePrintf(6, "\t address %p \n \t sp %p \n \t pc %p \n \t \t brk %p \n", uc->addr, uc->sp, uc->pc, curr->brk_address);
         
         //memcpy((void*) curr->user_context, (void*) uc, sizeof(UserContext));
@@ -423,7 +423,7 @@ void trapMemory(UserContext *uc)
           kernel_Exit(status, uc);
         }
         else if (uc->code == YALNIX_MAPERR) {
-          TracePrintf(6, "\t Process had a mapping error \n");
+          TracePrintf(6, "\t Process had a mapping error\n");
           if ((unsigned int)uc->addr < curr->brk_address || 
                 (unsigned int)uc->addr > (unsigned int) uc->sp){
                   TracePrintf(6, "\t exiting, real mapping err so sorry \n");
@@ -483,7 +483,7 @@ void trapMemory(UserContext *uc)
 // Handles Illegal Math from the NSA.
 void trapMath(UserContext *uc)
 {
-        TracePrintf(0, "trapMath ### start: now exiting\n");
+        TracePrintf(0, "trapMath ### start: now exiting; pid %d\n", curr_proc->process_id);
       	int status = -1;
       	kernel_Exit(status, uc);
         uc->regs[0] = status;
